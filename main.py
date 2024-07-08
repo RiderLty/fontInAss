@@ -11,7 +11,7 @@ import requests
 import queue
 import boto3
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Query, Request, Response
 
 
 class fontLoader():
@@ -213,16 +213,28 @@ async def process(request: Request):
         assText = subtitleBytes.decode("UTF-8-sig")
         font_charList = asu.analyseAss(assText)
         errors, embedFontsText = asu.makeEmbedFonts(font_charList)
-        # ok = assText.replace("[Events]\n", embedFontsText + "\n[Events]\n")
-        # print("embedFontsText",embedFontsText)
-        # processed = ok.encode("UTF-8-sig")
-        # return Response(processed)
-        # return Response((assText + embedFontsText).encode("UTF-8-sig"))
         head, tai = assText.split("[Events]")
         print(f"嵌入完成，用时 {time.time() - start:.2f}s")
         return Response((head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig"))
     except Exception as e:
         return Response(subtitleBytes)
+
+@app.get("/process_url")
+async def process(request: Request , ass_url: str = Query(None)):
+    start = time.time()
+    subtitleBytes = requests.get(ass_url).content
+    try:
+        assText = subtitleBytes.decode("UTF-8-sig")
+        font_charList = asu.analyseAss(assText)
+        errors, embedFontsText = asu.makeEmbedFonts(font_charList)
+        head, tai = assText.split("[Events]")
+        print(f"嵌入完成，用时 {time.time() - start:.2f}s")
+        return Response((head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig"))
+    except Exception as e:
+        return Response(subtitleBytes)
+
+
+
 
 
 if __name__ == "__main__":
