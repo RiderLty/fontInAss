@@ -34,7 +34,7 @@ class fontLoader():
             self.Bucket = None
 
     def loadFont(self, fontName):
-        if self.Bucket:
+        if not self.Bucket:
             if fontName in self.font_2_path:
                 try:
                     path = self.font_2_path[fontName]
@@ -153,37 +153,41 @@ class assSubsetter():
         encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20:]))
         return "\n".join(encoded_lines)
 
-    def makeOneEmbedFontsText(self, fontName, unicodeSet, resultQueue):
-        font = self.fontLoader.loadFont(fontName)
-        if font == None:
-            # return f"{fontName} miss", None
-            resultQueue.put((f"{fontName} miss", None))
-        else:
-            try:
-                originNames = font['name'].names
-                subsetter = Subsetter()
-                subsetter.populate(unicodes=unicodeSet)  # 输入需要子集化的文本内容
-                subsetter.subset(font)
-                font["name"].names = originNames
-                fontOutIO = BytesIO()
-                font.save(fontOutIO)  # 生成新的子集字体文件
-                enc = self.encode_binary_data(fontOutIO.getvalue())
-                # return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
-                resultQueue.put((None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
-            except Exception as e:
-                # return f"{fontName} : {str(e)}", None
-                resultQueue.put((f"{fontName} : {str(e)}", None))
+    def makeOneEmbedFontsText(self, fontName, unicodeSet, resultQueue , sem):
+        with sem:
+            print(f"loading : {fontName}")
+            font = self.fontLoader.loadFont(fontName)
+            if font == None:
+                # return f"{fontName} miss", None
+                resultQueue.put((f"{fontName} miss", None))
+            else:
+                try:
+                    originNames = font['name'].names
+                    subsetter = Subsetter()
+                    subsetter.populate(unicodes=unicodeSet)  # 输入需要子集化的文本内容
+                    subsetter.subset(font)
+                    font["name"].names = originNames
+                    fontOutIO = BytesIO()
+                    font.save(fontOutIO)  # 生成新的子集字体文件
+                    enc = self.encode_binary_data(fontOutIO.getvalue())
+                    # return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+                    resultQueue.put((None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
+                except Exception as e:
+                    # return f"{fontName} : {str(e)}", None
+                    resultQueue.put((f"{fontName} : {str(e)}", None))
 
     def makeEmbedFonts(self, font_charList):
         '''对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本 '''
         embedFontsText = "[Fonts]\n"
         errors = []
         resultQueue = queue.Queue()
+        
+        sem = threading.Semaphore(3)
+        
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
-                print(f"loading : {fontName}")
-                threading.Thread(target=self.makeOneEmbedFontsText, args=(
-                    fontName, unicodeSet, resultQueue)).start()
+                
+                threading.Thread(target=self.makeOneEmbedFontsText, args=(fontName, unicodeSet, resultQueue , sem)).start()
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
                 (err, result) = resultQueue.get()
@@ -232,10 +236,6 @@ async def process(request: Request , ass_url: str = Query(None)):
         return Response((head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig"))
     except Exception as e:
         return Response(subtitleBytes)
-
-
-
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8011)
