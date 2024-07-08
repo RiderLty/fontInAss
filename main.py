@@ -34,7 +34,7 @@ class fontLoader():
             self.Bucket = None
 
     def loadFont(self, fontName):
-        if not self.Bucket:
+        if self.Bucket:
             if fontName in self.font_2_path:
                 try:
                     path = self.font_2_path[fontName]
