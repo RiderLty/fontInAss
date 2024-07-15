@@ -88,7 +88,7 @@ class assSubsetter():
                 font_charList[fontName].add(ord(ch))
         for line in ass_str.splitlines(): 
             #比较坑爹这里
-            for match in re.findall(r'\\fn([^}|\\]*)[\\|}]', line):
+            for match in re.findall(r'{[^\\]*\\fn([^}|\\]*)[\\|}]', line):
                 fontName = match.replace("@", "")
                 for ch in line:
                     if fontName not in font_charList:
@@ -172,8 +172,7 @@ class assSubsetter():
         return errors, embedFontsText
 
 
-fl = fontLoader(externalFonts=json.load(
-    open("localFontMap.json", 'r', encoding="UTF-8")))
+fl = fontLoader(externalFonts=json.load( open("localFontMap.json", 'r', encoding="UTF-8")))
 asu = assSubsetter(fl)
 app = FastAPI()
 
