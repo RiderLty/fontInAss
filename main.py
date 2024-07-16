@@ -57,7 +57,6 @@ class fontLoader():
                     for record in font['name'].names:
                         if record.nameID == 1 and str(record).strip() == fontName:
                             return font
-
             elif path.lower().endswith("ttf") or path.lower().endswith("otf"):
                 return TTFont(bio)
             else:
@@ -199,8 +198,7 @@ async def process_bytes(request: Request):
 
 @app.get("/process_url")
 async def process_url(request: Request, ass_url: str = Query(None)):
-    if ass_url == None:
-        return "ass_url is None"
+    print("loading "+ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
         return Response(process(subtitleBytes))
