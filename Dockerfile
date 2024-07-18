@@ -5,5 +5,6 @@ RUN pyinstaller main.py -F -p ./ --name fontinass
 
 # FROM python:3.9-slim-buster 
 FROM python:3.9-slim
-COPY --from=builder /fontinass/dist/fontinass  /fontinass  /fontinass/fontMap.json /fontMap.json /fontinass/localFontMap.json /localFontMap.json
+COPY --from=builder /fontinass/dist/fontinass  /fontinass  
+COPY ./fontMap.json ./localFontMap.json /
 CMD [/fontinass]
