@@ -2,17 +2,14 @@
 from io import BytesIO
 import threading
 from easyass import *
-from fastapi.responses import JSONResponse
 from fontTools.ttLib import TTFont, TTCollection
 from fontTools.subset import Subsetter
+from bottle import run , get , post ,request, response
 import os
 import time
 import json
 import requests
 import queue
-import uvicorn
-from fastapi import FastAPI, Query, Request, Response
-
 
 def getAllFiles(path):
     Filelist = []
@@ -264,19 +261,6 @@ with open("localFontMap.json", 'w', encoding="UTF-8") as f:
     json.dump(localFonts, f, indent=4, ensure_ascii=True)
 
 asu = assSubsetter(fontLoader(externalFonts=localFonts))
-app = FastAPI()
-
-
-@app.get("/update")
-def updateLocal():
-    '''更新本地字体库'''
-    global asu
-    with open("localFontMap.json", 'r', encoding="UTF-8") as f:
-        localFonts = updateFontMap(fontDirList, json.load(f))
-    with open("localFontMap.json", 'w', encoding="UTF-8") as f:
-        json.dump(localFonts, f, indent=4, ensure_ascii=True)
-    asu = assSubsetter(fontLoader(externalFonts=localFonts))
-    return JSONResponse(localFonts)
 
 
 def process(bytes):
@@ -291,27 +275,39 @@ def process(bytes):
     return (head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig")
 
 
-@app.post("/process_bytes")
-async def process_bytes(request: Request):
-    '''传入字幕字节'''
-    subtitleBytes = await request.body()
+
+
+@get("/update")
+def updateLocal():
+    '''更新本地字体库'''
+    global asu
+    with open("localFontMap.json", 'r', encoding="UTF-8") as f:
+        localFonts = updateFontMap(fontDirList, json.load(f))
+    with open("localFontMap.json", 'w', encoding="UTF-8") as f:
+        json.dump(localFonts, f, indent=4, ensure_ascii=True)
+    asu = assSubsetter(fontLoader(externalFonts=localFonts))
+    return f"{len(localFonts)} fonts in local"
+
+@post("/process_bytes")
+def process_bytes():
+    data = request.body.read()
     try:
         return Response(process(subtitleBytes))
     except Exception as e:
         print(f"ERROR : {str(e)}")
-        return Response(subtitleBytes)
+        return subtitleBytes
 
-
-@app.get("/process_url")
-async def process_url(request: Request, ass_url: str = Query(None)):
+@get("/process_url")
+def process_url():
     '''传入字幕url'''
+    ass_url = request.query.get('ass_url')
     print("loading "+ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
-        return Response(process(subtitleBytes))
+        return process(subtitleBytes)
     except Exception as e:
         print(f"ERROR : {str(e)}")
-        return Response(subtitleBytes)
+        return subtitleBytes
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8011)
+    run(host="0.0.0.0" , port=8011)
