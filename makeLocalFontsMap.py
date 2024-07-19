@@ -2,12 +2,13 @@ import os
 from io import BytesIO
 from easyass import *
 from fontTools.ttLib import TTFont, TTCollection
+from fontTools.ttLib.sfnt import readTTCHeader
 import os
 import time
 import json
 
 
-def getAllSub(path):
+def getAllFiles(path):
     Filelist = []
     for home, dirs, files in os.walk(path):
         for filename in files:
@@ -16,33 +17,51 @@ def getAllSub(path):
 
 
 def pathReplacer(path):
-    return path.replace("E:\\", "/").replace("\\", "/")
-    # return path
+    # return path.replace("E:\\", "/").replace("\\", "/")
+    return path
+
+
+def updateFontMap(dirPath, old={}):
+    fontMap = {}
+    for file in getAllFiles(dirPath):
+        if pathReplacer(file) in old:
+            fontMap[pathReplacer(file)] = old[pathReplacer(file)]
+        else:
+            try:
+                fonts = None
+                if file.lower().endswith("ttc") or file.lower().endswith("ttf") or file.lower().endswith("otf"):
+                    print(file)
+                    with open(file, 'rb') as f:
+                        f.seek(0)
+                        sfntVersion = f.read(4)
+                        if sfntVersion == b"ttcf":
+                            fonts = TTCollection(file).fonts
+                        else:
+                            fonts = [TTFont(file)]
+                if fonts:
+                    names = set()
+                    for font in fonts:
+                        for record in font['name'].names:
+                            if record.nameID == 1:  # Font Family name
+                                names.add(
+                                    str(record).strip())
+                    fontMap[pathReplacer(file)] = {
+                        "size": os.path.getsize(file),
+                        "fonts": list(names)
+                    }
+
+            except Exception as e:
+                print(file, e)
+    return fontMap
+
 
 if __name__ == "__main__":
-    font_file_map = {}
-    font_miniSize = {}
+    # json.load(open("./fontMap.json", 'r', encoding="UTF-8"))
+    # res = updateFontMap(r"E:\超级字体整合包 XZ")
+    # with open("./fontMap.json", 'w', encoding="UTF-8") as f:
+    #     f.write(json.dumps(res, indent=4, ensure_ascii=True))
 
-    def addFont(font_name, path):
-        if font_name in font_file_map and font_miniSize[font_name] <= os.path.getsize(path):
-            return
-        font_file_map[font_name] = pathReplacer(path)
-        font_miniSize[font_name] = os.path.getsize(path)
 
-    for file in getAllSub(r"E:\超级字体整合包 XZ"):
-        try:
-            fonts = []
-            if file.lower().endswith("ttc"):
-                fonts = TTCollection(file).fonts
-            elif file.lower().endswith("ttf") or file.lower().endswith("otf"):
-                fonts = [TTFont(file)]
-            for font in fonts:
-                for record in font['name'].names:
-                    if record.nameID == 1:  # Font Family name
-                        addFont(str(record).strip(), file)
-        except Exception as e:
-            print(e, file)
-
-    with open("./fontMap.json" , 'w' , encoding="UTF-8") as f:
-    # with open("./localFontMap.json" , 'w' , encoding="UTF-8") as f:
-        f.write(json.dumps(font_file_map , indent=4 ,ensure_ascii=True))
+    res = updateFontMap(r"E:\超级字体整合包 XZ")
+    with open("./localFontMap.json", 'w', encoding="UTF-8") as f:
+        f.write(json.dumps(res, indent=4, ensure_ascii=True))

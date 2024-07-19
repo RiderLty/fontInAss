@@ -2,6 +2,7 @@
 from io import BytesIO
 import threading
 from easyass import *
+from fastapi.responses import JSONResponse
 from fontTools.ttLib import TTFont, TTCollection
 from fontTools.subset import Subsetter
 import os
@@ -11,6 +12,79 @@ import requests
 import queue
 import uvicorn
 from fastapi import FastAPI, Query, Request, Response
+
+
+def getAllFiles(path):
+    Filelist = []
+    for home, dirs, files in os.walk(path):
+        for filename in files:
+            Filelist.append(os.path.join(home, filename))
+    return Filelist
+
+
+def pathReplacer(path):
+    # return path.replace("E:\\", "/").replace("\\", "/")
+    return path
+
+
+def updateFontMap(dirPathList, old={}):
+    fontMap = {}
+    for dirPath in dirPathList:
+        for file in getAllFiles(dirPath):
+            if pathReplacer(file) in old:
+                fontMap[pathReplacer(file)] = old[pathReplacer(file)]
+            else:
+                try:
+                    fonts = None
+                    if file.lower().endswith("ttc") or file.lower().endswith("ttf") or file.lower().endswith("otf"):
+                        print(file)
+                        with open(file, 'rb') as f:
+                            f.seek(0)
+                            sfntVersion = f.read(4)
+                            if sfntVersion == b"ttcf":
+                                fonts = TTCollection(file).fonts
+                            else:
+                                fonts = [TTFont(file)]
+                    if fonts:
+                        names = set()
+                        for font in fonts:
+                            for record in font['name'].names:
+                                if record.nameID == 1:  # Font Family name
+                                    names.add(
+                                        str(record).strip())
+                        fontMap[pathReplacer(file)] = {
+                            "size": os.path.getsize(file),
+                            "fonts": list(names)
+                        }
+
+                except Exception as e:
+                    print(file, e)
+    return fontMap
+
+
+def makeFontMap(data):
+    '''
+    {
+        /path/to/ttf/or/otf : {
+            size: 62561,
+            fonts:[
+                YAHEI,
+                FANGSONG, 
+                ...
+            ]
+        }
+    }
+    '''
+    font_file_map = {}
+    font_miniSize = {}
+    for path, info in data.items():
+        for font_name in info["fonts"]:
+            if font_name in font_file_map and font_miniSize[font_name] <= info["size"]:
+                continue
+            font_file_map[font_name] = path
+            font_miniSize[font_name] = info["size"]
+            # print(font_name , info["size"])
+    return font_file_map
 
 
 def printPerformance(func: callable) -> callable:
@@ -26,16 +100,16 @@ def printPerformance(func: callable) -> callable:
 class fontLoader():
     def __init__(self, externalFonts={}) -> None:
         '''除了使用脚本附带的的字体外，可载入额外的字体，格式为 { 字体名称：路径 | http url }'''
-        self.externalFonts = externalFonts
-        self.fontPathMap = json.load(
-            open("fontMap.json", 'r', encoding="UTF-8"))
+        self.externalFonts = makeFontMap(externalFonts)
+        self.fontPathMap = makeFontMap(json.load(
+            open("fontMap.json", 'r', encoding="UTF-8")))
 
     @printPerformance
     def loadFont(self, fontName):
         try:
             if fontName in self.externalFonts:
                 path = self.externalFonts[fontName]
-                # print(f"load {path} from external fonts")
+                print(f"load {path} from external fonts")
                 if path.lower().startswith("http"):
                     fontBytes = requests.get(path).content
                 else:
@@ -51,16 +125,14 @@ class fontLoader():
             bio = BytesIO()
             bio.write(fontBytes)
             bio.seek(0)
-            if path.lower().endswith("ttc"):
+            if fontBytes[:4] == b"ttcf":
                 ttc = TTCollection(bio)
                 for font in ttc.fonts:
                     for record in font['name'].names:
                         if record.nameID == 1 and str(record).strip() == fontName:
                             return font
-            elif path.lower().endswith("ttf") or path.lower().endswith("otf"):
-                return TTFont(bio)
             else:
-                return None
+                return TTFont(bio)
         except Exception as e:
             print(f"ERROR loading {fontName} : {str(e)}")
             return None
@@ -85,8 +157,8 @@ class assSubsetter():
             fontName = style_fontName[event.Style.replace("*", "")]
             for ch in event.Text.dump():
                 font_charList[fontName].add(ord(ch))
-        for line in ass_str.splitlines(): 
-            #比较坑爹这里
+        for line in ass_str.splitlines():
+            # 比较坑爹这里
             for match in re.findall(r'{[^\\]*\\fn([^}|\\]*)[\\|}]', line):
                 fontName = match.replace("@", "")
                 for ch in line:
@@ -131,6 +203,7 @@ class assSubsetter():
         encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20:]))
         return "\n".join(encoded_lines)
 
+
     def makeOneEmbedFontsText(self, fontName, unicodeSet, resultQueue, sem):
         with sem:
             font = self.fontLoader.loadFont(fontName)
@@ -146,8 +219,7 @@ class assSubsetter():
                     fontOutIO = BytesIO()
                     font.save(fontOutIO)
                     enc = self.uuencode(fontOutIO.getvalue())
-                    resultQueue.put(
-                        (None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
+                    resultQueue.put( (None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
                 except Exception as e:
                     resultQueue.put((f"{fontName} : {str(e)}", None))
 
@@ -159,8 +231,7 @@ class assSubsetter():
         sem = threading.Semaphore(8)
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
-                threading.Thread(target=self.makeOneEmbedFontsText, args=(
-                    fontName, unicodeSet, resultQueue, sem)).start()
+                threading.Thread(target=self.makeOneEmbedFontsText, args=( fontName, unicodeSet, resultQueue, sem)).start()
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
                 (err, result) = resultQueue.get()
@@ -171,9 +242,41 @@ class assSubsetter():
         return errors, embedFontsText
 
 
-fl = fontLoader(externalFonts=json.load( open("localFontMap.json", 'r', encoding="UTF-8")))
-asu = assSubsetter(fl)
+fontDirList = [r"fonts"]
+
+if os.environ.get("FONT_DIRS"):
+    for dirPath in os.environ.get("FONT_DIRS").split(";"):
+        if dirPath.strip() != "":
+            fontDirList.append(dirPath.strip())
+print("fontDirList",fontDirList)
+
+if not os.path.exists("localFontMap.json"):
+    with open("localFontMap.json", 'w', encoding="UTF-8") as f:
+        json.dump({}, f)
+
+if not os.path.exists("fonts"):
+    os.makedirs("fonts", exist_ok=True)
+
+with open("localFontMap.json", 'r', encoding="UTF-8") as f:
+    localFonts = updateFontMap(fontDirList, json.load(f))
+
+with open("localFontMap.json", 'w', encoding="UTF-8") as f:
+    json.dump(localFonts, f, indent=4, ensure_ascii=True)
+
+asu = assSubsetter(fontLoader(externalFonts=localFonts))
 app = FastAPI()
+
+
+@app.get("/update")
+def updateLocal():
+    '''更新本地字体库'''
+    global asu
+    with open("localFontMap.json", 'r', encoding="UTF-8") as f:
+        localFonts = updateFontMap(fontDirList, json.load(f))
+    with open("localFontMap.json", 'w', encoding="UTF-8") as f:
+        json.dump(localFonts, f, indent=4, ensure_ascii=True)
+    asu = assSubsetter(fontLoader(externalFonts=localFonts))
+    return JSONResponse(localFonts)
 
 
 def process(bytes):
@@ -182,12 +285,15 @@ def process(bytes):
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
     head, tai = assText.split("[Events]")
-    print(f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}")
+    print(
+        f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}")
     len(errors) != 0 and print("ERRORS:" + "\n".join(errors))
     return (head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig")
 
+
 @app.post("/process_bytes")
 async def process_bytes(request: Request):
+    '''传入字幕字节'''
     subtitleBytes = await request.body()
     try:
         return Response(process(subtitleBytes))
@@ -198,6 +304,7 @@ async def process_bytes(request: Request):
 
 @app.get("/process_url")
 async def process_url(request: Request, ass_url: str = Query(None)):
+    '''传入字幕url'''
     print("loading "+ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
@@ -208,6 +315,3 @@ async def process_url(request: Request, ass_url: str = Query(None)):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8011)
-
-
-
