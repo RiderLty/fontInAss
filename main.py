@@ -4,12 +4,13 @@ import threading
 from easyass import *
 from fontTools.ttLib import TTFont, TTCollection
 from fontTools.subset import Subsetter
-from bottle import run , get , post ,request, response
+from bottle import run, get, post, request, response
 import os
 import time
 import json
 import requests
 import queue
+
 
 def getAllFiles(path):
     Filelist = []
@@ -200,7 +201,6 @@ class assSubsetter():
         encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20:]))
         return "\n".join(encoded_lines)
 
-
     def makeOneEmbedFontsText(self, fontName, unicodeSet, resultQueue, sem):
         with sem:
             font = self.fontLoader.loadFont(fontName)
@@ -216,7 +216,8 @@ class assSubsetter():
                     fontOutIO = BytesIO()
                     font.save(fontOutIO)
                     enc = self.uuencode(fontOutIO.getvalue())
-                    resultQueue.put( (None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
+                    resultQueue.put(
+                        (None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
                 except Exception as e:
                     resultQueue.put((f"{fontName} : {str(e)}", None))
 
@@ -228,7 +229,8 @@ class assSubsetter():
         sem = threading.Semaphore(8)
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
-                threading.Thread(target=self.makeOneEmbedFontsText, args=( fontName, unicodeSet, resultQueue, sem)).start()
+                threading.Thread(target=self.makeOneEmbedFontsText, args=(
+                    fontName, unicodeSet, resultQueue, sem)).start()
         for fontName, unicodeSet in font_charList.items():
             if len(unicodeSet) != 0:
                 (err, result) = resultQueue.get()
@@ -245,7 +247,7 @@ if os.environ.get("FONT_DIRS"):
     for dirPath in os.environ.get("FONT_DIRS").split(";"):
         if dirPath.strip() != "":
             fontDirList.append(dirPath.strip())
-print("fontDirList",fontDirList)
+print("fontDirList", fontDirList)
 
 if not os.path.exists("localFontMap.json"):
     with open("localFontMap.json", 'w', encoding="UTF-8") as f:
@@ -275,8 +277,6 @@ def process(bytes):
     return (head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig")
 
 
-
-
 @get("/update")
 def updateLocal():
     '''更新本地字体库'''
@@ -288,14 +288,17 @@ def updateLocal():
     asu = assSubsetter(fontLoader(externalFonts=localFonts))
     return f"{len(localFonts)} fonts in local"
 
+
 @post("/process_bytes")
 def process_bytes():
-    data = request.body.read()
+    subtitleBytes = request.body.read()
     try:
-        return Response(process(subtitleBytes))
+        response.add_header("Content-Type", "text/x-ssa")
+        return process(subtitleBytes)
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return subtitleBytes
+
 
 @get("/process_url")
 def process_url():
@@ -304,10 +307,12 @@ def process_url():
     print("loading "+ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
+        response.add_header("Content-Type", "text/x-ssa")
         return process(subtitleBytes)
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return subtitleBytes
 
+
 if __name__ == "__main__":
-    run(host="0.0.0.0" , port=8011)
+    run(host="0.0.0.0", port=8011)
