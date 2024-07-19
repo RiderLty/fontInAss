@@ -43,7 +43,11 @@
 
 # Docker
 
-`docker run -d -p 8011:8011 -v [/path/to/your/fonts]:/fonts riderlty/fontinass:latest`
-
+```
+docker run -d --name=fontinass --restart=unless-stopped \
+-p 8011:8011 \
+-v /path/to/your/fonts:/fonts \
+riderlty/fontinass:latest
+```
 
 
