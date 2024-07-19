@@ -46,8 +46,13 @@
 ```
 docker run -d --name=fontinass --restart=unless-stopped \
 -p 8011:8011 \
--v /path/to/your/fonts:/fonts \
 riderlty/fontinass:latest
+```
+将字体目录映射到`/fonts`下即可被识别
+```
+-v /path/to/your/fonts1:/fonts/dir1 \
+-v /path/to/your/fonts2:/fonts/dir2 \
+-v /path/to/your/fonts3:/fonts/dir3 \
 ```
 
 
