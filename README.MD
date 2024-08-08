@@ -35,11 +35,13 @@
 
 自带的 [fontMap.json](https://github.com/RiderLty/fontInAss/blob/main/fontMap.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114) , 通过cloudflare R2提供
 
-程序会读取运行目录下`fonts`文件夹内的字体，创建本地字体数据库，程序优先调用本地字体
+程序会读取运行目录下`fonts`文件夹内的字体，创建本地字体数据库并优先调用本地字体
 
 通过设置`FONT_DIRS`环境变量，可以指定扫描其他目录，多个目录用`;`隔开
 
-程序启动时自动扫描本地字体库，也可以通过`/update`来手动更新 
+程序启动时自动扫描本地字体库，也可以通过`http://[ip]:[port]/update`来手动更新 
+
+设置环境变量DEV为true，且在DEV文件夹内放置文件数为1时，会直接使用DEV目录下的字幕文件
 
 # Docker
 

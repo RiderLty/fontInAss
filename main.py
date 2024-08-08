@@ -297,9 +297,13 @@ def updateLocal():
     return JSONResponse(localFonts)
 
 
-def process(bytes):
+def process(assBytes):
     start = time.time()
-    assText = bytes.decode("UTF-8-sig")
+    assText = assBytes.decode("UTF-8-sig")
+    if os.getenv('DEV') == 'true' and os.path.exists("DEV") and len(os.listdir("DEV")) == 1:
+        print("DEV模式 使用字幕",os.path.join("DEV" , os.listdir("DEV")[0]) )
+        with open(os.path.join("DEV" , os.listdir("DEV")[0]) , "r" , encoding="UTF-8-sig") as f:
+            assText = f.read()
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
     head, tai = assText.split("[Events]")
