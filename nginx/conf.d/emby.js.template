@@ -20,6 +20,6 @@ const subtitlesHandler = async (r) => {
     }
 }
 
-export default { apiHandler, subtitlesHandler };
+export default { subtitlesHandler };
 
 
