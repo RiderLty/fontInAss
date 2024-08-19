@@ -14,7 +14,8 @@ import queue
 
 import uvicorn
 from fastapi import FastAPI, Query, Request, Response
-
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 
 def getAllFiles(path):
@@ -250,9 +251,9 @@ fontDirList = [r"fonts"]
 
 if os.environ.get("FONT_DIRS"):
     for dirPath in os.environ.get("FONT_DIRS").split(";"):
-        if dirPath.strip() != "":
+        if dirPath.strip() != "" and os.path.exists(dirPath):
             fontDirList.append(dirPath.strip())
-print("fontDirList", fontDirList)
+print("本地字体文件夹:", ",".join(fontDirList))
 
 if not os.path.exists("localFontMap.json"):
     with open("localFontMap.json", 'w', encoding="UTF-8") as f:
@@ -268,7 +269,6 @@ with open("localFontMap.json", 'w', encoding="UTF-8") as f:
     json.dump(localFonts, f, indent=4, ensure_ascii=True)
 
 asu = assSubsetter(fontLoader(externalFonts=localFonts))
-
 
 def process(bytes):
     start = time.time()
@@ -288,6 +288,7 @@ app = FastAPI()
 @app.get("/update")
 def updateLocal():
     '''更新本地字体库'''
+    print("更新本地字体库中...")
     global asu
     with open("localFontMap.json", 'r', encoding="UTF-8") as f:
         localFonts = updateFontMap(fontDirList, json.load(f))
@@ -331,6 +332,19 @@ async def process_url(request: Request, ass_url: str = Query(None)):
         print(f"ERROR : {str(e)}")
         return Response(subtitleBytes)
 
+class MyHandler(FileSystemEventHandler):
+    def on_created(self, event):
+        updateLocal()
+    def on_deleted(self, event):
+        updateLocal()
+
 if __name__ == "__main__":
-    # run(host="0.0.0.0", port=8011)
+    event_handler = MyHandler()
+    observer = Observer()
+    for fontDir in fontDirList:
+        print("监控中:",os.path.abspath(fontDir))
+        observer.schedule(event_handler, os.path.abspath(fontDir), recursive=True)
+    observer.start()
     uvicorn.run(app, host="0.0.0.0", port=8011)
+    observer.stop()
+    observer.join()
