@@ -1,7 +1,7 @@
 server {
     js_import emby from /etc/nginx/conf.d/emby.js;
     
-    listen 8096; #新的Emby访问端口
+    listen 8012; #新的Emby访问端口
     
     js_fetch_verify off;
     
