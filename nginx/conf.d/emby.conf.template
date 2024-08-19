@@ -1,7 +1,8 @@
 server {
-    set $EMBY_SERVER_URL "http://192.168.3.3:7096"; #修改EMBY_SERVER_URL为你的Emby服务器地址
-    js_import emby from /etc/nginx/conf.d/emby.js; #修改JS文件为正确的绝对路径
-    listen 80; #新的Emby访问端口
+    js_import emby from /etc/nginx/conf.d/emby.js;
+    
+    listen 8096; #新的Emby访问端口
+    
     js_fetch_verify off;
     
     location ~ /(socket|embywebsocket) {
