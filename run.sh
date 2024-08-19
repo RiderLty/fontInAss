@@ -1,4 +1,6 @@
 if [ ! -f ./configure_nginx ]; then \
-    find /etc/nginx -name "*.template" -exec sh -c 'envsubst < "$0" > "${0%.template} "' {} \; && touch ./configure_nginx
+    cat /etc/nginx/conf.d/emby.conf.template | envsubst > /etc/nginx/conf.d/emby.conf 
+    cat /etc/nginx/conf.d/emby.js.template | envsubst > /etc/nginx/conf.d/emby.js 
+    touch ./configure_nginx
 fi
 nginx && python3 main.py
