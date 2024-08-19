@@ -285,7 +285,7 @@ def process(bytes):
 app = FastAPI()
 
 
-@app.get("/update")
+# @app.get("/update")
 def updateLocal():
     '''更新本地字体库'''
     print("更新本地字体库中...")
