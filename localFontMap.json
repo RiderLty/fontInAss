@@ -1,1 +1,2259 @@
-{}
+{
+    "C:\\Windows\\Fonts\\AGENCYB.TTF": {
+        "size": 60656,
+        "fonts": [
+            "Agency FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\AGENCYR.TTF": {
+        "size": 58920,
+        "fonts": [
+            "Agency FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ALGER.TTF": {
+        "size": 76588,
+        "fonts": [
+            "Algerian"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ANTQUAB.TTF": {
+        "size": 151000,
+        "fonts": [
+            "Book Antiqua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ANTQUABI.TTF": {
+        "size": 150416,
+        "fonts": [
+            "Book Antiqua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ANTQUAI.TTF": {
+        "size": 149092,
+        "fonts": [
+            "Book Antiqua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\arial.ttf": {
+        "size": 1045960,
+        "fonts": [
+            "Arial"
+        ]
+    },
+    "C:\\Windows\\Fonts\\arialbd.ttf": {
+        "size": 990208,
+        "fonts": [
+            "Arial"
+        ]
+    },
+    "C:\\Windows\\Fonts\\arialbi.ttf": {
+        "size": 730804,
+        "fonts": [
+            "Arial"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ariali.ttf": {
+        "size": 727152,
+        "fonts": [
+            "Arial"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ARIALN.TTF": {
+        "size": 175956,
+        "fonts": [
+            "Arial Narrow"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ARIALNB.TTF": {
+        "size": 180740,
+        "fonts": [
+            "Arial Narrow"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ARIALNBI.TTF": {
+        "size": 180084,
+        "fonts": [
+            "Arial Narrow"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ARIALNI.TTF": {
+        "size": 181124,
+        "fonts": [
+            "Arial Narrow"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ariblk.ttf": {
+        "size": 167592,
+        "fonts": [
+            "Arial Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ARLRDBD.TTF": {
+        "size": 45260,
+        "fonts": [
+            "Arial Rounded MT Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\bahnschrift.ttf": {
+        "size": 338468,
+        "fonts": [
+            "Bahnschrift"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BASKVILL.TTF": {
+        "size": 54976,
+        "fonts": [
+            "Baskerville Old Face"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BAUHS93.TTF": {
+        "size": 47644,
+        "fonts": [
+            "Bauhaus 93"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BELL.TTF": {
+        "size": 84840,
+        "fonts": [
+            "Bell MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BELLB.TTF": {
+        "size": 82580,
+        "fonts": [
+            "Bell MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BELLI.TTF": {
+        "size": 82192,
+        "fonts": [
+            "Bell MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BERNHC.TTF": {
+        "size": 70656,
+        "fonts": [
+            "Bernard MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BKANT.TTF": {
+        "size": 155528,
+        "fonts": [
+            "Book Antiqua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_B.TTF": {
+        "size": 74440,
+        "fonts": [
+            "Bodoni MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_BI.TTF": {
+        "size": 85308,
+        "fonts": [
+            "Bodoni MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_BLAI.TTF": {
+        "size": 83816,
+        "fonts": [
+            "Bodoni MT Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_BLAR.TTF": {
+        "size": 73616,
+        "fonts": [
+            "Bodoni MT Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_CB.TTF": {
+        "size": 74092,
+        "fonts": [
+            "Bodoni MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_CBI.TTF": {
+        "size": 81072,
+        "fonts": [
+            "Bodoni MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_CI.TTF": {
+        "size": 80536,
+        "fonts": [
+            "Bodoni MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_CR.TTF": {
+        "size": 80580,
+        "fonts": [
+            "Bodoni MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_I.TTF": {
+        "size": 89940,
+        "fonts": [
+            "Bodoni MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_PSTC.TTF": {
+        "size": 91592,
+        "fonts": [
+            "Bodoni MT Poster Compressed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOD_R.TTF": {
+        "size": 77884,
+        "fonts": [
+            "Bodoni MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOOKOS.TTF": {
+        "size": 160940,
+        "fonts": [
+            "Bookman Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOOKOSB.TTF": {
+        "size": 154576,
+        "fonts": [
+            "Bookman Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOOKOSBI.TTF": {
+        "size": 162460,
+        "fonts": [
+            "Bookman Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BOOKOSI.TTF": {
+        "size": 161020,
+        "fonts": [
+            "Bookman Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRADHITC.TTF": {
+        "size": 105296,
+        "fonts": [
+            "Bradley Hand ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRITANIC.TTF": {
+        "size": 40728,
+        "fonts": [
+            "Britannic Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRLNSB.TTF": {
+        "size": 96880,
+        "fonts": [
+            "Berlin Sans FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRLNSDB.TTF": {
+        "size": 96852,
+        "fonts": [
+            "Berlin Sans FB Demi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRLNSR.TTF": {
+        "size": 97284,
+        "fonts": [
+            "Berlin Sans FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BROADW.TTF": {
+        "size": 60372,
+        "fonts": [
+            "Broadway"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BRUSHSCI.TTF": {
+        "size": 53456,
+        "fonts": [
+            "Brush Script MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\BSSYM7.TTF": {
+        "size": 54412,
+        "fonts": [
+            "Bookshelf Symbol 7"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibri.ttf": {
+        "size": 1681220,
+        "fonts": [
+            "Calibri"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibrib.ttf": {
+        "size": 1647428,
+        "fonts": [
+            "Calibri"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibrii.ttf": {
+        "size": 1228564,
+        "fonts": [
+            "Calibri"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibril.ttf": {
+        "size": 1471248,
+        "fonts": [
+            "Calibri Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibrili.ttf": {
+        "size": 1092612,
+        "fonts": [
+            "Calibri Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\calibriz.ttf": {
+        "size": 1190004,
+        "fonts": [
+            "Calibri"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALIFB.TTF": {
+        "size": 80620,
+        "fonts": [
+            "Californian FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALIFI.TTF": {
+        "size": 98748,
+        "fonts": [
+            "Californian FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALIFR.TTF": {
+        "size": 105300,
+        "fonts": [
+            "Californian FB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALIST.TTF": {
+        "size": 80148,
+        "fonts": [
+            "Calisto MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALISTB.TTF": {
+        "size": 85080,
+        "fonts": [
+            "Calisto MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALISTBI.TTF": {
+        "size": 84960,
+        "fonts": [
+            "Calisto MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CALISTI.TTF": {
+        "size": 59372,
+        "fonts": [
+            "Calisto MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\cambria.ttc": {
+        "size": 1792664,
+        "fonts": [
+            "Cambria",
+            "Cambria Math"
+        ]
+    },
+    "C:\\Windows\\Fonts\\cambriab.ttf": {
+        "size": 841440,
+        "fonts": [
+            "Cambria"
+        ]
+    },
+    "C:\\Windows\\Fonts\\cambriai.ttf": {
+        "size": 892620,
+        "fonts": [
+            "Cambria"
+        ]
+    },
+    "C:\\Windows\\Fonts\\cambriaz.ttf": {
+        "size": 856672,
+        "fonts": [
+            "Cambria"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candara.ttf": {
+        "size": 219532,
+        "fonts": [
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candarab.ttf": {
+        "size": 227604,
+        "fonts": [
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candarai.ttf": {
+        "size": 227648,
+        "fonts": [
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candaral.ttf": {
+        "size": 122132,
+        "fonts": [
+            "Candara Light",
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candarali.ttf": {
+        "size": 120996,
+        "fonts": [
+            "Candara Light",
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Candaraz.ttf": {
+        "size": 229364,
+        "fonts": [
+            "Candara"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CASTELAR.TTF": {
+        "size": 48252,
+        "fonts": [
+            "Castellar"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CENSCBK.TTF": {
+        "size": 162380,
+        "fonts": [
+            "Century Schoolbook"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CENTAUR.TTF": {
+        "size": 82760,
+        "fonts": [
+            "Centaur"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CENTURY.TTF": {
+        "size": 165248,
+        "fonts": [
+            "Century"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CHILLER.TTF": {
+        "size": 96452,
+        "fonts": [
+            "Chiller"
+        ]
+    },
+    "C:\\Windows\\Fonts\\COLONNA.TTF": {
+        "size": 54952,
+        "fonts": [
+            "Colonna MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\comic.ttf": {
+        "size": 245600,
+        "fonts": [
+            "Comic Sans MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\comicbd.ttf": {
+        "size": 229408,
+        "fonts": [
+            "Comic Sans MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\comici.ttf": {
+        "size": 226708,
+        "fonts": [
+            "Comic Sans MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\comicz.ttf": {
+        "size": 224252,
+        "fonts": [
+            "Comic Sans MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\consola.ttf": {
+        "size": 459180,
+        "fonts": [
+            "Consolas"
+        ]
+    },
+    "C:\\Windows\\Fonts\\consolab.ttf": {
+        "size": 397896,
+        "fonts": [
+            "Consolas"
+        ]
+    },
+    "C:\\Windows\\Fonts\\consolai.ttf": {
+        "size": 467584,
+        "fonts": [
+            "Consolas"
+        ]
+    },
+    "C:\\Windows\\Fonts\\consolaz.ttf": {
+        "size": 407956,
+        "fonts": [
+            "Consolas"
+        ]
+    },
+    "C:\\Windows\\Fonts\\constan.ttf": {
+        "size": 448376,
+        "fonts": [
+            "Constantia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\constanb.ttf": {
+        "size": 451824,
+        "fonts": [
+            "Constantia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\constani.ttf": {
+        "size": 448748,
+        "fonts": [
+            "Constantia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\constanz.ttf": {
+        "size": 455564,
+        "fonts": [
+            "Constantia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\COOPBL.TTF": {
+        "size": 80388,
+        "fonts": [
+            "Cooper Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\COPRGTB.TTF": {
+        "size": 61552,
+        "fonts": [
+            "Copperplate Gothic Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\COPRGTL.TTF": {
+        "size": 62716,
+        "fonts": [
+            "Copperplate Gothic Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbel.ttf": {
+        "size": 277168,
+        "fonts": [
+            "Corbel"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbelb.ttf": {
+        "size": 290908,
+        "fonts": [
+            "Corbel"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbeli.ttf": {
+        "size": 284690,
+        "fonts": [
+            "Corbel"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbell.ttf": {
+        "size": 172256,
+        "fonts": [
+            "Corbel Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbelli.ttf": {
+        "size": 169228,
+        "fonts": [
+            "Corbel Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\corbelz.ttf": {
+        "size": 294692,
+        "fonts": [
+            "Corbel"
+        ]
+    },
+    "C:\\Windows\\Fonts\\cour.ttf": {
+        "size": 806504,
+        "fonts": [
+            "Courier New"
+        ]
+    },
+    "C:\\Windows\\Fonts\\courbd.ttf": {
+        "size": 805244,
+        "fonts": [
+            "Courier New"
+        ]
+    },
+    "C:\\Windows\\Fonts\\courbi.ttf": {
+        "size": 577488,
+        "fonts": [
+            "Courier New"
+        ]
+    },
+    "C:\\Windows\\Fonts\\couri.ttf": {
+        "size": 667440,
+        "fonts": [
+            "Courier New"
+        ]
+    },
+    "C:\\Windows\\Fonts\\CURLZ___.TTF": {
+        "size": 69480,
+        "fonts": [
+            "Curlz MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Deng.ttf": {
+        "size": 16316468,
+        "fonts": [
+            "DengXian",
+            "\u7b49\u7ebf"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Dengb.ttf": {
+        "size": 16443212,
+        "fonts": [
+            "DengXian",
+            "\u7b49\u7ebf"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Dengl.ttf": {
+        "size": 15430284,
+        "fonts": [
+            "DengXian Light",
+            "\u7b49\u7ebf Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\DUBAI-BOLD.TTF": {
+        "size": 179268,
+        "fonts": [
+            "Dubai"
+        ]
+    },
+    "C:\\Windows\\Fonts\\DUBAI-LIGHT.TTF": {
+        "size": 179648,
+        "fonts": [
+            "Dubai Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\DUBAI-MEDIUM.TTF": {
+        "size": 179432,
+        "fonts": [
+            "Dubai Medium"
+        ]
+    },
+    "C:\\Windows\\Fonts\\DUBAI-REGULAR.TTF": {
+        "size": 181484,
+        "fonts": [
+            "Dubai"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ebrima.ttf": {
+        "size": 921480,
+        "fonts": [
+            "Ebrima"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ebrimabd.ttf": {
+        "size": 929968,
+        "fonts": [
+            "Ebrima"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ELEPHNT.TTF": {
+        "size": 51652,
+        "fonts": [
+            "Elephant"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ELEPHNTI.TTF": {
+        "size": 54324,
+        "fonts": [
+            "Elephant"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ENGR.TTF": {
+        "size": 49768,
+        "fonts": [
+            "Engravers MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ERASBD.TTF": {
+        "size": 57508,
+        "fonts": [
+            "Eras Bold ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ERASDEMI.TTF": {
+        "size": 59996,
+        "fonts": [
+            "Eras Demi ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ERASLGHT.TTF": {
+        "size": 68656,
+        "fonts": [
+            "Eras Light ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ERASMD.TTF": {
+        "size": 60772,
+        "fonts": [
+            "Eras Medium ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FELIXTI.TTF": {
+        "size": 45952,
+        "fonts": [
+            "Felix Titling"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FORTE.TTF": {
+        "size": 61776,
+        "fonts": [
+            "Forte"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRABK.TTF": {
+        "size": 152700,
+        "fonts": [
+            "Franklin Gothic Book"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRABKIT.TTF": {
+        "size": 169620,
+        "fonts": [
+            "Franklin Gothic Book"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRADM.TTF": {
+        "size": 142932,
+        "fonts": [
+            "Franklin Gothic Demi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRADMCN.TTF": {
+        "size": 116940,
+        "fonts": [
+            "Franklin Gothic Demi Cond"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRADMIT.TTF": {
+        "size": 135904,
+        "fonts": [
+            "Franklin Gothic Demi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRAHV.TTF": {
+        "size": 139400,
+        "fonts": [
+            "Franklin Gothic Heavy"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRAHVIT.TTF": {
+        "size": 152700,
+        "fonts": [
+            "Franklin Gothic Heavy"
+        ]
+    },
+    "C:\\Windows\\Fonts\\framd.ttf": {
+        "size": 133632,
+        "fonts": [
+            "Franklin Gothic Medium"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRAMDCN.TTF": {
+        "size": 132516,
+        "fonts": [
+            "Franklin Gothic Medium Cond"
+        ]
+    },
+    "C:\\Windows\\Fonts\\framdit.ttf": {
+        "size": 148728,
+        "fonts": [
+            "Franklin Gothic Medium"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FREESCPT.TTF": {
+        "size": 69876,
+        "fonts": [
+            "Freestyle Script"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FRSCRIPT.TTF": {
+        "size": 58580,
+        "fonts": [
+            "French Script MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FTLTLT.TTF": {
+        "size": 83580,
+        "fonts": [
+            "Footlight MT Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FZSTK.TTF": {
+        "size": 7574196,
+        "fonts": [
+            "\u65b9\u6b63\u8212\u4f53",
+            "FZShuTi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\FZYTK.TTF": {
+        "size": 3241748,
+        "fonts": [
+            "FZYaoTi",
+            "\u65b9\u6b63\u59da\u4f53"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Gabriola.ttf": {
+        "size": 1806004,
+        "fonts": [
+            "Gabriola"
+        ]
+    },
+    "C:\\Windows\\Fonts\\gadugi.ttf": {
+        "size": 242684,
+        "fonts": [
+            "Gadugi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\gadugib.ttf": {
+        "size": 249236,
+        "fonts": [
+            "Gadugi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GARA.TTF": {
+        "size": 198072,
+        "fonts": [
+            "Garamond"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GARABD.TTF": {
+        "size": 199772,
+        "fonts": [
+            "Garamond"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GARAIT.TTF": {
+        "size": 189464,
+        "fonts": [
+            "Garamond"
+        ]
+    },
+    "C:\\Windows\\Fonts\\georgia.ttf": {
+        "size": 219712,
+        "fonts": [
+            "Georgia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\georgiab.ttf": {
+        "size": 207476,
+        "fonts": [
+            "Georgia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\georgiai.ttf": {
+        "size": 208444,
+        "fonts": [
+            "Georgia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\georgiaz.ttf": {
+        "size": 211780,
+        "fonts": [
+            "Georgia"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GIGI.TTF": {
+        "size": 142072,
+        "fonts": [
+            "Gigi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILBI___.TTF": {
+        "size": 71496,
+        "fonts": [
+            "Gill Sans MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILB____.TTF": {
+        "size": 68304,
+        "fonts": [
+            "Gill Sans MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILC____.TTF": {
+        "size": 60320,
+        "fonts": [
+            "Gill Sans MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILI____.TTF": {
+        "size": 69436,
+        "fonts": [
+            "Gill Sans MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILLUBCD.TTF": {
+        "size": 72408,
+        "fonts": [
+            "Gill Sans Ultra Bold Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GILSANUB.TTF": {
+        "size": 73136,
+        "fonts": [
+            "Gill Sans Ultra Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GIL_____.TTF": {
+        "size": 67416,
+        "fonts": [
+            "Gill Sans MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GLECB.TTF": {
+        "size": 72676,
+        "fonts": [
+            "Gloucester MT Extra Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GLSNECB.TTF": {
+        "size": 84668,
+        "fonts": [
+            "Gill Sans MT Ext Condensed Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOTHIC.TTF": {
+        "size": 137568,
+        "fonts": [
+            "Century Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOTHICB.TTF": {
+        "size": 129676,
+        "fonts": [
+            "Century Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOTHICBI.TTF": {
+        "size": 139084,
+        "fonts": [
+            "Century Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOTHICI.TTF": {
+        "size": 148520,
+        "fonts": [
+            "Century Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOUDOS.TTF": {
+        "size": 81376,
+        "fonts": [
+            "Goudy Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOUDOSB.TTF": {
+        "size": 82796,
+        "fonts": [
+            "Goudy Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOUDOSI.TTF": {
+        "size": 80280,
+        "fonts": [
+            "Goudy Old Style"
+        ]
+    },
+    "C:\\Windows\\Fonts\\GOUDYSTO.TTF": {
+        "size": 55956,
+        "fonts": [
+            "Goudy Stout"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HARLOWSI.TTF": {
+        "size": 56596,
+        "fonts": [
+            "Harlow Solid Italic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HARNGTON.TTF": {
+        "size": 70440,
+        "fonts": [
+            "Harrington"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HATTEN.TTF": {
+        "size": 108664,
+        "fonts": [
+            "Haettenschweiler"
+        ]
+    },
+    "C:\\Windows\\Fonts\\himalaya.ttf": {
+        "size": 572776,
+        "fonts": [
+            "Microsoft Himalaya"
+        ]
+    },
+    "C:\\Windows\\Fonts\\holomdl2.ttf": {
+        "size": 40264,
+        "fonts": [
+            "HoloLens MDL2 Assets"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HTOWERT.TTF": {
+        "size": 92736,
+        "fonts": [
+            "High Tower Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HTOWERTI.TTF": {
+        "size": 74712,
+        "fonts": [
+            "High Tower Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\HYZhongHeiTi-197.ttf": {
+        "size": 1418764,
+        "fonts": [
+            "\u6c49\u4eea\u4e2d\u9ed1 197",
+            "HYZhongHei 197",
+            "\u6c49\u4eea\u4e2d\u9ed1",
+            "HYZhongHei"
+        ]
+    },
+    "C:\\Windows\\Fonts\\impact.ttf": {
+        "size": 206784,
+        "fonts": [
+            "Impact"
+        ]
+    },
+    "C:\\Windows\\Fonts\\IMPRISHA.TTF": {
+        "size": 60488,
+        "fonts": [
+            "Imprint MT Shadow"
+        ]
+    },
+    "C:\\Windows\\Fonts\\INFROMAN.TTF": {
+        "size": 74968,
+        "fonts": [
+            "Informal Roman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Inkfree.ttf": {
+        "size": 198972,
+        "fonts": [
+            "Ink Free"
+        ]
+    },
+    "C:\\Windows\\Fonts\\iqiyi_logov8.ttf": {
+        "size": 12116,
+        "fonts": [
+            "icomoon"
+        ]
+    },
+    "C:\\Windows\\Fonts\\IQYHT-Black.ttf": {
+        "size": 4684,
+        "fonts": [
+            "IQYHT Black",
+            "\u7231\u5947\u827a\u9ed1\u4f53 Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\IQYHT-Bold.ttf": {
+        "size": 4496,
+        "fonts": [
+            "\u7231\u5947\u827a\u9ed1\u4f53",
+            "IQYHT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\IQYHT-Medium.ttf": {
+        "size": 4704,
+        "fonts": [
+            "\u7231\u5947\u827a\u9ed1\u4f53 Medium",
+            "IQYHT Medium"
+        ]
+    },
+    "C:\\Windows\\Fonts\\IQYHT-Regular.ttf": {
+        "size": 4668,
+        "fonts": [
+            "\u7231\u5947\u827a\u9ed1\u4f53",
+            "IQYHT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ITCBLKAD.TTF": {
+        "size": 132372,
+        "fonts": [
+            "Blackadder ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ITCEDSCR.TTF": {
+        "size": 64056,
+        "fonts": [
+            "Edwardian Script ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ITCKRIST.TTF": {
+        "size": 59712,
+        "fonts": [
+            "Kristen ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\javatext.ttf": {
+        "size": 305448,
+        "fonts": [
+            "Javanese Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\JOKERMAN.TTF": {
+        "size": 69752,
+        "fonts": [
+            "Jokerman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\JUICE___.TTF": {
+        "size": 62884,
+        "fonts": [
+            "Juice ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\KUNSTLER.TTF": {
+        "size": 63392,
+        "fonts": [
+            "Kunstler Script"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LATINWD.TTF": {
+        "size": 44824,
+        "fonts": [
+            "Wide Latin"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LBRITE.TTF": {
+        "size": 70748,
+        "fonts": [
+            "Lucida Bright"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LBRITED.TTF": {
+        "size": 66724,
+        "fonts": [
+            "Lucida Bright"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LBRITEDI.TTF": {
+        "size": 71456,
+        "fonts": [
+            "Lucida Bright"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LBRITEI.TTF": {
+        "size": 71000,
+        "fonts": [
+            "Lucida Bright"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LCALLIG.TTF": {
+        "size": 55464,
+        "fonts": [
+            "Lucida Calligraphy"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LeelaUIb.ttf": {
+        "size": 327420,
+        "fonts": [
+            "Leelawadee UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LeelawUI.ttf": {
+        "size": 393764,
+        "fonts": [
+            "Leelawadee UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LeelUIsl.ttf": {
+        "size": 386264,
+        "fonts": [
+            "Leelawadee UI Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LFAX.TTF": {
+        "size": 61912,
+        "fonts": [
+            "Lucida Fax"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LFAXD.TTF": {
+        "size": 62100,
+        "fonts": [
+            "Lucida Fax"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LFAXDI.TTF": {
+        "size": 71472,
+        "fonts": [
+            "Lucida Fax"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LFAXI.TTF": {
+        "size": 67420,
+        "fonts": [
+            "Lucida Fax"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LHANDW.TTF": {
+        "size": 62484,
+        "fonts": [
+            "Lucida Handwriting"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LSANS.TTF": {
+        "size": 64608,
+        "fonts": [
+            "Lucida Sans"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LSANSD.TTF": {
+        "size": 59976,
+        "fonts": [
+            "Lucida Sans"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LSANSDI.TTF": {
+        "size": 66320,
+        "fonts": [
+            "Lucida Sans"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LSANSI.TTF": {
+        "size": 65412,
+        "fonts": [
+            "Lucida Sans"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LTYPE.TTF": {
+        "size": 55984,
+        "fonts": [
+            "Lucida Sans Typewriter"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LTYPEB.TTF": {
+        "size": 52868,
+        "fonts": [
+            "Lucida Sans Typewriter"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LTYPEBO.TTF": {
+        "size": 54620,
+        "fonts": [
+            "Lucida Sans Typewriter"
+        ]
+    },
+    "C:\\Windows\\Fonts\\LTYPEO.TTF": {
+        "size": 65412,
+        "fonts": [
+            "Lucida Sans Typewriter"
+        ]
+    },
+    "C:\\Windows\\Fonts\\lucon.ttf": {
+        "size": 111108,
+        "fonts": [
+            "Lucida Console"
+        ]
+    },
+    "C:\\Windows\\Fonts\\l_10646.ttf": {
+        "size": 309516,
+        "fonts": [
+            "Lucida Sans Unicode"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MAGNETOB.TTF": {
+        "size": 65284,
+        "fonts": [
+            "Magneto"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MAIAN.TTF": {
+        "size": 61384,
+        "fonts": [
+            "Maiandra GD"
+        ]
+    },
+    "C:\\Windows\\Fonts\\malgun.ttf": {
+        "size": 13457164,
+        "fonts": [
+            "\ub9d1\uc740 \uace0\ub515",
+            "Malgun Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\malgunbd.ttf": {
+        "size": 12598360,
+        "fonts": [
+            "\ub9d1\uc740 \uace0\ub515",
+            "Malgun Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\malgunsl.ttf": {
+        "size": 5083156,
+        "fonts": [
+            "Malgun Gothic Semilight",
+            "\ub9d1\uc740 \uace0\ub515 Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\marlett.ttf": {
+        "size": 27724,
+        "fonts": [
+            "Marlett"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MATURASC.TTF": {
+        "size": 51296,
+        "fonts": [
+            "Matura MT Script Capitals"
+        ]
+    },
+    "C:\\Windows\\Fonts\\micross.ttf": {
+        "size": 888236,
+        "fonts": [
+            "Microsoft Sans Serif"
+        ]
+    },
+    "C:\\Windows\\Fonts\\mingliub.ttc": {
+        "size": 36786404,
+        "fonts": [
+            "MingLiU_HKSCS-ExtB",
+            "PMingLiU-ExtB",
+            "\u7d30\u660e\u9ad4-ExtB",
+            "\u7d30\u660e\u9ad4_HKSCS-ExtB",
+            "\u65b0\u7d30\u660e\u9ad4-ExtB",
+            "MingLiU-ExtB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MISTRAL.TTF": {
+        "size": 191716,
+        "fonts": [
+            "Mistral"
+        ]
+    },
+    "C:\\Windows\\Fonts\\mmrtext.ttf": {
+        "size": 354468,
+        "fonts": [
+            "Myanmar Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\mmrtextb.ttf": {
+        "size": 336328,
+        "fonts": [
+            "Myanmar Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MOD20.TTF": {
+        "size": 62612,
+        "fonts": [
+            "Modern No. 20"
+        ]
+    },
+    "C:\\Windows\\Fonts\\monbaiti.ttf": {
+        "size": 289052,
+        "fonts": [
+            "Mongolian Baiti"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msgothic.ttc": {
+        "size": 8990160,
+        "fonts": [
+            "MS Gothic",
+            "MS PGothic",
+            "\uff2d\uff33 \uff30\u30b4\u30b7\u30c3\u30af",
+            "MS UI Gothic",
+            "\uff2d\uff33 \u30b4\u30b7\u30c3\u30af"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msjh.ttc": {
+        "size": 21402152,
+        "fonts": [
+            "Microsoft JhengHei UI",
+            "Microsoft JhengHei",
+            "\u5fae\u8edf\u6b63\u9ed1\u9ad4"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msjhbd.ttc": {
+        "size": 14441192,
+        "fonts": [
+            "Microsoft JhengHei UI",
+            "Microsoft JhengHei",
+            "\u5fae\u8edf\u6b63\u9ed1\u9ad4"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msjhl.ttc": {
+        "size": 12875740,
+        "fonts": [
+            "Microsoft JhengHei UI Light",
+            "Microsoft JhengHei Light",
+            "\u5fae\u8edf\u6b63\u9ed1\u9ad4 Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msyh.ttc": {
+        "size": 19701556,
+        "fonts": [
+            "\u5fae\u8f6f\u96c5\u9ed1",
+            "Microsoft YaHei UI",
+            "Microsoft YaHei"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msyhbd.ttc": {
+        "size": 16880832,
+        "fonts": [
+            "\u5fae\u8f6f\u96c5\u9ed1",
+            "Microsoft YaHei UI",
+            "Microsoft YaHei"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msyhl.ttc": {
+        "size": 12183612,
+        "fonts": [
+            "\u5fae\u8f6f\u96c5\u9ed1 Light",
+            "Microsoft YaHei Light",
+            "Microsoft YaHei UI Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\msyi.ttf": {
+        "size": 301180,
+        "fonts": [
+            "Microsoft Yi Baiti"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MTCORSVA.TTF": {
+        "size": 157360,
+        "fonts": [
+            "Monotype Corsiva"
+        ]
+    },
+    "C:\\Windows\\Fonts\\MTEXTRA.TTF": {
+        "size": 9024,
+        "fonts": [
+            "MT Extra"
+        ]
+    },
+    "C:\\Windows\\Fonts\\mvboli.ttf": {
+        "size": 79320,
+        "fonts": [
+            "MV Boli"
+        ]
+    },
+    "C:\\Windows\\Fonts\\NIAGENG.TTF": {
+        "size": 95904,
+        "fonts": [
+            "Niagara Engraved"
+        ]
+    },
+    "C:\\Windows\\Fonts\\NIAGSOL.TTF": {
+        "size": 74012,
+        "fonts": [
+            "Niagara Solid"
+        ]
+    },
+    "C:\\Windows\\Fonts\\Nirmala.ttf": {
+        "size": 1535692,
+        "fonts": [
+            "Nirmala UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\NirmalaB.ttf": {
+        "size": 1490236,
+        "fonts": [
+            "Nirmala UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\NirmalaS.ttf": {
+        "size": 1568068,
+        "fonts": [
+            "Nirmala UI Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ntailu.ttf": {
+        "size": 74464,
+        "fonts": [
+            "Microsoft New Tai Lue"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ntailub.ttf": {
+        "size": 67168,
+        "fonts": [
+            "Microsoft New Tai Lue"
+        ]
+    },
+    "C:\\Windows\\Fonts\\OCRAEXT.TTF": {
+        "size": 55400,
+        "fonts": [
+            "OCR A Extended"
+        ]
+    },
+    "C:\\Windows\\Fonts\\OLDENGL.TTF": {
+        "size": 93068,
+        "fonts": [
+            "Old English Text MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ONYX.TTF": {
+        "size": 81044,
+        "fonts": [
+            "Onyx"
+        ]
+    },
+    "C:\\Windows\\Fonts\\OUTLOOK.TTF": {
+        "size": 17672,
+        "fonts": [
+            "MS Outlook"
+        ]
+    },
+    "C:\\Windows\\Fonts\\pala.ttf": {
+        "size": 472284,
+        "fonts": [
+            "Palatino Linotype"
+        ]
+    },
+    "C:\\Windows\\Fonts\\palab.ttf": {
+        "size": 419932,
+        "fonts": [
+            "Palatino Linotype"
+        ]
+    },
+    "C:\\Windows\\Fonts\\palabi.ttf": {
+        "size": 335292,
+        "fonts": [
+            "Palatino Linotype"
+        ]
+    },
+    "C:\\Windows\\Fonts\\palai.ttf": {
+        "size": 413708,
+        "fonts": [
+            "Palatino Linotype"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PALSCRI.TTF": {
+        "size": 51404,
+        "fonts": [
+            "Palace Script MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PAPYRUS.TTF": {
+        "size": 163476,
+        "fonts": [
+            "Papyrus"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PARCHM.TTF": {
+        "size": 151256,
+        "fonts": [
+            "Parchment"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PERBI___.TTF": {
+        "size": 75620,
+        "fonts": [
+            "Perpetua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PERB____.TTF": {
+        "size": 58512,
+        "fonts": [
+            "Perpetua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PERI____.TTF": {
+        "size": 76080,
+        "fonts": [
+            "Perpetua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PERTIBD.TTF": {
+        "size": 48320,
+        "fonts": [
+            "Perpetua Titling MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PERTILI.TTF": {
+        "size": 43800,
+        "fonts": [
+            "Perpetua Titling MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PER_____.TTF": {
+        "size": 60216,
+        "fonts": [
+            "Perpetua"
+        ]
+    },
+    "C:\\Windows\\Fonts\\phagspa.ttf": {
+        "size": 93720,
+        "fonts": [
+            "Microsoft PhagsPa"
+        ]
+    },
+    "C:\\Windows\\Fonts\\phagspab.ttf": {
+        "size": 97476,
+        "fonts": [
+            "Microsoft PhagsPa"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PLAYBILL.TTF": {
+        "size": 46164,
+        "fonts": [
+            "Playbill"
+        ]
+    },
+    "C:\\Windows\\Fonts\\POORICH.TTF": {
+        "size": 76588,
+        "fonts": [
+            "Poor Richard"
+        ]
+    },
+    "C:\\Windows\\Fonts\\PRISTINA.TTF": {
+        "size": 82680,
+        "fonts": [
+            "Pristina"
+        ]
+    },
+    "C:\\Windows\\Fonts\\RAGE.TTF": {
+        "size": 132600,
+        "fonts": [
+            "Rage Italic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\RAVIE.TTF": {
+        "size": 74416,
+        "fonts": [
+            "Ravie"
+        ]
+    },
+    "C:\\Windows\\Fonts\\REFSAN.TTF": {
+        "size": 220172,
+        "fonts": [
+            "MS Reference Sans Serif"
+        ]
+    },
+    "C:\\Windows\\Fonts\\REFSPCL.TTF": {
+        "size": 53288,
+        "fonts": [
+            "MS Reference Specialty"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCCB___.TTF": {
+        "size": 59444,
+        "fonts": [
+            "Rockwell Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCC____.TTF": {
+        "size": 55824,
+        "fonts": [
+            "Rockwell Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCK.TTF": {
+        "size": 72272,
+        "fonts": [
+            "Rockwell"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCKB.TTF": {
+        "size": 68780,
+        "fonts": [
+            "Rockwell"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCKBI.TTF": {
+        "size": 73700,
+        "fonts": [
+            "Rockwell"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCKEB.TTF": {
+        "size": 49168,
+        "fonts": [
+            "Rockwell Extra Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ROCKI.TTF": {
+        "size": 76756,
+        "fonts": [
+            "Rockwell"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SansSerifCollection.ttf": {
+        "size": 1336432,
+        "fonts": [
+            "Sans Serif Collection"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SCHLBKB.TTF": {
+        "size": 168756,
+        "fonts": [
+            "Century Schoolbook"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SCHLBKBI.TTF": {
+        "size": 160964,
+        "fonts": [
+            "Century Schoolbook"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SCHLBKI.TTF": {
+        "size": 163164,
+        "fonts": [
+            "Century Schoolbook"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SCRIPTBL.TTF": {
+        "size": 55500,
+        "fonts": [
+            "Script MT Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segmdl2.ttf": {
+        "size": 283820,
+        "fonts": [
+            "Segoe MDL2 Assets"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SegoeIcons.ttf": {
+        "size": 441892,
+        "fonts": [
+            "Segoe Fluent Icons"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoepr.ttf": {
+        "size": 168404,
+        "fonts": [
+            "Segoe Print"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeprb.ttf": {
+        "size": 167800,
+        "fonts": [
+            "Segoe Print"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoesc.ttf": {
+        "size": 597476,
+        "fonts": [
+            "Segoe Script"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoescb.ttf": {
+        "size": 593028,
+        "fonts": [
+            "Segoe Script"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeui.ttf": {
+        "size": 975088,
+        "fonts": [
+            "Segoe UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeuib.ttf": {
+        "size": 964768,
+        "fonts": [
+            "Segoe UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeuii.ttf": {
+        "size": 532220,
+        "fonts": [
+            "Segoe UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeuil.ttf": {
+        "size": 925552,
+        "fonts": [
+            "Segoe UI Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeuisl.ttf": {
+        "size": 863836,
+        "fonts": [
+            "Segoe UI Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\segoeuiz.ttf": {
+        "size": 544004,
+        "fonts": [
+            "Segoe UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguibl.ttf": {
+        "size": 324260,
+        "fonts": [
+            "Segoe UI Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguibli.ttf": {
+        "size": 356008,
+        "fonts": [
+            "Segoe UI Black"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguiemj.ttf": {
+        "size": 12173944,
+        "fonts": [
+            "Segoe UI Emoji"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguihis.ttf": {
+        "size": 1606568,
+        "fonts": [
+            "Segoe UI Historic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguili.ttf": {
+        "size": 461608,
+        "fonts": [
+            "Segoe UI Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguisb.ttf": {
+        "size": 991152,
+        "fonts": [
+            "Segoe UI Semibold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguisbi.ttf": {
+        "size": 458708,
+        "fonts": [
+            "Segoe UI Semibold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguisli.ttf": {
+        "size": 438896,
+        "fonts": [
+            "Segoe UI Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\seguisym.ttf": {
+        "size": 2454728,
+        "fonts": [
+            "Segoe UI Symbol"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SegUIVar.ttf": {
+        "size": 1851000,
+        "fonts": [
+            "Segoe UI Variable"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SHOWG.TTF": {
+        "size": 52316,
+        "fonts": [
+            "Showcard Gothic"
+        ]
+    },
+    "C:\\Windows\\Fonts\\simfang.ttf": {
+        "size": 10578152,
+        "fonts": [
+            "\u4eff\u5b8b",
+            "FangSong"
+        ]
+    },
+    "C:\\Windows\\Fonts\\simhei.ttf": {
+        "size": 9753388,
+        "fonts": [
+            "\u9ed1\u4f53",
+            "SimHei"
+        ]
+    },
+    "C:\\Windows\\Fonts\\simkai.ttf": {
+        "size": 11787328,
+        "fonts": [
+            "KaiTi",
+            "\u6977\u4f53"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SIMLI.TTF": {
+        "size": 9223160,
+        "fonts": [
+            "LiSu",
+            "\u96b6\u4e66"
+        ]
+    },
+    "C:\\Windows\\Fonts\\simsun.ttc": {
+        "size": 18008680,
+        "fonts": [
+            "SimSun",
+            "NSimSun",
+            "\u65b0\u5b8b\u4f53",
+            "\u5b8b\u4f53"
+        ]
+    },
+    "C:\\Windows\\Fonts\\simsunb.ttf": {
+        "size": 21877944,
+        "fonts": [
+            "SimSun-ExtB"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SIMYOU.TTF": {
+        "size": 6700204,
+        "fonts": [
+            "YouYuan",
+            "\u5e7c\u5706"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SitkaVF-Italic.ttf": {
+        "size": 558964,
+        "fonts": [
+            "Sitka Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SitkaVF.ttf": {
+        "size": 517100,
+        "fonts": [
+            "Sitka Text"
+        ]
+    },
+    "C:\\Windows\\Fonts\\SNAP____.TTF": {
+        "size": 63196,
+        "fonts": [
+            "Snap ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STCAIYUN.TTF": {
+        "size": 5673836,
+        "fonts": [
+            "STCaiyun",
+            "\u534e\u6587\u5f69\u4e91"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STENCIL.TTF": {
+        "size": 55596,
+        "fonts": [
+            "Stencil"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STFANGSO.TTF": {
+        "size": 11362788,
+        "fonts": [
+            "STFangsong",
+            "\u534e\u6587\u4eff\u5b8b"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STHUPO.TTF": {
+        "size": 3714568,
+        "fonts": [
+            "\u534e\u6587\u7425\u73c0",
+            "STHupo"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STKAITI.TTF": {
+        "size": 12736196,
+        "fonts": [
+            "\u534e\u6587\u6977\u4f53",
+            "STKaiti"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STLITI.TTF": {
+        "size": 4111960,
+        "fonts": [
+            "\u534e\u6587\u96b6\u4e66",
+            "STLiti"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STSONG.TTF": {
+        "size": 11697600,
+        "fonts": [
+            "STSong",
+            "\u534e\u6587\u5b8b\u4f53"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STXIHEI.TTF": {
+        "size": 9768704,
+        "fonts": [
+            "\u534e\u6587\u7ec6\u9ed1",
+            "STXihei"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STXINGKA.TTF": {
+        "size": 4016288,
+        "fonts": [
+            "\u534e\u6587\u884c\u6977",
+            "STXingkai"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STXINWEI.TTF": {
+        "size": 4051204,
+        "fonts": [
+            "STXinwei",
+            "\u534e\u6587\u65b0\u9b4f"
+        ]
+    },
+    "C:\\Windows\\Fonts\\STZHONGS.TTF": {
+        "size": 12135284,
+        "fonts": [
+            "STZhongsong",
+            "\u534e\u6587\u4e2d\u5b8b"
+        ]
+    },
+    "C:\\Windows\\Fonts\\sylfaen.ttf": {
+        "size": 259980,
+        "fonts": [
+            "Sylfaen"
+        ]
+    },
+    "C:\\Windows\\Fonts\\symbol.ttf": {
+        "size": 69036,
+        "fonts": [
+            "Symbol"
+        ]
+    },
+    "C:\\Windows\\Fonts\\tahoma.ttf": {
+        "size": 951868,
+        "fonts": [
+            "Tahoma"
+        ]
+    },
+    "C:\\Windows\\Fonts\\tahomabd.ttf": {
+        "size": 880644,
+        "fonts": [
+            "Tahoma"
+        ]
+    },
+    "C:\\Windows\\Fonts\\taile.ttf": {
+        "size": 67568,
+        "fonts": [
+            "Microsoft Tai Le"
+        ]
+    },
+    "C:\\Windows\\Fonts\\taileb.ttf": {
+        "size": 58532,
+        "fonts": [
+            "Microsoft Tai Le"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCBI____.TTF": {
+        "size": 73856,
+        "fonts": [
+            "Tw Cen MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCB_____.TTF": {
+        "size": 74656,
+        "fonts": [
+            "Tw Cen MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCCB____.TTF": {
+        "size": 66020,
+        "fonts": [
+            "Tw Cen MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCCEB.TTF": {
+        "size": 74708,
+        "fonts": [
+            "Tw Cen MT Condensed Extra Bold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCCM____.TTF": {
+        "size": 66804,
+        "fonts": [
+            "Tw Cen MT Condensed"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCMI____.TTF": {
+        "size": 78236,
+        "fonts": [
+            "Tw Cen MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TCM_____.TTF": {
+        "size": 76252,
+        "fonts": [
+            "Tw Cen MT"
+        ]
+    },
+    "C:\\Windows\\Fonts\\TEMPSITC.TTF": {
+        "size": 76100,
+        "fonts": [
+            "Tempus Sans ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\times.ttf": {
+        "size": 1206884,
+        "fonts": [
+            "Times New Roman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\timesbd.ttf": {
+        "size": 1185876,
+        "fonts": [
+            "Times New Roman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\timesbi.ttf": {
+        "size": 918940,
+        "fonts": [
+            "Times New Roman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\timesi.ttf": {
+        "size": 977892,
+        "fonts": [
+            "Times New Roman"
+        ]
+    },
+    "C:\\Windows\\Fonts\\trebuc.ttf": {
+        "size": 254396,
+        "fonts": [
+            "Trebuchet MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\trebucbd.ttf": {
+        "size": 244124,
+        "fonts": [
+            "Trebuchet MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\trebucbi.ttf": {
+        "size": 225868,
+        "fonts": [
+            "Trebuchet MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\trebucit.ttf": {
+        "size": 252224,
+        "fonts": [
+            "Trebuchet MS"
+        ]
+    },
+    "C:\\Windows\\Fonts\\unispace bd.ttf": {
+        "size": 49980,
+        "fonts": [
+            "Unispace"
+        ]
+    },
+    "C:\\Windows\\Fonts\\verdana.ttf": {
+        "size": 243304,
+        "fonts": [
+            "Verdana"
+        ]
+    },
+    "C:\\Windows\\Fonts\\verdanab.ttf": {
+        "size": 211260,
+        "fonts": [
+            "Verdana"
+        ]
+    },
+    "C:\\Windows\\Fonts\\verdanai.ttf": {
+        "size": 223268,
+        "fonts": [
+            "Verdana"
+        ]
+    },
+    "C:\\Windows\\Fonts\\verdanaz.ttf": {
+        "size": 229800,
+        "fonts": [
+            "Verdana"
+        ]
+    },
+    "C:\\Windows\\Fonts\\VINERITC.TTF": {
+        "size": 104372,
+        "fonts": [
+            "Viner Hand ITC"
+        ]
+    },
+    "C:\\Windows\\Fonts\\VIVALDII.TTF": {
+        "size": 66696,
+        "fonts": [
+            "Vivaldi"
+        ]
+    },
+    "C:\\Windows\\Fonts\\VLADIMIR.TTF": {
+        "size": 54308,
+        "fonts": [
+            "Vladimir Script"
+        ]
+    },
+    "C:\\Windows\\Fonts\\webdings.ttf": {
+        "size": 120560,
+        "fonts": [
+            "Webdings"
+        ]
+    },
+    "C:\\Windows\\Fonts\\wingding.ttf": {
+        "size": 82180,
+        "fonts": [
+            "Wingdings"
+        ]
+    },
+    "C:\\Windows\\Fonts\\WINGDNG2.TTF": {
+        "size": 65788,
+        "fonts": [
+            "Wingdings 2"
+        ]
+    },
+    "C:\\Windows\\Fonts\\WINGDNG3.TTF": {
+        "size": 35328,
+        "fonts": [
+            "Wingdings 3"
+        ]
+    },
+    "C:\\Windows\\Fonts\\YuGothB.ttc": {
+        "size": 14743864,
+        "fonts": [
+            "\u6e38\u30b4\u30b7\u30c3\u30af",
+            "Yu Gothic UI",
+            "Yu Gothic",
+            "Yu Gothic UI Semibold"
+        ]
+    },
+    "C:\\Windows\\Fonts\\YuGothL.ttc": {
+        "size": 13984748,
+        "fonts": [
+            "Yu Gothic UI Light",
+            "\u6e38\u30b4\u30b7\u30c3\u30af Light",
+            "Yu Gothic Light"
+        ]
+    },
+    "C:\\Windows\\Fonts\\YuGothM.ttc": {
+        "size": 13923436,
+        "fonts": [
+            "\u6e38\u30b4\u30b7\u30c3\u30af Medium",
+            "Yu Gothic Medium",
+            "Yu Gothic UI"
+        ]
+    },
+    "C:\\Windows\\Fonts\\YuGothR.ttc": {
+        "size": 13851052,
+        "fonts": [
+            "\u6e38\u30b4\u30b7\u30c3\u30af",
+            "Yu Gothic",
+            "Yu Gothic UI Semilight"
+        ]
+    },
+    "C:\\Windows\\Fonts\\ZWAdobeF.TTF": {
+        "size": 6800,
+        "fonts": [
+            "ZWAdobeF"
+        ]
+    },
+    "C:\\Windows\\Fonts\\\u5c0f\u7c73\u5170\u4ead\u5b57\u4f53.ttf": {
+        "size": 3656952,
+        "fonts": [
+            "MI LANTING",
+            "\u5c0f\u7c73\u5170\u4ead"
+        ]
+    }
+}
