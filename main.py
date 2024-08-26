@@ -359,7 +359,7 @@ def updateLocal():
     return JSONResponse(localFonts)
 
 
-def process(subText ):
+def process(assBytes):
     start = time.time()
     assText = assBytes.decode("UTF-8-sig")
 
@@ -391,12 +391,11 @@ async def process_bytes(request: Request):
     '''传入字幕字节'''
     subtitleBytes = await request.body()
     try:
-        subText , code  = bytes2textWithCode(subtitleBytes)
-        assBytes = process(subText)
-        return Response(assBytes)
+        return Response(process(subtitleBytes))
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return Response(subtitleBytes)
+
 
 @app.get("/process_url")
 async def process_url(request: Request, ass_url: str = Query(None)):
@@ -404,8 +403,7 @@ async def process_url(request: Request, ass_url: str = Query(None)):
     print("loading "+ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
-        subText , code  = bytes2textWithCode(subtitleBytes)
-        return Response(process(subText))
+        return Response(process(subtitleBytes))
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return Response(subtitleBytes)
