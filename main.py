@@ -12,6 +12,7 @@ import json
 import requests
 import queue
 
+import re
 import uvicorn
 from fastapi import FastAPI, Query, Request, Response
 from watchdog.observers import Observer
@@ -247,6 +248,77 @@ class assSubsetter():
         return errors, embedFontsText
 
 
+def isSRT(text):
+    srt_pattern = r'@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@'
+    matches = re.findall(srt_pattern, "@".join(text.splitlines()))
+    return len(matches) > 0
+
+
+def srt2ass(srtText):
+    src = ''
+    utf8bom = ''
+
+    if u'\ufeff' in srtText:
+        srtText = srtText.replace(u'\ufeff', '')
+        utf8bom = u'\ufeff'
+
+    srtText = srtText.replace("\r", "")
+    lines = [x.strip() for x in srtText.split("\n") if x.strip()]
+    subLines = ''
+    tmpLines = ''
+    lineCount = 0
+
+    for ln in range(len(lines)):
+        line = lines[ln]
+        if line.isdigit() and re.match('-?\d\d:\d\d:\d\d', lines[(ln+1)]):
+            if tmpLines:
+                subLines += tmpLines.replace("\n", "\\n") + "\n"
+            tmpLines = ''
+            lineCount = 0
+            continue
+        else:
+            if re.match('-?\d\d:\d\d:\d\d', line):
+                line = line.replace('-0', '0')
+                tmpLines += 'Dialogue: 0,' + line + ',Default,,0,0,0,,'
+            else:
+                if lineCount < 2:
+                    tmpLines += line
+                else:
+                    tmpLines += "\n" + line
+            lineCount += 1
+        ln += 1
+
+    subLines += tmpLines + "\n"
+
+    subLines = re.sub(r'\d(\d:\d{2}:\d{2}),(\d{2})\d', '\\1.\\2', subLines)
+    subLines = re.sub(r'\s+-->\s+', ',', subLines)
+    # replace style
+    subLines = re.sub(r'<([ubi])>', "{\\\\\g<1>1}", subLines)
+    subLines = re.sub(r'</([ubi])>', "{\\\\\g<1>0}", subLines)
+    subLines = re.sub(
+        r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>', "{\\\\c&H\\3\\2\\1&}", subLines)
+    subLines = re.sub(r'</font>', "", subLines)
+
+    head_str = '''[Script Info]
+; This is an Advanced Sub Station Alpha v4+ script.
+Title:
+ScriptType: v4.00+
+Collisions: Normal
+PlayDepth: 0
+
+
+[V4+ Styles]
+''' + os.environ.get("SRT_2_ASS_FORMAT") +"\n"+ os.environ.get("SRT_2_ASS_STYLE") + '''
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text'''
+
+# Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+# Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
+    print("head_str\n\n",head_str)
+    output_str = utf8bom + head_str + '\n' + subLines
+    return output_str
+
+
 fontDirList = [r"fonts"]
 
 if os.environ.get("FONT_DIRS"):
@@ -270,22 +342,11 @@ with open("localFontMap.json", 'w', encoding="UTF-8") as f:
 
 asu = assSubsetter(fontLoader(externalFonts=localFonts))
 
-def process(bytes):
-    start = time.time()
-    assText = bytes.decode("UTF-8-sig")
-    font_charList = asu.analyseAss(assText)
-    errors, embedFontsText = asu.makeEmbedFonts(font_charList)
-    head, tai = assText.split("[Events]")
-    print(
-        f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}")
-    len(errors) != 0 and print("ERRORS:" + "\n".join(errors))
-    return (head + embedFontsText+"\n[Events]" + tai).encode("UTF-8-sig")
-
-
 app = FastAPI()
 
-
 # @app.get("/update")
+
+
 def updateLocal():
     '''更新本地字体库'''
     print("更新本地字体库中...")
@@ -301,9 +362,20 @@ def updateLocal():
 def process(assBytes):
     start = time.time()
     assText = assBytes.decode("UTF-8-sig")
+
+    if isSRT(assText):
+        if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
+            print("SRT ===> ASS")
+            assText = srt2ass(assText)
+        else:
+            raise ValueError("SRT字幕")
+
+    if "[Fonts]\n" in assText:
+        raise ValueError("已有内嵌字幕")
+
     if os.getenv('DEV') == 'true' and os.path.exists("DEV") and len(os.listdir("DEV")) == 1:
-        print("DEV模式 使用字幕",os.path.join("DEV" , os.listdir("DEV")[0]) )
-        with open(os.path.join("DEV" , os.listdir("DEV")[0]) , "r" , encoding="UTF-8-sig") as f:
+        print("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
+        with open(os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig") as f:
             assText = f.read()
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
@@ -336,18 +408,22 @@ async def process_url(request: Request, ass_url: str = Query(None)):
         print(f"ERROR : {str(e)}")
         return Response(subtitleBytes)
 
+
 class MyHandler(FileSystemEventHandler):
     def on_created(self, event):
         updateLocal()
+
     def on_deleted(self, event):
         updateLocal()
+
 
 if __name__ == "__main__":
     event_handler = MyHandler()
     observer = Observer()
     for fontDir in fontDirList:
-        print("监控中:",os.path.abspath(fontDir))
-        observer.schedule(event_handler, os.path.abspath(fontDir), recursive=True)
+        print("监控中:", os.path.abspath(fontDir))
+        observer.schedule(event_handler, os.path.abspath(
+            fontDir), recursive=True)
     observer.start()
     uvicorn.run(app, host="0.0.0.0", port=8011)
     observer.stop()
