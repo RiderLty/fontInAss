@@ -306,15 +306,15 @@ ScriptType: v4.00+
 Collisions: Normal
 PlayDepth: 0
 
-
 [V4+ Styles]
 ''' + os.environ.get("SRT_2_ASS_FORMAT") +"\n"+ os.environ.get("SRT_2_ASS_STYLE") + '''
+
 [Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text'''
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+'''
 
 # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 # Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
-    print("head_str\n\n",head_str)
     output_str = utf8bom + head_str + '\n' + subLines
     return output_str
 
