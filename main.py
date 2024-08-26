@@ -342,90 +342,6 @@ with open("localFontMap.json", 'w', encoding="UTF-8") as f:
 
 asu = assSubsetter(fontLoader(externalFonts=localFonts))
 
-<<<<<<< HEAD
-=======
-
-def bytes2textWithCode(content):
-    encodings = ["ascii", "utf-8", "utf-16",
-                 "utf-32", "cp1252", "gb2312", "gbk", "big5"]
-    for enc in encodings:
-        try:
-            tmp = content.decode(enc)
-            return tmp, enc
-        except:
-            pass
-    return None,None
-
-
-def srt2ass(text):
-    tmp = text
-    src = ''
-    utf8bom = ''
-
-    if u'\ufeff' in tmp:
-        tmp = tmp.replace(u'\ufeff', '')
-        utf8bom = u'\ufeff'
-
-    tmp = tmp.replace("\r", "")
-    lines = [x.strip() for x in tmp.split("\n") if x.strip()]
-    subLines = ''
-    tmpLines = ''
-    lineCount = 0
-
-    for ln in range(len(lines)):
-        line = lines[ln]
-        if line.isdigit() and re.match('-?\d\d:\d\d:\d\d', lines[(ln+1)]):
-            if tmpLines:
-                subLines += tmpLines.replace("\n", "\\n") + "\n"
-            tmpLines = ''
-            lineCount = 0
-            continue
-        else:
-            if re.match('-?\d\d:\d\d:\d\d', line):
-                line = line.replace('-0', '0')
-                tmpLines += 'Dialogue: 0,' + line + ',Default,,0,0,0,,'
-            else:
-                if lineCount < 2:
-                    tmpLines += line
-                else:
-                    tmpLines += "\n" + line
-            lineCount += 1
-        ln += 1
-
-    subLines += tmpLines + "\n"
-
-    subLines = re.sub(r'\d(\d:\d{2}:\d{2}),(\d{2})\d', '\\1.\\2', subLines)
-    subLines = re.sub(r'\s+-->\s+', ',', subLines)
-    # replace style
-    subLines = re.sub(r'<([ubi])>', "{\\\\\g<1>1}", subLines)
-    subLines = re.sub(r'</([ubi])>', "{\\\\\g<1>0}", subLines)
-    subLines = re.sub(
-        r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>', "{\\\\c&H\\3\\2\\1&}", subLines)
-    subLines = re.sub(r'</font>', "", subLines)
-
-    head_str = '''[Script Info]
-; This is an Advanced Sub Station Alpha v4+ script.
-Title:
-ScriptType: v4.00+
-Collisions: Normal
-PlayDepth: 0
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text'''
-
-    output_str = utf8bom + head_str + '\n' + subLines
-    return output_str
-
-def isSRT(text):
-    srt_pattern = r'@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@'
-    matches = re.findall(srt_pattern, "@".join(text.splitlines()))
-    return len(matches) > 0
-
->>>>>>> c7bde4b3d34394819c1c58a4694a950203a1825e
 app = FastAPI()
 
 # @app.get("/update")
@@ -445,7 +361,6 @@ def updateLocal():
 
 def process(subText ):
     start = time.time()
-<<<<<<< HEAD
     assText = assBytes.decode("UTF-8-sig")
 
     if isSRT(assText):
@@ -462,22 +377,6 @@ def process(subText ):
         print("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
         with open(os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig") as f:
             assText = f.read()
-=======
-    if os.getenv('DEV') == 'true' and os.path.exists("DEV") and len(os.listdir("DEV")) == 1:
-        print("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
-        with open(os.path.join("DEV", os.listdir("DEV")[0]), "rb") as f:
-            subText,code = bytes2textWithCode(f.read())
-    if isSRT(subText):
-        raise ValueError("SRT文件")
-        # print("SRT ===> ASS")
-        # assText = srt2ass(subText)
-    else:
-        assText = subText
-    
-    if "[Fonts]\n" in assText:
-        raise ValueError("已有内嵌字幕")
-    
->>>>>>> c7bde4b3d34394819c1c58a4694a950203a1825e
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
     head, tai = assText.split("[Events]")
