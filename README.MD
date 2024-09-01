@@ -21,7 +21,52 @@ docker run -d --name=fontinass --restart=unless-stopped \
 在客户端上使用`http://[ip]:8012`访问容器代理的Emby
 
 enjoy ~
- 
+
+## 手动运行
+
+安装依赖
+```
+pip install -r ./requirements.txt
+```
+修改main.py，中，EMBY_SERVER_URL为你的emby服务器地址，例如：
+```
+EMBY_SERVER_URL = "http://192.168.3.3:7096"
+```
+添加nginx反向代理
+```
+server {
+    listen 8012; #新的Emby访问端口
+    
+    location ~ /(socket|embywebsocket) {
+        proxy_pass $EMBY_SERVER_URL;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Protocol $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
+    }
+
+    location ~* /videos/(.*)/Subtitles {
+        #修改为你的fontinass服务器地址
+        proxy_pass http://127.0.0.1:8011;
+    }
+
+    location / {
+        #修改为你的EMBY服务器地址
+        proxy_pass $EMBY_SERVER_URL;
+    }
+}
+```
+
+
+
+
+
+
 ## 配置说明
 
 容器内部端口`8011`为字体处理服务，`8012`为nginx反向代理Emby

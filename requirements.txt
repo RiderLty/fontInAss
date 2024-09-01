@@ -1,6 +1,5 @@
 easyass==1.0.0b12
 fonttools==4.33.3
-boto3==1.34.139
 uvicorn==0.30.0
 fastapi==0.89.1
 requests==2.31.0

@@ -1,9 +1,5 @@
 server {
-    js_import emby from /etc/nginx/conf.d/emby.js;
-    
     listen 8012; #新的Emby访问端口
-    
-    js_fetch_verify off;
     
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
@@ -19,8 +15,7 @@ server {
     }
 
     location ~* /videos/(.*)/Subtitles {
-        js_fetch_max_response_buffer_size 1024m;
-        js_content emby.subtitlesHandler;
+        proxy_pass http://127.0.0.1:8011;
     }
 
     location / {

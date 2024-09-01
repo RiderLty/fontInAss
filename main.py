@@ -435,6 +435,37 @@ async def process_url(ass_url: str = Query(None)):
         print(f"ERROR : {str(e)}")
         return Response(content=subtitleBytes, headers={"Srt2Ass": str(False)})
 
+#手动修改此处，或者使用环境变量
+EMBY_SERVER_URL = "EMBY_SERVER_URL环境变量"
+
+
+@app.get("/{path:path}")
+async def proxy_pass(request: Request, response: Response):
+    try:
+        host = os.environ.get("EMBY_SERVER_URL") or EMBY_SERVER_URL
+        url = (
+            f"{request.url.path}?{request.url.query}"
+            if request.url.query
+            else request.url.path
+        )
+        embyRequestUrl = host + url
+        print("字幕URL:", embyRequestUrl)
+        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+    except Exception as e:
+        info = f"fontinass获取原始字幕出错:{str(e)}\n字幕URL:{embyRequestUrl}"
+        print(info)
+        return info
+    try:
+        print("原始大小:", len(serverResponse.content))
+        srt, bytes = process(serverResponse.content)
+        print("处理后大小:", len(bytes))
+        copyHeaders = {key: srt(value) for key, value in response.headers.items()}
+        copyHeaders["Content-Length"] = str(len(bytes))
+        return Response(content=bytes, headers=copyHeaders)
+    except Exception as e:
+        print("出错了:", e, " 返回原始内容")
+        return Response(content=serverResponse.content, headers=serverResponse.headers)
+
 
 class MyHandler(FileSystemEventHandler):
     def on_created(self, event):
