@@ -1,5 +1,6 @@
 from io import BytesIO
 import threading
+import traceback
 from easyass import *
 from fastapi.responses import JSONResponse
 from fontTools.ttLib import TTFont, TTCollection
@@ -17,7 +18,7 @@ from fastapi import FastAPI, Query, Request, Response
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from cachetools import LRUCache
-
+import copy
 
 cacheSize = int(os.environ.get("CACHE_SIZE") or 32)
 fontCache = LRUCache(maxsize=cacheSize)
@@ -125,7 +126,7 @@ class fontLoader:
         cachedResult = fontCache.get(fontName)
         if cachedResult:
             print("字体缓存命中")
-            return cachedResult
+            return copy.deepcopy(cachedResult)
 
         try:
             if fontName in self.externalFonts:
@@ -156,9 +157,10 @@ class fontLoader:
                             return font
             else:
                 fontCache[fontName] = TTFont(bio)
-                return fontCache[fontName]
+                return copy.deepcopy(fontCache[fontName])
         except Exception as e:
             print(f"ERROR loading {fontName} : {str(e)}")
+            traceback.print_exc()
             return None
 
 
@@ -235,16 +237,21 @@ class assSubsetter:
             else:
                 try:
                     originNames = font["name"].names
+                    
                     subsetter = Subsetter()
                     subsetter.populate(unicodes=unicodeSet)
                     subsetter.subset(font)
+                    
                     font["name"].names = originNames
                     fontOutIO = BytesIO()
                     font.save(fontOutIO)
                     enc = self.uuencode(fontOutIO.getvalue())
                     resultQueue.put((None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
                 except Exception as e:
-                    resultQueue.put((f"{fontName} : {str(e)}", None))
+                    print(f"子集化{fontName}出错了 : {str(e)}\ndetail:\n")
+                    traceback.print_exc()
+                    print("================================\n")
+                    resultQueue.put((f" {fontName} : {str(e)}", None))
 
     def makeEmbedFonts(self, font_charList):
         """对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本"""
