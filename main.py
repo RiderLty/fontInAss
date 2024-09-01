@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from fontTools.ttLib import TTFont, TTCollection
 from fontTools.subset import Subsetter
 
-# from bottle import run, get, post, request, response
 import os
 import time
 import json
@@ -17,6 +16,12 @@ import uvicorn
 from fastapi import FastAPI, Query, Request, Response
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from cachetools import LRUCache
+
+
+cacheSize = int(os.environ.get("CACHE_SIZE") or 32)
+fontCache = LRUCache(maxsize=cacheSize)
+subCache = LRUCache(maxsize=cacheSize)
 
 
 def getAllFiles(path):
@@ -117,6 +122,11 @@ class fontLoader:
 
     @printPerformance
     def loadFont(self, fontName):
+        cachedResult = fontCache.get(fontName)
+        if cachedResult:
+            print("字体缓存命中")
+            return cachedResult
+
         try:
             if fontName in self.externalFonts:
                 path = self.externalFonts[fontName]
@@ -142,9 +152,11 @@ class fontLoader:
                 for font in ttc.fonts:
                     for record in font["name"].names:
                         if record.nameID == 1 and str(record).strip() == fontName:
+                            fontCache[fontName] = font
                             return font
             else:
-                return TTFont(bio)
+                fontCache[fontName] = TTFont(bio)
+                return fontCache[fontName]
         except Exception as e:
             print(f"ERROR loading {fontName} : {str(e)}")
             return None
@@ -376,6 +388,11 @@ def updateLocal():
 
 
 def process(assBytes):
+    cachedResult = subCache.get(assBytes)
+    if cachedResult:
+        print("字幕缓存命中")
+        return cachedResult[0], cachedResult[1]
+
     start = time.time()
     assText = assBytes.decode("UTF-8-sig")
 
@@ -407,6 +424,12 @@ def process(assBytes):
         f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}"
     )
     len(errors) != 0 and print("ERRORS:" + "\n".join(errors))
+
+    subCache[assBytes] = (
+        srt,
+        (head + embedFontsText + "\n[Events]" + tai).encode("UTF-8-sig"),
+    )
+
     return srt, (head + embedFontsText + "\n[Events]" + tai).encode("UTF-8-sig")
 
 
@@ -435,7 +458,8 @@ async def process_url(ass_url: str = Query(None)):
         print(f"ERROR : {str(e)}")
         return Response(content=subtitleBytes, headers={"Srt2Ass": str(False)})
 
-#手动修改此处，或者使用环境变量
+
+# 手动修改此处，或者使用环境变量
 EMBY_SERVER_URL = "EMBY_SERVER_URL环境变量"
 
 
@@ -451,6 +475,7 @@ async def proxy_pass(request: Request, response: Response):
         embyRequestUrl = host + url
         print("字幕URL:", embyRequestUrl)
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+        copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
         info = f"fontinass获取原始字幕出错:{str(e)}\n字幕URL:{embyRequestUrl}"
         print(info)
@@ -459,11 +484,15 @@ async def proxy_pass(request: Request, response: Response):
         print("原始大小:", len(serverResponse.content))
         srt, bytes = process(serverResponse.content)
         print("处理后大小:", len(bytes))
-        copyHeaders = {key: srt(value) for key, value in response.headers.items()}
+        
         copyHeaders["Content-Length"] = str(len(bytes))
+        if srt:
+            if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
+                raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
         return Response(content=bytes, headers=copyHeaders)
     except Exception as e:
         print("出错了:", e, " 返回原始内容")
+        copyHeaders["fontinass-exception"] = str(e)
         return Response(content=serverResponse.content, headers=serverResponse.headers)
 
 

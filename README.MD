@@ -62,11 +62,6 @@ server {
 }
 ```
 
-
-
-
-
-
 ## 配置说明
 
 容器内部端口`8011`为字体处理服务，`8012`为nginx反向代理Emby
@@ -86,6 +81,12 @@ server {
   -e SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
+
+程序默认字体与字幕缓存大小为32，可修改CACHE_SIZE来自定义
+```
+-e CACHE_SIZE=1024
+```
+
 
 
 

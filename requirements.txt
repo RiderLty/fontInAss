@@ -4,3 +4,4 @@ uvicorn==0.30.0
 fastapi==0.89.1
 requests==2.31.0
 watchdog==4.0.2
+cachetools==5.5.0
