@@ -424,7 +424,7 @@ async def process_bytes(request: Request):
 
 
 @app.get("/process_url")
-async def process_url(request: Request, ass_url: str = Query(None)):
+async def process_url(ass_url: str = Query(None)):
     """传入字幕url"""
     print("loading " + ass_url)
     try:
@@ -434,7 +434,6 @@ async def process_url(request: Request, ass_url: str = Query(None)):
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return Response(content=subtitleBytes, headers={"Srt2Ass": str(False)})
-    
 
 
 class MyHandler(FileSystemEventHandler):
