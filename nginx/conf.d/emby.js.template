@@ -1,5 +1,9 @@
 import qs from 'querystring';
 
+const debug = (msg) => {
+    ngx.log(ngx.ERR, `DEBUG:${msg}\n`);
+}
+
 const subtitlesHandler = async (r) => {
     debug("处理字幕： " + `${EMBY_SERVER_URL}${r.uri}${qs.stringify(r.args) === "" ? "" : "?" + qs.stringify(r.args)}`)
     const rawResponse = await ngx.fetch(`${EMBY_SERVER_URL}${r.uri}${qs.stringify(r.args) === "" ? "" : "?" + qs.stringify(r.args)}`)
@@ -15,9 +19,6 @@ const subtitlesHandler = async (r) => {
         const processedBytes = await processedResponse.arrayBuffer();
         r.headersOut["Content-Length"] = processedBytes.length;
         r.headersOut["Accept-Ranges"] = "bytes";
-        
-        
-        
         let returnBytes = processedBytes
         if (processedResponse.headers["srt2ass"] && processedResponse.headers["srt2ass"] === "True") {
             debug("字幕为SRT转ASS")

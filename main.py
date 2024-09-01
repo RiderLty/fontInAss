@@ -413,6 +413,7 @@ def process(assBytes):
 @app.post("/process_bytes")
 async def process_bytes(request: Request):
     """传入字幕字节"""
+    print(request.headers)
     subtitleBytes = await request.body()
     try:
         srt, bytes = process(subtitleBytes)
