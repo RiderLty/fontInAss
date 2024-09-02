@@ -439,10 +439,23 @@ def updateLocal():
 
 
 def process(assBytes):
-    cachedResult = subCache.get(assBytes)
-    if cachedResult:
-        logger.info("字幕缓存命中")
-        return cachedResult[0], cachedResult[1]
+    devFlag = (
+        os.getenv("DEV") == "true"
+        and os.path.exists("DEV")
+        and len(os.listdir("DEV")) == 1
+    )
+
+    if devFlag:
+        logger.debug("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
+        with open(
+            os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig"
+        ) as f:
+            assText = f.read()
+    else:#非DEV模式，才使用字幕缓存
+        cachedResult = subCache.get(assBytes)
+        if cachedResult:
+            logger.info("字幕缓存命中")
+            return cachedResult[0], cachedResult[1]
 
     start = time.time()
     assText = assBytes.decode("UTF-8-sig")
@@ -458,16 +471,6 @@ def process(assBytes):
     if "[Fonts]\n" in assText:
         raise ValueError("已有内嵌字幕")
 
-    if (
-        os.getenv("DEV") == "true"
-        and os.path.exists("DEV")
-        and len(os.listdir("DEV")) == 1
-    ):
-        logger.debug("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
-        with open(
-            os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig"
-        ) as f:
-            assText = f.read()
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
     head, tai = assText.split("[Events]")
@@ -478,10 +481,10 @@ def process(assBytes):
     len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
     resultText = head + embedFontsText + "\n[Events]" + tai
     resultBytes = resultText.encode("UTF-8-sig")
-    
+
     subCache[assBytes] = (srt, resultBytes)
     os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
-    return (srt,resultBytes)
+    return (srt, resultBytes)
 
 
 @app.post("/process_bytes")
