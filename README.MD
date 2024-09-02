@@ -14,9 +14,12 @@
 docker run -d --name=fontinass --restart=unless-stopped \
   -p 8012:8012 \
   -e EMBY_SERVER_URL=http://[ip]:[port] \
+  -v /etc/localFontMap.json:/localFontMap.json \
   riderlty/fontinass:latest
 ```
 设置EMBY_SERVER_URL为你的EMBY服务器的地址
+
+映射/localFontMap.json到你的数据保存位置，避免每次更新容器重复扫描本地字体
 
 在客户端上使用`http://[ip]:8012`访问容器代理的Emby
 
