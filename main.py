@@ -444,6 +444,7 @@ def process(assBytes):
         and os.path.exists("DEV")
         and len(os.listdir("DEV")) == 1
     )
+    start = time.time()
 
     if devFlag:
         logger.debug("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
@@ -456,11 +457,11 @@ def process(assBytes):
         if cachedResult:
             logger.info("字幕缓存命中")
             return cachedResult[0], cachedResult[1]
-
-    start = time.time()
-    assText = assBytes.decode("UTF-8-sig")
+        assText = assBytes.decode("UTF-8-sig")
     os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
+    
     srt = isSRT(assText)
+    
     if srt:
         if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
             logger.info("SRT ===> ASS")
