@@ -1,3 +1,27 @@
+import builtins
+import contextlib
+import datetime
+import io
+import logging
+import coloredlogs
+
+logger = logging.getLogger(f'{"main"}:{"loger"}')
+fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
+coloredlogs.install(
+    level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
+)
+
+
+original_print = builtins.print
+
+
+def custom_print(*args, **kwargs):
+    logger.info("".join([str(x) for x in args]))
+
+
+builtins.print = custom_print
+# exit(0)
+
 from io import BytesIO
 import threading
 import traceback
@@ -13,12 +37,39 @@ import requests
 import queue
 
 import re
-import uvicorn
+from uvicorn import Config, Server
 from fastapi import FastAPI, Query, Request, Response
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from cachetools import LRUCache
 import copy
+
+
+import asyncio
+
+import ssl
+
+serverLoop = asyncio.new_event_loop()
+asyncio.set_event_loop(serverLoop)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+def init_logger():
+    LOGGER_NAMES = (
+        "uvicorn",
+        "uvicorn.access",
+    )
+    for logger_name in LOGGER_NAMES:
+        logging_logger = logging.getLogger(logger_name)
+        fmt = f"🌏 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"  # 📨
+        coloredlogs.install(
+            level=logging.DEBUG,
+            logger=logging_logger,
+            milliseconds=True,
+            datefmt="%X",
+            fmt=fmt,
+        )
+
 
 cacheSize = int(os.environ.get("CACHE_SIZE") or 32)
 fontCache = LRUCache(maxsize=cacheSize)
@@ -52,7 +103,7 @@ def updateFontMap(dirPathList, old={}):
                         or file.lower().endswith("ttf")
                         or file.lower().endswith("otf")
                     ):
-                        print(file)
+                        logger.info(f"更新外部字体 {file}")
                         with open(file, "rb") as f:
                             f.seek(0)
                             sfntVersion = f.read(4)
@@ -72,7 +123,7 @@ def updateFontMap(dirPathList, old={}):
                         }
 
                 except Exception as e:
-                    print(file, e)
+                    logger.error(f"更新外部字体出错 {file} : {str(e)}")
     return fontMap
 
 
@@ -97,7 +148,6 @@ def makeFontMap(data):
                 continue
             font_file_map[font_name] = path
             font_miniSize[font_name] = info["size"]
-            # print(font_name , info["size"])
     return font_file_map
 
 
@@ -105,7 +155,7 @@ def printPerformance(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         start = time.perf_counter_ns()
         result = func(*args, **kwargs)
-        print(
+        logger.info(
             f"{func.__name__}{args[1:]}{kwargs} 耗时 {(time.perf_counter_ns() - start) / 1000000} ms"
         )
         return result
@@ -125,24 +175,22 @@ class fontLoader:
     def loadFont(self, fontName):
         cachedResult = fontCache.get(fontName)
         if cachedResult:
-            print("字体缓存命中")
+            logger.info(f"{fontName} 字体缓存命中")
             return copy.deepcopy(cachedResult)
 
         try:
             if fontName in self.externalFonts:
                 path = self.externalFonts[fontName]
-                print(f"load {path} from external fonts")
+                logger.info(f"从本地加载字体 {path}")
                 if path.lower().startswith("http"):
                     fontBytes = requests.get(path).content
                 else:
                     fontBytes = open(path, "rb").read()
             elif fontName in self.fontPathMap:
                 path = self.fontPathMap[fontName]
-                start = time.time()
                 fontBytes = requests.get(
                     "https://fonts.storage.rd5isto.org" + path
                 ).content
-                # print( f"load {path} {len(fontBytes) // 1048576:.2f}MB in {(time.time() - start):.2f}s")
             else:
                 return None
             bio = BytesIO()
@@ -159,8 +207,7 @@ class fontLoader:
                 fontCache[fontName] = TTFont(bio)
                 return copy.deepcopy(fontCache[fontName])
         except Exception as e:
-            print(f"ERROR loading {fontName} : {str(e)}")
-            traceback.print_exc()
+            logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")
             return None
 
 
@@ -201,7 +248,6 @@ class assSubsetter:
             bytes_chunk = binaryData[i : i + 3]
             if len(bytes_chunk) < 3:
                 bytes_chunk += b"\x00" * (3 - len(bytes_chunk))
-                print(bytes_chunk)
             packed = int.from_bytes(bytes_chunk, "big")
             # packed = (packed & 0xFFFFFF)  # 确保只有24位
             six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
@@ -237,20 +283,18 @@ class assSubsetter:
             else:
                 try:
                     originNames = font["name"].names
-                    
+
                     subsetter = Subsetter()
                     subsetter.populate(unicodes=unicodeSet)
                     subsetter.subset(font)
-                    
+
                     font["name"].names = originNames
                     fontOutIO = BytesIO()
                     font.save(fontOutIO)
                     enc = self.uuencode(fontOutIO.getvalue())
                     resultQueue.put((None, f"fontname:{fontName}_0.ttf\n{enc}\n"))
                 except Exception as e:
-                    print(f"子集化{fontName}出错了 : {str(e)}\ndetail:\n")
-                    traceback.print_exc()
-                    print("================================\n")
+                    logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
                     resultQueue.put((f" {fontName} : {str(e)}", None))
 
     def makeEmbedFonts(self, font_charList):
@@ -360,7 +404,7 @@ if os.environ.get("FONT_DIRS"):
     for dirPath in os.environ.get("FONT_DIRS").split(";"):
         if dirPath.strip() != "" and os.path.exists(dirPath):
             fontDirList.append(dirPath.strip())
-print("本地字体文件夹:", ",".join(fontDirList))
+logger.info("本地字体文件夹:" + ",".join(fontDirList))
 
 if not os.path.exists("localFontMap.json"):
     with open("localFontMap.json", "w", encoding="UTF-8") as f:
@@ -384,7 +428,7 @@ app = FastAPI()
 
 def updateLocal():
     """更新本地字体库"""
-    print("更新本地字体库中...")
+    logger.info("更新本地字体库中...")
     global asu
     with open("localFontMap.json", "r", encoding="UTF-8") as f:
         localFonts = updateFontMap(fontDirList, json.load(f))
@@ -397,16 +441,16 @@ def updateLocal():
 def process(assBytes):
     cachedResult = subCache.get(assBytes)
     if cachedResult:
-        print("字幕缓存命中")
+        logger.info("字幕缓存命中")
         return cachedResult[0], cachedResult[1]
 
     start = time.time()
     assText = assBytes.decode("UTF-8-sig")
-
+    os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
     srt = isSRT(assText)
     if srt:
         if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
-            print("SRT ===> ASS")
+            logger.info("SRT ===> ASS")
             assText = srt2ass(assText)
         else:
             raise ValueError("SRT字幕")
@@ -419,7 +463,7 @@ def process(assBytes):
         and os.path.exists("DEV")
         and len(os.listdir("DEV")) == 1
     ):
-        print("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
+        logger.debug("DEV模式 使用字幕", os.path.join("DEV", os.listdir("DEV")[0]))
         with open(
             os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig"
         ) as f:
@@ -427,17 +471,17 @@ def process(assBytes):
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
     head, tai = assText.split("[Events]")
-    print(
+    logger.info(
         f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}"
     )
-    len(errors) != 0 and print("ERRORS:" + "\n".join(errors))
-
-    subCache[assBytes] = (
-        srt,
-        (head + embedFontsText + "\n[Events]" + tai).encode("UTF-8-sig"),
-    )
-
-    return srt, (head + embedFontsText + "\n[Events]" + tai).encode("UTF-8-sig")
+    logger.info(f"生成Fonts部分长度 {len(embedFontsText)}")
+    len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
+    resultText = head + embedFontsText + "\n[Events]" + tai
+    resultBytes = resultText.encode("UTF-8-sig")
+    
+    subCache[assBytes] = (srt, resultBytes)
+    os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
+    return (srt,resultBytes)
 
 
 @app.post("/process_bytes")
@@ -447,10 +491,15 @@ async def process_bytes(request: Request):
     subtitleBytes = await request.body()
     try:
         srt, bytes = process(subtitleBytes)
-        return Response(content=bytes, headers={"Srt2Ass": str(srt)})
+        return Response(
+            content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
+        )
     except Exception as e:
-        print(f"ERROR : {str(e)}")
-        return Response(content=subtitleBytes, headers={"Srt2Ass": str(False)})
+        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        return Response(
+            content=subtitleBytes,
+            headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
+        )
 
 
 @app.get("/process_url")
@@ -460,14 +509,19 @@ async def process_url(ass_url: str = Query(None)):
     try:
         subtitleBytes = requests.get(ass_url).content
         srt, bytes = process(subtitleBytes)
-        return Response(content=bytes, headers={"Srt2Ass": str(srt)})
+        return Response(
+            content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
+        )
     except Exception as e:
-        print(f"ERROR : {str(e)}")
-        return Response(content=subtitleBytes, headers={"Srt2Ass": str(False)})
+        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        return Response(
+            content=subtitleBytes,
+            headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
+        )
 
 
 # 手动修改此处，或者使用环境变量
-EMBY_SERVER_URL = "EMBY_SERVER_URL环境变量"
+EMBY_SERVER_URL = "尚未EMBY_SERVER_URL环境变量"
 
 
 @app.get("/{path:path}")
@@ -480,25 +534,27 @@ async def proxy_pass(request: Request, response: Response):
             else request.url.path
         )
         embyRequestUrl = host + url
-        print("字幕URL:", embyRequestUrl)
+        logger.info(f"字幕URL:{embyRequestUrl}")
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
         copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
-        info = f"fontinass获取原始字幕出错:{str(e)}\n字幕URL:{embyRequestUrl}"
-        print(info)
+        info = f"fontinass获取原始字幕出错:{str(e)}"
+        logger.error(info)
         return info
     try:
-        print("原始大小:", len(serverResponse.content))
+        logger.info(f"原始大小:{len(serverResponse.content)}")
         srt, bytes = process(serverResponse.content)
-        print("处理后大小:", len(bytes))
-        
+        logger.info(f"处理后大小:{len(bytes)}")
         copyHeaders["Content-Length"] = str(len(bytes))
         if srt:
-            if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
+            if (
+                "user-agent" in request.headers
+                and "infuse" in request.headers["user-agent"].lower()
+            ):
                 raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
         return Response(content=bytes, headers=copyHeaders)
     except Exception as e:
-        print("出错了:", e, " 返回原始内容")
+        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         copyHeaders["fontinass-exception"] = str(e)
         return Response(content=serverResponse.content, headers=serverResponse.headers)
 
@@ -511,13 +567,28 @@ class MyHandler(FileSystemEventHandler):
         updateLocal()
 
 
+def getServer(port):
+    serverConfig = Config(
+        app=app,
+        # host="::",
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+        loop=serverLoop,
+        ws_max_size=1024 * 1024 * 1024 * 1024,
+    )
+    return Server(serverConfig)
+
+
 if __name__ == "__main__":
     event_handler = MyHandler()
     observer = Observer()
     for fontDir in fontDirList:
-        print("监控中:", os.path.abspath(fontDir))
+        logger.info("监控中:" + os.path.abspath(fontDir))
         observer.schedule(event_handler, os.path.abspath(fontDir), recursive=True)
     observer.start()
-    uvicorn.run(app, host="0.0.0.0", port=8011)
+    serverInstance = getServer(8011)
+    init_logger()
+    serverLoop.run_until_complete(serverInstance.serve())
     observer.stop()
     observer.join()
