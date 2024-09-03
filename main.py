@@ -4,7 +4,7 @@ import datetime
 import io
 import logging
 import coloredlogs
-
+import chardet
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(
@@ -326,12 +326,6 @@ def isSRT(text):
 
 
 def srt2ass(srtText):
-    src = ""
-    utf8bom = ""
-
-    if "\ufeff" in srtText:
-        srtText = srtText.replace("\ufeff", "")
-        utf8bom = "\ufeff"
 
     srtText = srtText.replace("\r", "")
     lines = [x.strip() for x in srtText.split("\n") if x.strip()]
@@ -393,7 +387,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
     # Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
-    output_str = utf8bom + head_str + "\n" + subLines
+    output_str =  head_str + "\n" + subLines
     # print(output_str)
     os.getenv("DEV") == "true" and logger.debug("SRT转ASS\n" + output_str)
     return output_str
@@ -439,6 +433,11 @@ def updateLocal():
     return JSONResponse(localFonts)
 
 
+def bytes2str(bytes):
+    result = chardet.detect(bytes)
+    logger.info(f"判断编码:{str(result)}")
+    return bytes.decode(result['encoding'])
+    
 def process(assBytes):
     devFlag = (
         os.getenv("DEV") == "true"
@@ -449,16 +448,15 @@ def process(assBytes):
 
     if devFlag:
         logger.debug("DEV模式 使用字幕"+os.path.join("DEV", os.listdir("DEV")[0]))
-        with open(
-            os.path.join("DEV", os.listdir("DEV")[0]), "r", encoding="UTF-8-sig"
-        ) as f:
-            assText = f.read()
+        with open( os.path.join("DEV", os.listdir("DEV")[0]), "rb",) as f:
+            assBytes = f.read()
+            assText = bytes2str(assBytes)
     else:#非DEV模式，才使用字幕缓存
         cachedResult = subCache.get(assBytes)
         if cachedResult:
             logger.info("字幕缓存命中")
             return cachedResult[0], cachedResult[1]
-        assText = assBytes.decode("UTF-8-sig")
+        assText = bytes2str(assBytes)
     os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
     
     srt = isSRT(assText)
