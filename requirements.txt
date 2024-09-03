@@ -6,3 +6,4 @@ requests==2.31.0
 watchdog==4.0.2
 cachetools==5.5.0
 coloredlogs==15.0.1
+chardet==5.1.0
