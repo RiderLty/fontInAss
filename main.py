@@ -468,7 +468,8 @@ def process(assBytes):
             logger.info("SRT ===> ASS")
             assText = srt2ass(assText)
         else:
-            raise ValueError("SRT字幕")
+            logger.info("未开启SRT转ASS")
+            return (True, assText.encode("UTF-8-sig"))
 
     if "[Fonts]\n" in assText:
         raise ValueError("已有内嵌字幕")
@@ -557,11 +558,10 @@ async def proxy_pass(request: Request, response: Response):
                 and "infuse" in request.headers["user-agent"].lower()
             ):
                 raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
-        return Response(content=bytes, headers=copyHeaders)
+        return Response(content=bytes)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        copyHeaders["fontinass-exception"] = str(e)
-        return Response(content=serverResponse.content, headers=serverResponse.headers)
+        return Response(content=serverResponse.content)
 
 
 class MyHandler(FileSystemEventHandler):
