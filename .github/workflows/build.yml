@@ -26,5 +26,5 @@ jobs:
             linux/amd64
            
           push: true
-          tags: riderlty/fontinass:latest
+          tags: riderlty/fontinass:njsmode
 
