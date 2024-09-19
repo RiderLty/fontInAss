@@ -90,6 +90,12 @@ server {
 -e CACHE_SIZE=1024
 ```
 
+支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
+
+通过HDR来设置字幕亮度峰值, 例如1000nit
+```
+-e HDR=1000
+```
 
 
 
