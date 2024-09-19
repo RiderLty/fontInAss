@@ -382,11 +382,13 @@ class assSubsetter:
             style_fontName[styleName] = fontName
             font_charList[fontName] = set()
         for event in sub.events:
-            if event.style not in style_fontName:
-                print("event使用了未知样式")
-
+            os.getenv("DEV") == "true" and logger.debug("")
+            os.getenv("DEV") == "true" and logger.debug("原始Event文本 : " + event.text)
+            eventStyle =  event.style.replace("*","")
+            if eventStyle not in style_fontName:
+                logger.error(f"event[{eventStyle}]使用了未知样式")
                 continue
-            fontLine = r"{\fn" + style_fontName[event.style] + "}" + event.text
+            fontLine = r"{\fn" + style_fontName[eventStyle] + "}" + event.text
             # 在首部加上对应的style的字体
             for inlineStyle in re.findall(
                 r"({[^\\]*\\r[^}|\\]*[\\|}])", event.text
@@ -397,14 +399,13 @@ class assSubsetter:
                     fontLine = fontLine.replace(
                         inlineStyle, r"{\fn" + style_fontName[styleName] + "}"
                     )  # 将内联style，改为指定字体名称的形式
-
+                else:
+                    logger.error(f"event内联[{styleName}]使用了未知样式")
             res = [
                 (fn.groups()[0], fn.start(), fn.end())
                 for fn in re.finditer(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", fontLine)
             ]
             # 获取所有的内联字体位置名称信息
-            os.getenv("DEV") == "true" and logger.debug("")
-            os.getenv("DEV") == "true" and logger.debug("原始Event文本 : " + event.text)
             for i in range(len(res)):
                 fontName = res[i][0].replace("@", "")
                 textStart = res[i][2]
@@ -659,6 +660,14 @@ def process(assBytes):
 
     if "[Fonts]\n" in assText:
         raise ValueError("已有内嵌字幕")
+    
+    
+    if os.getenv("HDR"):
+        logger.info(f"HDR适配")
+        try:
+            assText = hdr.ssaProcessor(assText,int(os.getenv("HDR")))
+        except Exception as e:
+            logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
     font_charList = asu.analyseAss(assText)
     errors, embedFontsText = asu.makeEmbedFonts(font_charList)
@@ -670,12 +679,7 @@ def process(assBytes):
     len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
     resultText = head + embedFontsText + "\n[Events]" + tai
 
-    if os.getenv("HDR"):
-        logger.info(f"HDR适配")
-        try:
-            resultText = hdr.ssaProcessor(resultText,float(os.getenv("HDR")))
-        except Exception as e:
-            logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
+    
 
     resultBytes = resultText.encode("UTF-8-sig")
 
@@ -791,3 +795,4 @@ if __name__ == "__main__":
     serverLoop.run_until_complete(serverInstance.serve())
     observer.stop()
     observer.join()
+#ok
