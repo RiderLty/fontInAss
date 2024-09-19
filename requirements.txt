@@ -1,4 +1,4 @@
-easyass==1.0.0b12
+ass==0.5.4
 fonttools==4.33.3
 uvicorn==0.30.0
 fastapi==0.89.1
@@ -7,3 +7,5 @@ watchdog==4.0.2
 cachetools==5.5.0
 coloredlogs==15.0.1
 chardet==5.1.0
+colour-science==0.4.4
+numpy==1.26.4

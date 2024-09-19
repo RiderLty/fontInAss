@@ -2,5 +2,6 @@
     "cSpell.words": [
         "EMBY",
         "uuencode"
-    ]
+    ],
+    "terminal.integrated.scrollback": 10000
 }

@@ -5,6 +5,9 @@ import io
 import logging
 import coloredlogs
 import chardet
+import warnings
+
+
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(
@@ -22,10 +25,12 @@ def custom_print(*args, **kwargs):
 builtins.print = custom_print
 # exit(0)
 
-from io import BytesIO
+from io import BytesIO, StringIO
 import threading
 import traceback
-from easyass import *
+
+# from easyass import *
+import ass as ssa
 from fastapi.responses import JSONResponse
 from fontTools.ttLib import TTFont, TTCollection
 from fontTools.subset import Subsetter
@@ -48,6 +53,30 @@ import copy
 import asyncio
 
 import ssl
+
+
+
+import ass as ssa
+import numpy as np
+
+import warnings
+warnings.filterwarnings('ignore')
+
+from colour import RGB_Colourspace
+from colour.models import eotf_inverse_BT2100_PQ, sRGB_to_XYZ, XYZ_to_xyY, xyY_to_XYZ, XYZ_to_RGB, \
+    RGB_COLOURSPACE_BT2020, eotf_BT2100_PQ
+
+COLOURSPACE_BT2100_PQ = RGB_Colourspace(
+    name='COLOURSPACE_BT2100',
+    primaries=RGB_COLOURSPACE_BT2020.primaries,
+    whitepoint=RGB_COLOURSPACE_BT2020.whitepoint,
+    matrix_RGB_to_XYZ=RGB_COLOURSPACE_BT2020.matrix_RGB_to_XYZ,
+    matrix_XYZ_to_RGB=RGB_COLOURSPACE_BT2020.matrix_XYZ_to_RGB,
+    cctf_encoding=eotf_inverse_BT2100_PQ,
+    cctf_decoding=eotf_BT2100_PQ,
+)
+
+
 
 serverLoop = asyncio.new_event_loop()
 asyncio.set_event_loop(serverLoop)
@@ -167,9 +196,10 @@ class fontLoader:
     def __init__(self, externalFonts={}) -> None:
         """除了使用脚本附带的的字体外，可载入额外的字体，格式为 { 字体名称：路径 | http url }"""
         self.externalFonts = makeFontMap(externalFonts)
-        self.fontPathMap = makeFontMap(
-            json.load(open("fontMap.json", "r", encoding="UTF-8"))
-        )
+        with open("fontMap.json", "r", encoding="UTF-8") as f:
+            self.fontPathMap = makeFontMap(
+                json.load(f)
+            )
 
     @printPerformance
     def loadFont(self, fontName):
@@ -211,33 +241,187 @@ class fontLoader:
             return None
 
 
+class hdrify:
+    """
+    https://github.com/gky99/ssaHdrify
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    def ssaProcessor(self, assText: str,srgb_brightness = 100):
+        sub = ssa.parse_string(assText)
+        for s in sub.styles:
+            self.transformColour(s.primary_color,srgb_brightness)
+            self.transformColour(s.secondary_color,srgb_brightness)
+            self.transformColour(s.outline_color,srgb_brightness)
+            self.transformColour(s.back_color,srgb_brightness)
+        for e in sub.events:
+            self.transformEvent(e,srgb_brightness)
+
+        out = StringIO()
+        sub.dump_file(out)
+        return out.getvalue()
+
+
+        # output_fname = os.path.splitext(fname)
+        # output_fname = output_fname[0] + ".hdr.ass"
+
+        # with open(output_fname, "w", encoding="utf_8_sig") as f:
+        #     sub.dump_file(f)
+        #     print(f"Wrote {output_fname}")
+    
+    
+    def transformColour(self,colour,srgb_brightness):
+        rgb = (colour.r, colour.g, colour.b)
+        transformed = self.sRgbToHdr(rgb,srgb_brightness)
+        colour.r = transformed[0]
+        colour.g = transformed[1]
+        colour.b = transformed[2]
+    
+    
+    
+    def transformEvent(self, event,srgb_brightness):
+        line = event.text
+        matches = []
+        for match in re.finditer(r"\\[0-9]?c&H([0-9a-fA-F]{2,})&", line):
+            start = match.start(1)
+            end = match.end(1)
+            hex_colour = match.group(1)
+            hex_colour.rjust(6, "0")
+            b = int(hex_colour[0:2], 16)
+            g = int(hex_colour[2:4], 16)
+            r = int(hex_colour[4:6], 16)
+            (r, g, b) = self.sRgbToHdr((r, g, b),srgb_brightness)
+            hex_colour = "{:02x}{:02x}{:02x}".format(b, g, r)
+            matches.append((start, end, hex_colour.upper()))
+
+        for start, end, hex_colour in matches:
+            line = line[:start] + hex_colour + line[end:]
+
+        event.text = line
+
+    def sRgbToHdr(
+        self, source: tuple[int, int, int] , srgb_brightness
+    ) -> tuple[int, int, int]:
+        """
+        Convert RGB color in SDR color space to HDR color space.
+
+        How it works:
+        1. Convert the RGB color to reference xyY color space to get absolute chromaticity and linear luminance response
+        2. Time the target brightness of SDR color space to the Y because Rec.2100 has an absolute luminance
+        3. Convert the xyY color back to RGB under Rec.2100/Rec.2020 color space.
+
+        Notes:
+        -  Unlike sRGB and Rec.709 color space which have their OOTF(E) = EOTF(OETF(E)) equals or almost equals to y = x,
+            it's OOTF is something close to gamma 2.4. Therefore, to have matched display color for color in SDR color space
+            the COLOURSPACE_BT2100_PQ denotes a display color space rather than a scene color space. It wasted me quite some
+            time to figure that out :(
+        -  Option to set output luminance is removed because PQ has an absolute luminance level, which means any color in
+            the Rec.2100 color space will be displayed the same on any accurate display regardless of the capable peak
+            brightness of the device if no clipping happens. Therefore, the peak brightness should always target 10000 nits
+            so the SDR color can be accurately projected to the sub-range of Rec.2100 color space
+        args:
+        colour -- (0-255, 0-255, 0-255)
+        """
+        normalized_sdr_color = np.array(source) / 255
+        xyY_sdr_color = XYZ_to_xyY(
+            sRGB_to_XYZ(normalized_sdr_color, apply_cctf_decoding=True)
+        )
+
+        xyY_hdr_color = xyY_sdr_color.copy()
+        target_luminance = xyY_sdr_color[2] * srgb_brightness
+        xyY_hdr_color[2] = target_luminance
+
+        output = XYZ_to_RGB(
+            xyY_to_XYZ(xyY_hdr_color),
+            colourspace=COLOURSPACE_BT2100_PQ,
+            apply_cctf_encoding=True,
+        )
+        output = np.round(output * 255)
+        return (int(output[0]), int(output[1]), int(output[2]))
+
+
 class assSubsetter:
     def __init__(self, fontLoader) -> None:
         self.fontLoader = fontLoader
 
+    # def analyseAssVer0(self, ass_str):
+    #     """分析ass文件 返回 字体：{unicodes}"""
+    #     ass_obj = Ass()
+    #     ass_obj.parse(ass_str)
+    #     style_fontName = {}  # 样式 => 字体
+    #     font_charList = {}  # 字体 => unicode list
+    #     for style in ass_obj.styles:
+    #         styleName = style.Name.strip()
+    #         fontName = style.Fontname.strip().replace("@", "")
+    #         style_fontName[styleName] = fontName
+    #         font_charList[fontName] = set()
+    #     for event in ass_obj.events:
+    #         fontName = style_fontName[event.Style.replace("*", "")]
+    #         for ch in event.Text.dump():
+    #             font_charList[fontName].add(ord(ch))
+    #     for line in ass_str.splitlines():
+    #         # 比较坑爹这里
+    #         for match in re.findall(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", line):
+    #             fontName = match.replace("@", "")
+    #             for ch in line:
+    #                 if fontName not in font_charList:
+    #                     font_charList[fontName] = set()
+    #                 font_charList[fontName].add(ord(ch))
+    #     return font_charList
+
     def analyseAss(self, ass_str):
         """分析ass文件 返回 字体：{unicodes}"""
-        ass_obj = Ass()
-        ass_obj.parse(ass_str)
+        sub = ssa.parse_string(ass_str)
         style_fontName = {}  # 样式 => 字体
         font_charList = {}  # 字体 => unicode list
-        for style in ass_obj.styles:
-            styleName = style.Name.strip()
-            fontName = style.Fontname.strip().replace("@", "")
+        for style in sub.styles:
+            styleName = style.name.strip()
+            fontName = style.fontname.strip().replace("@", "")
             style_fontName[styleName] = fontName
             font_charList[fontName] = set()
-        for event in ass_obj.events:
-            fontName = style_fontName[event.Style.replace("*", "")]
-            for ch in event.Text.dump():
-                font_charList[fontName].add(ord(ch))
-        for line in ass_str.splitlines():
-            # 比较坑爹这里
-            for match in re.findall(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", line):
-                fontName = match.replace("@", "")
-                for ch in line:
+        for event in sub.events:
+            if event.style not in style_fontName:
+                print("event使用了未知样式")
+
+                continue
+            fontLine = r"{\fn" + style_fontName[event.style] + "}" + event.text
+            # 在首部加上对应的style的字体
+            for inlineStyle in re.findall(
+                r"({[^\\]*\\r[^}|\\]*[\\|}])", event.text
+            ):  # 用于匹配 {\rXXX} 其中xxx为style名称
+                # {\r} 会有这种 空的
+                styleName = re.findall(r"{[^\\]*\\r([^}|\\]*)[\\|}]", inlineStyle)[0]
+                if styleName in style_fontName:
+                    fontLine = fontLine.replace(
+                        inlineStyle, r"{\fn" + style_fontName[styleName] + "}"
+                    )  # 将内联style，改为指定字体名称的形式
+
+            res = [
+                (fn.groups()[0], fn.start(), fn.end())
+                for fn in re.finditer(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", fontLine)
+            ]
+            # 获取所有的内联字体位置名称信息
+            os.getenv("DEV") == "true" and logger.debug("")
+            os.getenv("DEV") == "true" and logger.debug("原始Event文本 : " + event.text)
+            for i in range(len(res)):
+                fontName = res[i][0].replace("@", "")
+                textStart = res[i][2]
+                textEnd = None if i == len(res) - 1 else res[i + 1][1]
+                text = re.sub(
+                    r"(?<!{)\{\\([^{}]*)\}(?!})", "", fontLine[textStart:textEnd]
+                )
+                os.getenv("DEV") == "true" and logger.debug(
+                    f"{fontName} :  {fontLine[textStart:textEnd]}  ===> {text}"
+                )
+                for ch in text:
                     if fontName not in font_charList:
                         font_charList[fontName] = set()
                     font_charList[fontName].add(ord(ch))
+            # print("")
+            # 最终获取 字体 : 文本code
+        # print(font_charList)
         return font_charList
 
     def uuencode(self, binaryData):
@@ -387,7 +571,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
     # Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
-    output_str =  head_str + "\n" + subLines
+    output_str = head_str + "\n" + subLines
     # print(output_str)
     os.getenv("DEV") == "true" and logger.debug("SRT转ASS\n" + output_str)
     return output_str
@@ -415,7 +599,7 @@ with open("localFontMap.json", "w", encoding="UTF-8") as f:
     json.dump(localFonts, f, indent=4, ensure_ascii=True)
 
 asu = assSubsetter(fontLoader(externalFonts=localFonts))
-
+hdr = hdrify()
 app = FastAPI()
 
 # @app.get("/update")
@@ -436,8 +620,9 @@ def updateLocal():
 def bytes2str(bytes):
     result = chardet.detect(bytes)
     logger.info(f"判断编码:{str(result)}")
-    return bytes.decode(result['encoding'])
-    
+    return bytes.decode(result["encoding"])
+
+
 def process(assBytes):
     devFlag = (
         os.getenv("DEV") == "true"
@@ -447,20 +632,23 @@ def process(assBytes):
     start = time.time()
 
     if devFlag:
-        logger.debug("DEV模式 使用字幕"+os.path.join("DEV", os.listdir("DEV")[0]))
-        with open( os.path.join("DEV", os.listdir("DEV")[0]), "rb",) as f:
+        logger.debug("DEV模式 使用字幕" + os.path.join("DEV", os.listdir("DEV")[0]))
+        with open(
+            os.path.join("DEV", os.listdir("DEV")[0]),
+            "rb",
+        ) as f:
             assBytes = f.read()
             assText = bytes2str(assBytes)
-    else:#非DEV模式，才使用字幕缓存
+    else:  # 非DEV模式，才使用字幕缓存
         cachedResult = subCache.get(assBytes)
         if cachedResult:
             logger.info("字幕缓存命中")
             return cachedResult[0], cachedResult[1]
         assText = bytes2str(assBytes)
-    os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
-    
+    # os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
+
     srt = isSRT(assText)
-    
+
     if srt:
         if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
             logger.info("SRT ===> ASS")
@@ -481,10 +669,18 @@ def process(assBytes):
     logger.info(f"生成Fonts部分长度 {len(embedFontsText)}")
     len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
     resultText = head + embedFontsText + "\n[Events]" + tai
+
+    if os.getenv("HDR"):
+        logger.info(f"HDR适配")
+        try:
+            resultText = hdr.ssaProcessor(resultText,float(os.getenv("HDR")))
+        except Exception as e:
+            logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
+
     resultBytes = resultText.encode("UTF-8-sig")
 
     subCache[assBytes] = (srt, resultBytes)
-    os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
+    # os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
     return (srt, resultBytes)
 
 
