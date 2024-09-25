@@ -25,6 +25,17 @@ docker run -d --name=fontinass --restart=unless-stopped \
 
 enjoy ~
 
+## Unraidb部署
+
+下载模版
+``` sh
+curl -o /boot/config/plugins/dockerMan/templates-user/my-fontinass.xml  https://raw.githubusercontent.com/RiderLty/fontInAss/refs/heads/main/my-fontinass.xml
+```
+Docker > 添加容器 > 选择一个模版 > fontinass
+
+移除你不需要的配置项
+
+应用
 ## 手动运行
 
 安装依赖
@@ -96,7 +107,6 @@ server {
 ```
 -e HDR=1000
 ```
-
 
 
 
