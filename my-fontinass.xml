@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>fontinass</Name>
+  <Repository>riderlty/fontinass</Repository>
+  <Registry>https://hub.docker.com/r/riderlty/fontinass/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://hub.docker.com/r/riderlty/fontinass/</Support>
+  <Project/>
+  <Overview>&#x5B9E;&#x65F6;&#x5C06;&#x5B57;&#x4F53;&#x5B50;&#x96C6;&#x5316;&#x540E;&#x5D4C;&#x5165;ass&#x7684;&#x5C0F;&#x5DE5;&#x5177;&#xFF0C;&#x7528;&#x4E8E;&#x5728;&#x672A;&#x5B89;&#x88C5;&#x5BF9;&#x5E94;&#x5B57;&#x4F53;&#x7684;&#x7CFB;&#x7EDF;&#x4E0A;&#x6B63;&#x786E;&#x663E;&#x793A;&#x5B57;&#x5E55;&#x3002;&#xD;
+&#xD;
+https://github.com/RiderLty/fontInAss&#xD;
+https://hub.docker.com/r/riderlty/fontinass&#xD;
+https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
+  <Category/>
+  <WebUI>http://[IP]:[PORT:8097]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://www.foundertype.com/favicon.ico</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1727267900</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="EMBY_SERVER_URL" Target="EMBY_SERVER_URL" Default="http://[EMBY&#x670D;&#x52A1;&#x5668;&#x5730;&#x5740;]:[EMBY&#x670D;&#x52A1;&#x5668;&#x7AEF;&#x53E3;]" Mode="" Description="EMBY&#x670D;&#x52A1;&#x5668;&#x7684;URL" Type="Variable" Display="always" Required="true" Mask="false">http://192.168.3.3:7096</Config>
+  <Config Name="PORT" Target="8012" Default="8097" Mode="tcp" Description="&#x53CD;&#x5411;&#x4EE3;&#x7406;EMBY&#x7684;&#x7AEF;&#x53E3;&#xFF0C;&#x4F7F;&#x7528;&#x6B64;&#x7AEF;&#x53E3;&#x8BBF;&#x95EE;EMBY" Type="Port" Display="always" Required="true" Mask="false">8097</Config>
+  <Config Name="localFontMap.json" Target="/localFontMap.json" Default="/mnt/user/appdata/fontinass/localFontMap.json" Mode="rw" Description="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6570;&#x636E;&#x5E93;&#x5B58;&#x50A8;&#x8DEF;&#x5F84;&#xFF0C;&#x975E;&#x5FC5;&#x987B;&#xFF0C;&#x5982;&#x679C;&#x672C;&#x5730;&#x5B57;&#x4F53;&#x8F83;&#x591A;&#xFF0C;&#x5EFA;&#x8BAE;&#x8BBE;&#x7F6E;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/fontinass/localFontMap.json</Config>
+  <Config Name="&#x7F13;&#x5B58;&#x5927;&#x5C0F;" Target="CACHE_SIZE" Default="512" Mode="" Description="&#x5B57;&#x4F53;&#x3001;&#x5B57;&#x5E55;&#x7F13;&#x5B58;&#x5927;&#x5C0F;" Type="Variable" Display="always" Required="true" Mask="false">1024</Config>
+  <Config Name="SERVER" Target="8011" Default="8011" Mode="tcp" Description="&#x5B57;&#x4F53;&#x5904;&#x7406;&#x670D;&#x52A1;&#x7AEF;&#x53E3;&#xFF0C;&#x53EF;&#x4E0D;&#x66B4;&#x9732;" Type="Port" Display="advanced" Required="false" Mask="false">8011</Config>
+  <Config Name="fonts" Target="/fonts" Default="" Mode="rw" Description="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6620;&#x5C04;&#x7684;&#x8DEF;&#x5F84;" Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user/storage/Fonts/</Config>
+  <Config Name="DEV" Target="DEV" Default="false" Mode="" Description="&#x5F00;&#x53D1;&#x6A21;&#x5F0F;" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="SRT_2_ASS_FORMAT" Target="SRT_2_ASS_FORMAT" Default="Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding" Mode="" Description="SRT&#x8F6C;ASS&#x4F7F;&#x7528;&#x7684;FORMAT" Type="Variable" Display="advanced" Required="false" Mask="false">Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding</Config>
+  <Config Name="SRT_2_ASS_STYLE" Target="SRT_2_ASS_STYLE" Default="Style: Default,&#x6977;&#x4F53;,20,&amp;amp;H03FFFFFF,&amp;amp;H00FFFFFF,&amp;amp;H00000000,&amp;amp;H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1" Mode="" Description="SRT&#x8F6C;ASS&#x4F7F;&#x7528;&#x7684;STYLE" Type="Variable" Display="advanced" Required="false" Mask="false">Style: Default,&#x6977;&#x4F53;,20,&amp;H03FFFFFF,&amp;H00FFFFFF,&amp;H00000000,&amp;H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1</Config>
+  <Config Name="HDR" Target="HDR" Default="1000" Mode="" Description="HDR&#x6620;&#x5C04;" Type="Variable" Display="advanced" Required="false" Mask="false">FALSE1</Config>
+</Container>
