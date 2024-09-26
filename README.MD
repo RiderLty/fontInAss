@@ -25,7 +25,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
 
 enjoy ~
 
-## Unraidb部署
+## Unraid部署
 
 下载模版
 ``` sh
