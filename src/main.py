@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 import builtins
 import logging
 import multiprocessing
@@ -14,7 +17,7 @@ from uvicorn import Config, Server
 from cachetools import LRUCache
 import asyncio
 import ssl
-import warnings
+
 import utils
 from dirmonitor import dirmonitor
 
@@ -140,7 +143,6 @@ if __name__ == "__main__":
         level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
     )
     original_print = builtins.print
-    warnings.filterwarnings('ignore')
     builtins.print = custom_print
     # 手动修改此处，或者使用环境变量
     EMBY_SERVER_URL = "尚未EMBY_SERVER_URL环境变量"
