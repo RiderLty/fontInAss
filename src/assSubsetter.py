@@ -30,10 +30,10 @@ def analyseAss(ass_str):
         fontLine = r"{\fn" + style_fontName[eventStyle] + "}" + event.text
         # 在首部加上对应的style的字体
         for inlineStyle in re.findall(
-            r"({[^\\]*\\r[^}|\\]*[\\|}])", event.text
+            r"({[^\\]*\\r[^}|\\]+[\\|}])", event.text
         ):  # 用于匹配 {\rXXX} 其中xxx为style名称
             # {\r} 会有这种 空的
-            styleName = re.findall(r"{[^\\]*\\r([^}|\\]*)[\\|}]", inlineStyle)[0]
+            styleName = re.findall(r"{[^\\]*\\r([^}|\\]+)[\\|}]", inlineStyle)[0]
             if styleName in style_fontName:
                 fontLine = fontLine.replace(
                     inlineStyle, r"{\fn" + style_fontName[styleName] + "}"
