@@ -134,7 +134,9 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
             for font in ttc.fonts:
                 for record in font["name"].names:
                     if record.nameID == 1 and str(record).strip() == fontName:
-                        fontCache[fontName] = fontBytes
+                        fontOutIO = BytesIO()
+                        font.save(fontOutIO)
+                        fontCache[fontName] = fontOutIO
                         return copy.deepcopy(fontCache[fontName])
 
         else:
