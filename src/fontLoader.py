@@ -127,16 +127,16 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
             return None
 
         if fontBytes[:4] == b"ttcf":
-            bio = BytesIO()
-            bio.write(fontBytes)
-            bio.seek(0)
-            ttc = TTCollection(bio)
+            fontInIO = BytesIO(fontBytes)
+
+            ttc = TTCollection(fontInIO)
             for font in ttc.fonts:
                 for record in font["name"].names:
                     if record.nameID == 1 and str(record).strip() == fontName:
                         fontOutIO = BytesIO()
+                        #font.save好慢
                         font.save(fontOutIO)
-                        fontCache[fontName] = fontOutIO
+                        fontCache[fontName] = fontOutIO.getvalue()
                         return copy.deepcopy(fontCache[fontName])
 
         else:
