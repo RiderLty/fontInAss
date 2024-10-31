@@ -92,6 +92,61 @@ def makeFontMap(data):
 #         logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")
 #         return None
 
+# @utils.printPerformance
+# def loadFont(fontName, externalFonts, fontPathMap, fontCache):
+#     cachedResult = fontCache.get(fontName)
+#     if cachedResult:
+#         logger.info(f"{fontName} 字体缓存命中")
+#         return copy.deepcopy(cachedResult)
+#
+#     try:
+#         if fontName in externalFonts:
+#             path = externalFonts[fontName]
+#             logger.info(f"从本地加载字体 {path}")
+#             if path.lower().startswith("http"):
+#                 fontBytes = requests.get(path).content
+#             else:
+#                 fontBytes = open(path, "rb").read()
+#         elif fontName in fontPathMap:
+#             path = fontPathMap[fontName]
+#             logger.info(f"从网络加载字体 https://fonts.storage.rd5isto.org{path}")
+#             fontBytes = requests.get(
+#                 "https://fonts.storage.rd5isto.org" + path
+#             ).content
+#
+#             # 构造完整的本地路径
+#             file_path = os.path.join("../fonts/download", path.lstrip('/'))
+#             # 确保路径中的文件夹存在
+#             local_path = os.path.dirname(file_path)
+#             os.makedirs(local_path, exist_ok=True)
+#             # 保存到本地
+#             with open(file_path, "wb") as f:
+#                 f.write(fontBytes)
+#             logger.info(f"字体已下载到本地 {file_path}")
+#         else:
+#             return None
+#
+#         if fontBytes[:4] == b"ttcf":
+#             fontInIO = BytesIO(fontBytes)
+#
+#             ttc = TTCollection(fontInIO)
+#             for font in ttc.fonts:
+#                 for record in font["name"].names:
+#                     if record.nameID == 1 and str(record).strip() == fontName:
+#                         fontOutIO = BytesIO()
+#                         #font.save好慢
+#                         font.save(fontOutIO)
+#                         fontCache[fontName] = fontOutIO.getvalue()
+#                         return copy.deepcopy(fontCache[fontName])
+#
+#         else:
+#             fontCache[fontName] = fontBytes
+#             return copy.deepcopy(fontCache[fontName])
+#     except Exception as e:
+#         logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")
+#         return None
+
+
 @utils.printPerformance
 def loadFont(fontName, externalFonts, fontPathMap, fontCache):
     cachedResult = fontCache.get(fontName)
@@ -128,19 +183,14 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
 
         if fontBytes[:4] == b"ttcf":
             fontInIO = BytesIO(fontBytes)
-
             ttc = TTCollection(fontInIO)
-            for font in ttc.fonts:
+            for index, font in enumerate(ttc.fonts):
                 for record in font["name"].names:
                     if record.nameID == 1 and str(record).strip() == fontName:
-                        fontOutIO = BytesIO()
-                        #font.save好慢
-                        font.save(fontOutIO)
-                        fontCache[fontName] = fontOutIO.getvalue()
+                        fontCache[fontName] = [fontBytes, index]
                         return copy.deepcopy(fontCache[fontName])
-
         else:
-            fontCache[fontName] = fontBytes
+            fontCache[fontName] = [fontBytes,0]
             return copy.deepcopy(fontCache[fontName])
     except Exception as e:
         logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")
