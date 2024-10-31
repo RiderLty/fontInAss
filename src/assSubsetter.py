@@ -190,6 +190,30 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
 
     return errors, embedFontsText
 
+# def makeOneEmbedFontsText(args):
+#     # 在每个子进程中设置日志，这亚子报错了在主进程也可以看到
+#     logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+#
+#     fontBytes, fontName, unicodeSet,= args
+#     if fontBytes is None:
+#         return f"{fontName} miss", None
+#     else:
+#         try:
+#             #转harfbuzz.Face对象
+#             face = uharfbuzz.Face(fontBytes)
+#             #初始化子集化UNICODE
+#             inp = uharfbuzz.SubsetInput()
+#             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
+#             #子集化
+#             face = uharfbuzz.subset(face, inp)
+#             #编码，直接传入bytes类型face.blob.data
+#             enc = uuencode(face.blob.data)
+#             return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+#         except Exception as e:
+#             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
+#             return f" {fontName} : {str(e)}", None
+
+
 def makeOneEmbedFontsText(args):
     # 在每个子进程中设置日志，这亚子报错了在主进程也可以看到
     logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -199,8 +223,9 @@ def makeOneEmbedFontsText(args):
         return f"{fontName} miss", None
     else:
         try:
-            #转harfbuzz.Face对象
-            face = uharfbuzz.Face(fontBytes)
+            # logger.error(f"当前字体处于ttc的index : {fontBytes[1]}")
+            #转harfbuzz.Face对象 指定blob的faces_index
+            face = uharfbuzz.Face(fontBytes[0],fontBytes[1])
             #初始化子集化UNICODE
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
@@ -208,6 +233,7 @@ def makeOneEmbedFontsText(args):
             face = uharfbuzz.subset(face, inp)
             #编码，直接传入bytes类型face.blob.data
             enc = uuencode(face.blob.data)
+            del face
             return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
