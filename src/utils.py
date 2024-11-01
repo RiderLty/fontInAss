@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -85,8 +86,9 @@ def printPerformance(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         start = time.perf_counter_ns()
         result = func(*args, **kwargs)
+        duration = (time.perf_counter_ns() - start) / 1000000
         logger.info(
-            f"{func.__name__}{args[0:1]}{kwargs} 耗时 {(time.perf_counter_ns() - start) / 1000000} ms"
+            f"{func.__name__}{args[0:1]}{kwargs} 用时 {duration:.2f}ms"
         )
         return result
 
@@ -170,67 +172,6 @@ def bytes2str(bytes):
     logger.info(f"判断编码:{str(result)}")
     return bytes.decode(result["encoding"])
 
-# def process(assBytes, subCache, externalFonts, fontPathMap, fontCache):
-#     devFlag = (
-#             os.getenv("DEV") == "true"
-#             and os.path.exists("DEV")
-#             and len(os.listdir("DEV")) == 1
-#     )
-#     start = time.time()
-#
-#     if devFlag:
-#         logger.debug("DEV模式 使用字幕" + os.path.join("DEV", os.listdir("DEV")[0]))
-#         with open(
-#                 os.path.join("DEV", os.listdir("DEV")[0]),
-#                 "rb",
-#         ) as f:
-#             assBytes = f.read()
-#             assText = bytes2str(assBytes)
-#     else:  # 非DEV模式，才使用字幕缓存
-#         cachedResult = subCache.get(assBytes)
-#         if cachedResult:
-#             logger.info("字幕缓存命中")
-#             return cachedResult[0], cachedResult[1]
-#         assText = bytes2str(assBytes)
-#     # os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
-#
-#     srt = isSRT(assText)
-#
-#     if srt:
-#         if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
-#             logger.info("SRT ===> ASS")
-#             assText = srt2ass(assText)
-#         else:
-#             logger.info("未开启SRT转ASS")
-#             return (True, assText.encode("UTF-8-sig"))
-#
-#     if "[Fonts]\n" in assText:
-#         raise ValueError("已有内嵌字幕")
-#
-#     if os.getenv("HDR"):
-#         logger.info(f"HDR适配")
-#         try:
-#             assText = hdrify.ssaProcessor(assText, int(os.getenv("HDR")))
-#         except Exception as e:
-#             logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
-#
-#     font_charList = assSubsetter.analyseAss(assText)
-#     errors, embedFontsText = assSubsetter.makeEmbedFonts(font_charList, externalFonts, fontPathMap, fontCache)
-#     head, tai = assText.split("[Events]")
-#     print(assText)
-#     logger.info(
-#         f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}"
-#     )
-#     logger.info(f"生成Fonts部分长度 {len(embedFontsText)}")
-#     len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
-#     resultText = head + embedFontsText + "\n[Events]" + tai
-#
-#     resultBytes = resultText.encode("UTF-8-sig")
-#
-#     subCache[assBytes] = (srt, resultBytes)
-#     # os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
-#     return (srt, resultBytes)
-
 def split_ass_text(ass_text_chunk):
     parts = ass_text_chunk.split("[Events]")
     if len(parts) == 2:
@@ -239,7 +180,7 @@ def split_ass_text(ass_text_chunk):
         # 如果没有找到 "[Events]"，可以返回一个默认值或抛出异常
         return "", ass_text_chunk  # 返回空的 head 和原始 chunk 作为 tai
 
-def process(pool, assBytes, subCache, externalFonts, fontPathMap, fontCache):
+def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL):
     devFlag = (
             os.getenv("DEV") == "true"
             and os.path.exists("DEV")
@@ -255,10 +196,13 @@ def process(pool, assBytes, subCache, externalFonts, fontPathMap, fontCache):
         ) as f:
             assBytes = f.read()
             assText = bytes2str(assBytes)
-    else:  # 非DEV模式，才使用字幕缓存
-        cachedResult = subCache.get(assBytes)
-        if cachedResult:
-            logger.info("字幕缓存命中")
+    else:  # 非DEV模式，才使用字幕缓存+
+        if sub_HNmae in subCache:
+            cachedResult = subCache[sub_HNmae]
+            # 刷新字幕缓存过期时间
+            subCache.touch(sub_HNmae, expire= SUB_TTL)
+            # logger.info(f"字幕缓存命中")
+            logger.info(f"字幕缓存命中 - 占用: {len(cachedResult[1]) / (1024 * 1024):.2f}MB")
             return cachedResult[0], cachedResult[1]
         assText = bytes2str(assBytes)
     os.getenv("DEV") == "true" and logger.debug("原始字幕\n" + assText)
@@ -284,19 +228,26 @@ def process(pool, assBytes, subCache, externalFonts, fontPathMap, fontCache):
             logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
     font_charList = assSubsetter.analyseAss(assText)
-    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache)
+    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache, FONT_TTL)
     head, tai = assText.split("[Events]")
     # print(assText)
-    logger.info(
-        # f"嵌入完成，用时 {time.time() - start:.2f}s \n生成Fonts {len(embedFontsText)}"
-        f"嵌入完成，用时 {time.time() - start:.2f}s"
-    )
-    logger.info(f"生成Fonts部分长度 {len(embedFontsText)}")
+    logger.info(f"嵌入完成 用时 {time.time() - start:.2f}s - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
     len(errors) != 0 and logger.info("ERRORS:" + "\n".join(errors))
     resultText = head + embedFontsText + "\n[Events]" + tai
 
     resultBytes = resultText.encode("UTF-8-sig")
 
-    subCache[assBytes] = (srt, resultBytes)
+    subCache.set(sub_HNmae, (srt, resultBytes), expire= SUB_TTL)
+
     # os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
     return (srt, resultBytes)
+
+#计算文件哈希值
+def bytes_to_hashName(bytes, hash_algorithm='sha256'):
+    hash_func = {
+        'md5': hashlib.md5,
+        'sha1': hashlib.sha1,
+        'sha256': hashlib.sha256
+    }.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
+    hash_func.update(bytes)
+    return hash_func.hexdigest()

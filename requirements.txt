@@ -4,9 +4,9 @@ uvicorn==0.30.0
 fastapi==0.89.1
 requests==2.31.0
 watchdog==4.0.2
-cachetools==5.5.0
+diskcache==5.6.3
 coloredlogs==15.0.1
 chardet==5.1.0
 colour-science==0.4.4
 numpy==1.26.4
-uharfbuzz==0.41.0
+uharfbuzz==0.41.1
