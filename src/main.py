@@ -14,7 +14,7 @@ import requests
 
 from fastapi import FastAPI, Query, Request, Response
 from uvicorn import Config, Server
-from cachetools import LRUCache
+from diskcache import Cache
 import asyncio
 import ssl
 
@@ -51,7 +51,8 @@ async def process_bytes(request: Request):
     print(request.headers)
     subtitleBytes = await request.body()
     try:
-        srt, bytes = utils.process(pool, subtitleBytes, subCache, externalFonts, fontPathMap, fontCache)
+        sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
         return Response(
             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
         )
@@ -69,7 +70,8 @@ async def process_url(ass_url: str = Query(None)):
     print("loading " + ass_url)
     try:
         subtitleBytes = requests.get(ass_url).content
-        srt, bytes = utils.process(pool, subtitleBytes, subCache, externalFonts, fontPathMap, fontCache)
+        sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
         return Response(
             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
         )
@@ -90,7 +92,7 @@ async def proxy_pass(request: Request, response: Response):
             else request.url.path
         )
         embyRequestUrl = host + url
-        logger.info(f"字幕URL:{embyRequestUrl}")
+        logger.info(f"字幕URL: {embyRequestUrl}")
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
         copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
@@ -98,9 +100,11 @@ async def proxy_pass(request: Request, response: Response):
         logger.error(info)
         return info
     try:
-        logger.info(f"原始大小:{len(serverResponse.content)}")
-        srt, bytes = utils.process(pool, serverResponse.content, subCache, externalFonts, fontPathMap, fontCache)
-        logger.info(f"处理后大小:{len(bytes)}")
+        subtitleBytes = serverResponse.content
+        logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
+        sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
+        logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
         copyHeaders["Content-Length"] = str(len(bytes))
         if srt:
             if (
@@ -113,15 +117,6 @@ async def proxy_pass(request: Request, response: Response):
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=serverResponse.content)
 
-
-# class MyHandler(FileSystemEventHandler):
-#     def on_created(self, event):
-#         self.emit_once = True
-#         utils.updateLocal(fontDirList)
-#
-#     def on_deleted(self, event):
-#         self.emit_once = True
-#         utils.updateLocal(fontDirList)
 
 def getServer(port,serverLoop):
     serverConfig = Config(
@@ -136,8 +131,14 @@ def getServer(port,serverLoop):
     return Server(serverConfig)
 
 if __name__ == "__main__":
+    # 进程池最大数量
+    cpu_count = int(os.cpu_count())
+    POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
+    if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
+        POOL_CPU_MAX = cpu_count
     #根据CPU逻辑处理器数创建子进程池
-    pool = multiprocessing.Pool(int(os.cpu_count()))
+    pool = multiprocessing.Pool(POOL_CPU_MAX)
+
     fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
     coloredlogs.install(
         level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
@@ -146,13 +147,6 @@ if __name__ == "__main__":
     builtins.print = custom_print
     # 手动修改此处，或者使用环境变量
     EMBY_SERVER_URL = "尚未EMBY_SERVER_URL环境变量"
-
-    cacheSize = int(os.environ.get("CACHE_SIZE") or 32)
-    subCache = LRUCache(maxsize=cacheSize)
-
-    serverLoop = asyncio.new_event_loop()
-    asyncio.set_event_loop(serverLoop)
-    ssl._create_default_https_context = ssl._create_unverified_context
 
     fontDirList = [r"../fonts"]
 
@@ -182,24 +176,36 @@ if __name__ == "__main__":
     if not os.path.exists("../fonts"):
         os.makedirs("../fonts", exist_ok=True)
 
-    cacheSize = int(os.environ.get("CACHE_SIZE") or 32)
-    fontCache = LRUCache(maxsize=cacheSize)
+    # 字幕文件缓存的过期时间，分钟为单位，默认60分钟，字幕文件占用很小。
+    SUB_TTL = int(os.environ.get("SUB_TTL", default= 60 * 60))
+    if SUB_TTL < 0:
+        SUB_TTL = 60 * 60
+    # 字体文件缓存的过期时间，分钟为单位，默认30分钟
+    FONT_TTL = int(os.environ.get("FONT_TTL", default= 30 * 60))
+    if FONT_TTL < 0:
+        FONT_TTL = 30 * 60
 
+    # 最小10MB
+    SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE",default= 10))
+    subCache = Cache(directory= None, size_limit= SUB_CACHE_SIZE * 1024 * 1024)
 
-    # event_handler = MyHandler()
+    # 最小100MB
+    FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE",default= 100))
+    fontCache = Cache(directory= None, size_limit= FONT_CACHE_SIZE * 1024 * 1024)
+
+    serverLoop = asyncio.new_event_loop()
+    asyncio.set_event_loop(serverLoop)
+    ssl._create_default_https_context = ssl._create_unverified_context
+
+    # 创建fonts字体文件夹监视实体
     event_handler = dirmonitor(fontDirList)
     event_handler.start()
-    # observer = Observer()
-    # for fontDir in fontDirList:
-    #     logger.info("监控中:" + os.path.abspath(fontDir))
-    #     observer.schedule(event_handler, os.path.abspath(fontDir), recursive=True)
-    # observer.start()
+    # 启动web服务
     serverInstance = getServer(8011,serverLoop)
+    # 初始化日记
     init_logger()
     serverLoop.run_until_complete(serverInstance.serve())
-    # observer.stop()
-    # observer.join()
     event_handler.stop()
-    event_handler.join()
+    event_handler.join() # 等待文件监视退出
     pool.close()
     pool.join()  # 等待所有进程完成

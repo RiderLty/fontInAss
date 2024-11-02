@@ -96,9 +96,29 @@ server {
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
 
-程序默认字体与字幕缓存大小为32，可修改CACHE_SIZE来自定义
+字幕缓存大小上限为10MB，可修改SUB_CACHE_SIZE来自定义，单位（MB）
 ```
--e CACHE_SIZE=1024
+-e SUB_CACHE_SIZE=10
+```
+
+字幕缓存在内存的过期时间为60分钟，可修改SUB_TTL来自定义，单位（分钟）
+```
+-e SUB_TTL=60
+```
+
+字体缓存大小上限为100MB，可修改FONT_CACHE_SIZE来自定义，单位（MB）
+```
+-e FONT_CACHE_SIZE=100
+```
+
+字幕缓存在内存的过期时间为30分钟，可修改FONT_TTL来自定义，单位（分钟）
+```
+-e FONT_TTL=30
+```
+
+子集化进程池最大数量，不设置就默认为CPU总线程数，类型（整数）
+```
+-e POOL_CPU_MAX=4
 ```
 
 支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
