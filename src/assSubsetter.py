@@ -1,5 +1,6 @@
 import os
 import logging
+import coloredlogs
 import re
 import uharfbuzz
 import traceback
@@ -98,10 +99,14 @@ def uuencode(binaryData):
     return "\n".join(encoded_lines)
 
 def makeOneEmbedFontsText(args):
-    # 在每个子进程中设置日志，这亚子报错了在主进程也可以看到
-    logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+    fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
+    coloredlogs.install(
+        level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
+    )
 
-    fontBytes, fontName, unicodeSet,= args
+    #fontBytes, fontName, unicodeSet,= args
+    fontName, unicodeSet, externalFonts, fontPathMap, fontCache, FONT_TTL = args
+    fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL)
     if fontBytes is None:
         return f"缺少字体 {fontName}", None
     else:
@@ -130,9 +135,9 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache, F
     tasks = []
     for fontName, unicodeSet in font_charList.items():
         if len(unicodeSet) != 0:
-            #读取字体文件是属于I/O密集型，所以似乎不适合在多进程中处理
-            fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL)
-            task = (fontBytes, fontName, unicodeSet)
+            task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache, FONT_TTL)
+            # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL)
+            # task = (fontBytes, fontName, unicodeSet)
             tasks.append(task)
 
     # 异步地处理任务
