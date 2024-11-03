@@ -108,7 +108,7 @@ server {
 
 字体缓存大小上限为30条目，可修改FONT_CACHE_SIZE来自定义，单位（条）
 ```
--e FONT_CACHE_SIZE=300
+-e FONT_CACHE_SIZE=30
 ```
 
 字幕缓存在内存的过期时间为30分钟，可修改FONT_TTL来自定义，单位（分钟）
