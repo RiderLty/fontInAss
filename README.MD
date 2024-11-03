@@ -96,9 +96,9 @@ server {
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
 
-字幕缓存大小上限为10MB，可修改SUB_CACHE_SIZE来自定义，单位（MB）
+字幕缓存大小上限为50条目，可修改SUB_CACHE_SIZE来自定义，单位（条）
 ```
--e SUB_CACHE_SIZE=10
+-e SUB_CACHE_SIZE=50
 ```
 
 字幕缓存在内存的过期时间为60分钟，可修改SUB_TTL来自定义，单位（分钟）
@@ -106,9 +106,9 @@ server {
 -e SUB_TTL=60
 ```
 
-字体缓存大小上限为100MB，可修改FONT_CACHE_SIZE来自定义，单位（MB）
+字体缓存大小上限为30条目，可修改FONT_CACHE_SIZE来自定义，单位（条）
 ```
--e FONT_CACHE_SIZE=100
+-e FONT_CACHE_SIZE=30
 ```
 
 字幕缓存在内存的过期时间为30分钟，可修改FONT_TTL来自定义，单位（分钟）
