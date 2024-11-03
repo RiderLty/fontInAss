@@ -180,7 +180,7 @@ def split_ass_text(ass_text_chunk):
         # 如果没有找到 "[Events]"，可以返回一个默认值或抛出异常
         return "", ass_text_chunk  # 返回空的 head 和原始 chunk 作为 tai
 
-def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL):
+def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fontCache):
     devFlag = (
             os.getenv("DEV") == "true"
             and os.path.exists("DEV")
@@ -200,7 +200,7 @@ def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fon
         if sub_HNmae in subCache:
             cachedResult = subCache[sub_HNmae]
             # 刷新字幕缓存过期时间
-            subCache.touch(sub_HNmae, expire= SUB_TTL)
+            subCache[sub_HNmae] = cachedResult
             # logger.info(f"字幕缓存命中")
             logger.info(f"字幕缓存命中 - 占用: {len(cachedResult[1]) / (1024 * 1024):.2f}MB")
             return cachedResult[0], cachedResult[1]
@@ -228,7 +228,7 @@ def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fon
             logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
     font_charList = assSubsetter.analyseAss(assText)
-    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache, FONT_TTL)
+    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache)
     head, tai = assText.split("[Events]")
     # print(assText)
     logger.info(f"嵌入完成 用时 {time.time() - start:.2f}s - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
@@ -237,7 +237,7 @@ def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fon
 
     resultBytes = resultText.encode("UTF-8-sig")
 
-    subCache.set(sub_HNmae, (srt, resultBytes), expire= SUB_TTL)
+    subCache[sub_HNmae] = (srt, resultBytes)
 
     # os.getenv("DEV") == "true" and logger.debug("处理后字幕\n" + resultText)
     return (srt, resultBytes)

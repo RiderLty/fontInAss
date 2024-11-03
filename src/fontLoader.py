@@ -2,6 +2,7 @@ import logging
 import copy
 import os
 import traceback
+
 import requests
 from io import BytesIO
 from fontTools.ttLib import TTCollection
@@ -42,12 +43,11 @@ def makeFontMap(data):
     return font_file_map
 
 @utils.printPerformance
-def loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL):
-
+def loadFont(fontName, externalFonts, fontPathMap, fontCache):
     if fontName in fontCache:
         cachedResult = fontCache[fontName]
         #刷新字体缓存过期时间
-        fontCache.touch(fontName, expire= FONT_TTL)
+        fontCache[fontName] = cachedResult
         logger.info(f"{fontName} 字体缓存命中 - 占用: {len(cachedResult[0]) / (1024 * 1024):.2f}MB")
         return copy.deepcopy(cachedResult)
 
@@ -84,10 +84,10 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL):
             for index, font in enumerate(ttc.fonts):
                 for record in font["name"].names:
                     if record.nameID == 1 and str(record).strip() == fontName:
-                        fontCache.set(fontName, [fontBytes, index], expire=FONT_TTL)
+                        fontCache[fontName] = [fontBytes, index]
                         return copy.deepcopy([fontBytes, index])
         else:
-            fontCache.set(fontName, [fontBytes, 0], expire=FONT_TTL)
+            fontCache[fontName] = [fontBytes, 0]
             return copy.deepcopy([fontBytes, 0])
     except Exception as e:
         logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")

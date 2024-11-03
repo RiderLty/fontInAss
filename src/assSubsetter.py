@@ -1,6 +1,5 @@
 import os
 import logging
-import coloredlogs
 import re
 import uharfbuzz
 import traceback
@@ -99,14 +98,12 @@ def uuencode(binaryData):
     return "\n".join(encoded_lines)
 
 def makeOneEmbedFontsText(args):
-    fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
-    coloredlogs.install(
-        level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
-    )
+    # 在每个子进程中设置日志
+    logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    #fontBytes, fontName, unicodeSet,= args
-    fontName, unicodeSet, externalFonts, fontPathMap, fontCache, FONT_TTL = args
-    fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL)
+    # fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
+    # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+    fontBytes, fontName, unicodeSet,= args
     if fontBytes is None:
         return f"缺少字体 {fontName}", None
     else:
@@ -127,7 +124,7 @@ def makeOneEmbedFontsText(args):
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
             return f" {fontName} : {str(e)}", None
 
-def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache, FONT_TTL):
+def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
     """对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本"""
     embedFontsText = "[Fonts]\n"
     errors = []
@@ -135,9 +132,9 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache, F
     tasks = []
     for fontName, unicodeSet in font_charList.items():
         if len(unicodeSet) != 0:
-            task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache, FONT_TTL)
-            # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache, FONT_TTL)
-            # task = (fontBytes, fontName, unicodeSet)
+            # task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache)
+            fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+            task = (fontBytes, fontName, unicodeSet)
             tasks.append(task)
 
     # 异步地处理任务

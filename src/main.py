@@ -14,7 +14,7 @@ import requests
 
 from fastapi import FastAPI, Query, Request, Response
 from uvicorn import Config, Server
-from diskcache import Cache
+from cachetools import TTLCache
 import asyncio
 import ssl
 
@@ -52,7 +52,7 @@ async def process_bytes(request: Request):
     subtitleBytes = await request.body()
     try:
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
         return Response(
             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
         )
@@ -71,7 +71,7 @@ async def process_url(ass_url: str = Query(None)):
     try:
         subtitleBytes = requests.get(ass_url).content
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
         return Response(
             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
         )
@@ -103,7 +103,7 @@ async def proxy_pass(request: Request, response: Response):
         subtitleBytes = serverResponse.content
         logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache, SUB_TTL, FONT_TTL)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
         logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
         copyHeaders["Content-Length"] = str(len(bytes))
         if srt:
@@ -185,13 +185,13 @@ if __name__ == "__main__":
     if FONT_TTL < 0:
         FONT_TTL = 30 * 60
 
-    # 最小10MB
-    SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE",default= 10))
-    subCache = Cache(directory= None, size_limit= SUB_CACHE_SIZE * 1024 * 1024)
+    # 最大50条目
+    SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE",default= 50))
+    subCache = TTLCache(maxsize= SUB_CACHE_SIZE, ttl= SUB_TTL)
 
-    # 最小100MB
-    FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE",default= 100))
-    fontCache = Cache(directory= None, size_limit= FONT_CACHE_SIZE * 1024 * 1024)
+    # 最大30条目
+    FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE",default= 30))
+    fontCache = TTLCache(maxsize= FONT_CACHE_SIZE, ttl= FONT_TTL)
 
     serverLoop = asyncio.new_event_loop()
     asyncio.set_event_loop(serverLoop)
