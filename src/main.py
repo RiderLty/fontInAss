@@ -186,9 +186,7 @@ if __name__ == "__main__":
     builtins.print = custom_print
     # 手动修改此处，或者使用环境变量
     EMBY_SERVER_URL = "尚未EMBY_SERVER_URL环境变量"
-
     fontDirList = [r"../fonts"]
-
     if not os.path.exists("../localFontMap.json"):
         with open("../localFontMap.json", "w", encoding="UTF-8") as f:
             json.dump({}, f)

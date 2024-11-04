@@ -127,7 +127,7 @@ def makeOneEmbedFontsText(args):
             bio.write(face.blob.data)
             bio.seek(0)
             target = TTFont(bio)
-            target["name"].names = originNames
+            target["name"].names = originNames#子集化后需要将原始名称替换回去，否则会找不到字体导致子集化无效
             fontOutIO = BytesIO()
             target.save(fontOutIO)
             enc = uuencode(fontOutIO.getvalue())
