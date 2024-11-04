@@ -25,6 +25,11 @@ docker run -d --name=fontinass --restart=unless-stopped \
 
 enjoy ~
 
+### 无nginx版本
+使用```riderlty/fontinass:nonginx```tag，不整合nginx
+
+有需求的用户可参考手动部署自行添加反向代理
+
 ## Unraid部署
 
 下载模版
@@ -96,22 +101,22 @@ server {
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
 
-字幕缓存大小上限为50条目，可修改SUB_CACHE_SIZE来自定义，单位（条）
+字幕缓存上限，默认30，单位（条）
 ```
 -e SUB_CACHE_SIZE=50
 ```
 
-字幕缓存在内存的过期时间为60分钟，可修改SUB_TTL来自定义，单位（分钟）
+字幕缓存在内存的过期时间，默认60，单位（分钟），SUB_TTL <= 0 禁用过期
 ```
 -e SUB_TTL=60
 ```
 
-字体缓存大小上限为30条目，可修改FONT_CACHE_SIZE来自定义，单位（条）
+字体缓存上限，默认30，单位（条）
 ```
 -e FONT_CACHE_SIZE=30
 ```
 
-字幕缓存在内存的过期时间为30分钟，可修改FONT_TTL来自定义，单位（分钟）
+字体缓存在内存的过期时间，默认60，单位（分钟），FONT_TTL <= 0 禁用过期
 ```
 -e FONT_TTL=30
 ```

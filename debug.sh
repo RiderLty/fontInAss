@@ -1,10 +1,11 @@
+cd /mnt/user/storage/Projects/fontInAss/
 docker stop test
 
-docker rmi test && docker build /mnt/user/storage/Projects/fontInAss/ -t test
+docker build -f  --rm -f default.Dockerfile . -t test --build-arg NGINX=NO
 
 docker run  --name test --rm -p 9999:8012 -p 9998:8011  -e EMBY_SERVER_URL="http://192.168.3.3:7096"  test 
 
-
+docker run  --name test --rm -it -p 9999:8012 -p 9998:8011  -e EMBY_SERVER_URL="http://192.168.3.3:7096"  test /bin/bash
 
 export EMBY_SERVER_URL="http://192.168.3.3:7096"
 export SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'

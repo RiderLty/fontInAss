@@ -19,13 +19,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      - name: Build and push
+      - name: Build and push default
         uses: docker/build-push-action@v4
         with:
+          build-args: NGINX=YES
+          context: .
           platforms: |
             linux/amd64
             linux/arm64
-           
           push: true
           tags: riderlty/fontinass:latest
-
+      
+      - name: Build and push without nginx
+        uses: docker/build-push-action@v4
+        with:
+          build-args: NGINX=NO
+          context: .
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          tags: riderlty/fontinass:noproxy
