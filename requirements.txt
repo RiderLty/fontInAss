@@ -1,7 +1,5 @@
 ass==0.5.4
 fonttools==4.33.3
-uvicorn==0.30.0
-fastapi==0.89.1
 requests==2.31.0
 watchdog==4.0.2
 cachetools==5.5.0
@@ -10,3 +8,4 @@ chardet==5.1.0
 colour-science==0.4.4
 numpy==1.26.4
 uharfbuzz==0.41.1
+bottle==0.13.2

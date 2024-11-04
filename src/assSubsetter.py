@@ -96,15 +96,14 @@ def makeOneEmbedFontsText(args):
     # 在每个子进程中设置日志
     logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
 
-    fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
-    fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
-    # fontBytes, fontName, unicodeSet,= args
+    # fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
+    # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+    fontBytes, fontName, unicodeSet,= args
     if fontBytes is None:
         return f"缺少字体 {fontName}", None
     else:
         try:
-         
-            logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
+            # logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
             # 转harfbuzz.Face对象 指定blob的faces_index
             face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
             # ================================================
@@ -150,9 +149,9 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
     tasks = []
     for fontName, unicodeSet in font_charList.items():
         if len(unicodeSet) != 0:  # 考虑到从网络获取字体的情况，使用多线程
-            task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache)
-            # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
-            # task = (fontBytes, fontName, unicodeSet)
+            # task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache)
+            fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+            task = (fontBytes, fontName, unicodeSet)
             tasks.append(task)
     # 异步地处理任务
     results = pool.map(makeOneEmbedFontsText, tasks)

@@ -8,7 +8,6 @@ import traceback
 
 import chardet
 from fontTools.ttLib import TTFont, TTCollection
-from fastapi.responses import JSONResponse
 
 import assSubsetter
 import fontLoader
@@ -78,7 +77,7 @@ def updateLocal(fontDirList):
     with open("../localFontMap.json", "w", encoding="UTF-8") as f:
         json.dump(localFonts, f, indent=4, ensure_ascii=True)
     externalFonts = fontLoader.makeFontMap(localFonts)
-    return JSONResponse(localFonts)
+    # return JSONResponse(localFonts)
     # return externalFonts
 
 

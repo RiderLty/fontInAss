@@ -1,7 +1,9 @@
+docker rmi $(docker images -f "dangling=true" -q)
+
 cd /mnt/user/storage/Projects/fontInAss/
 docker stop test
 
-docker build -f  --rm -f default.Dockerfile . -t test --build-arg NGINX=NO
+docker build . -t test --build-arg NGINX=NO
 
 docker run  --name test --rm -p 9999:8012 -p 9998:8011  -e EMBY_SERVER_URL="http://192.168.3.3:7096"  test 
 
