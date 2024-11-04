@@ -33,6 +33,7 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
 
 FROM python:3.10-slim-buster 
+ARG NGINX=YES
 COPY --from=builder /wheels /wheels
 COPY --from=builder /requirements.txt .
 COPY fontMap.json localFontMap.json requirements.txt run.sh /
