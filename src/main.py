@@ -189,6 +189,9 @@ if __name__ == "__main__":
 
     fontDirList = [r"../fonts"]
 
+    if not os.path.exists("../localFontMap.json"):
+        with open("../localFontMap.json", "w", encoding="UTF-8") as f:
+            json.dump({}, f)
     # externalFonts = utils.updateLocal(fontDirList)
     with open("../localFontMap.json", "r", encoding="UTF-8") as f:
         localFonts = utils.updateFontMap(fontDirList, json.load(f))
@@ -207,10 +210,6 @@ if __name__ == "__main__":
             if dirPath.strip() != "" and os.path.exists(dirPath):
                 fontDirList.append(dirPath.strip())
     logger.info("本地字体文件夹:" + ",".join(fontDirList))
-
-    if not os.path.exists("../localFontMap.json"):
-        with open("../localFontMap.json", "w", encoding="UTF-8") as f:
-            json.dump({}, f)
 
     if not os.path.exists("../fonts"):
         os.makedirs("../fonts", exist_ok=True)

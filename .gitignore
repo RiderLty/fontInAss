@@ -4,3 +4,5 @@ fonts
 TEST
 *.pyc
 localFontMap.json
+src/test.py
+localFontMap.json
