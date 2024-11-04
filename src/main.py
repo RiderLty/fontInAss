@@ -14,7 +14,7 @@ import requests
 
 from fastapi import FastAPI, Query, Request, Response
 from uvicorn import Config, Server
-from cachetools import TTLCache
+from cachetools import LRUCache, TTLCache
 import asyncio
 import ssl
 
@@ -178,20 +178,20 @@ if __name__ == "__main__":
 
     # 字幕文件缓存的过期时间，分钟为单位，默认60分钟，字幕文件占用很小。
     SUB_TTL = int(os.environ.get("SUB_TTL", default= 60 * 60))
-    if SUB_TTL < 0:
-        SUB_TTL = 60 * 60
+    # if SUB_TTL < 0: 
+    #     SUB_TTL = 60 * 60
     # 字体文件缓存的过期时间，分钟为单位，默认30分钟
     FONT_TTL = int(os.environ.get("FONT_TTL", default= 30 * 60))
-    if FONT_TTL < 0:
-        FONT_TTL = 30 * 60
+    # if FONT_TTL < 0:
+    #     FONT_TTL = 30 * 60
 
     # 最大50条目
     SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE",default= 50))
-    subCache = TTLCache(maxsize= SUB_CACHE_SIZE, ttl= SUB_TTL)
+    subCache = TTLCache(maxsize= SUB_CACHE_SIZE, ttl= SUB_TTL) if SUB_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE) # 过期时间小于等于0 则永不过期
 
     # 最大30条目
     FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE",default= 30))
-    fontCache = TTLCache(maxsize= FONT_CACHE_SIZE, ttl= FONT_TTL)
+    fontCache = TTLCache(maxsize= FONT_CACHE_SIZE, ttl= FONT_TTL) if FONT_TTL > 0 else LRUCache(maxsize=FONT_CACHE_SIZE) # 过期时间小于等于0 则永不过期
 
     serverLoop = asyncio.new_event_loop()
     asyncio.set_event_loop(serverLoop)

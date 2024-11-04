@@ -23,20 +23,17 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./default.Dockerfile
           platforms: |
             linux/amd64
-            linux/arm64
           push: true
           tags: riderlty/fontinass:latest
       
       - name: Build and push without nginx
         uses: docker/build-push-action@v4
         with:
+          build-args: NGINX=NO
           context: .
-          file: ./noproxy.Dockerfile
           platforms: |
             linux/amd64
-            linux/arm64
           push: true
           tags: riderlty/fontinass:noproxy
