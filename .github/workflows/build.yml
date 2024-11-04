@@ -26,6 +26,7 @@ jobs:
           context: .
           platforms: |
             linux/amd64
+            linux/arm64
           push: true
           tags: riderlty/fontinass:latest
       
@@ -36,5 +37,6 @@ jobs:
           context: .
           platforms: |
             linux/amd64
+            linux/arm64
           push: true
           tags: riderlty/fontinass:noproxy
