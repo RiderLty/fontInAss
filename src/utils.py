@@ -12,6 +12,7 @@ from fontTools.ttLib import TTFont, TTCollection
 import assSubsetter
 import fontLoader
 import hdrify
+from config import DEFAULT_FONT_PATH, FONT_MAP_PATH, LOCAL_FONT_MAP_PATH
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -71,10 +72,10 @@ def updateLocal(fontDirList):
     global externalFonts
     """更新本地字体库"""
     logger.info("更新本地字体库中...")
-    with open("../localFontMap.json", "r", encoding="UTF-8") as f:
+    with open(LOCAL_FONT_MAP_PATH, "r", encoding="UTF-8") as f:
         localFonts = updateFontMap(fontDirList, json.load(f))
 
-    with open("../localFontMap.json", "w", encoding="UTF-8") as f:
+    with open(LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
         json.dump(localFonts, f, indent=4, ensure_ascii=True)
     externalFonts = fontLoader.makeFontMap(localFonts)
     # return JSONResponse(localFonts)
