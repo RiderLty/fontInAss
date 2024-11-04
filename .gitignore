@@ -1,2 +1,6 @@
 
 localFontMap.json
+fonts
+TEST
+*.pyc
+localFontMap.json

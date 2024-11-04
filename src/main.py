@@ -12,8 +12,9 @@ import os
 import json
 import requests
 
-from fastapi import FastAPI, Query, Request, Response
-from uvicorn import Config, Server
+from bottle import Bottle, request,response
+# from fastapi import FastAPI, Query, Request, Response
+# from uvicorn import Config, Server
 from cachetools import LRUCache, TTLCache
 import asyncio
 import ssl
@@ -22,7 +23,8 @@ import utils
 from dirmonitor import dirmonitor
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
-app = FastAPI()
+# app = FastAPI()
+app = Bottle()
 
 
 def custom_print(*args, **kwargs):
@@ -45,56 +47,56 @@ def init_logger():
         )
 
 
-@app.post("/process_bytes")
-async def process_bytes(request: Request):
-    """传入字幕字节"""
-    print(request.headers)
-    subtitleBytes = await request.body()
-    try:
-        sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
-        return Response(
-            content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
-        )
-    except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(
-            content=subtitleBytes,
-            headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
-        )
+# @app.post("/process_bytes")
+# async def process_bytes(request: Request):
+#     """传入字幕字节"""
+#     print(request.headers)
+#     subtitleBytes = await request.body()
+#     try:
+#         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+#         srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
+#         return Response(
+#             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
+#         )
+#     except Exception as e:
+#         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+#         return Response(
+#             content=subtitleBytes,
+#             headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
+#         )
 
 
-@app.get("/process_url")
-async def process_url(ass_url: str = Query(None)):
-    """传入字幕url"""
-    print("loading " + ass_url)
-    try:
-        subtitleBytes = requests.get(ass_url).content
-        sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
-        return Response(
-            content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
-        )
-    except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(
-            content=subtitleBytes,
-            headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
-        )
+# @app.get("/process_url")
+# async def process_url(ass_url: str = Query(None)):
+#     """传入字幕url"""
+#     print("loading " + ass_url)
+#     try:
+#         subtitleBytes = requests.get(ass_url).content
+#         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+#         srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
+#         return Response(
+#             content=bytes, headers={"Srt2Ass": str(srt), "fontinass-exception": "None"}
+#         )
+#     except Exception as e:
+#         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+#         return Response(
+#             content=subtitleBytes,
+#             headers={"Srt2Ass": str(False), "fontinass-exception": str(e)},
+#         )
 
-@app.get("/{path:path}")
-async def proxy_pass(request: Request, response: Response):
+@app.route('/<path:path>', method='GET')
+def catch_all(path):
     try:
         host = os.environ.get("EMBY_SERVER_URL") or EMBY_SERVER_URL
         url = (
-            f"{request.url.path}?{request.url.query}"
-            if request.url.query
-            else request.url.path
+            f"{request.path}?{request.query_string}"
+            if request.query_string
+            else request.path
         )
         embyRequestUrl = host + url
         logger.info(f"字幕URL: {embyRequestUrl}")
-        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
-        copyHeaders = {key: str(value) for key, value in response.headers.items()}
+        # print({key: value for key, value in request.headers.items()})
+        serverResponse = requests.get(url=embyRequestUrl)
     except Exception as e:
         info = f"fontinass获取原始字幕出错:{str(e)}"
         logger.error(info)
@@ -105,30 +107,67 @@ async def proxy_pass(request: Request, response: Response):
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
         srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
         logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
-        copyHeaders["Content-Length"] = str(len(bytes))
         if srt:
             if (
                 "user-agent" in request.headers
                 and "infuse" in request.headers["user-agent"].lower()
             ):
                 raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
-        return Response(content=bytes)
+        
+        response.content_type = 'application/octet-stream'
+        response.set_header('Content-Disposition', 'attachment; filename="data.bin"')
+        return bytes
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
+        response.content_type = 'application/octet-stream'
+        return serverResponse.content
+# @app.get("/{path:path}")
+# async def proxy_pass(request: Request, response: Response):
+#     try:
+#         host = os.environ.get("EMBY_SERVER_URL") or EMBY_SERVER_URL
+#         url = (
+#             f"{request.url.path}?{request.url.query}"
+#             if request.url.query
+#             else request.url.path
+#         )
+#         embyRequestUrl = host + url
+#         logger.info(f"字幕URL: {embyRequestUrl}")
+#         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+#         copyHeaders = {key: str(value) for key, value in response.headers.items()}
+#     except Exception as e:
+#         info = f"fontinass获取原始字幕出错:{str(e)}"
+#         logger.error(info)
+#         return info
+#     try:
+#         subtitleBytes = serverResponse.content
+#         logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
+#         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
+#         srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
+#         logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
+#         copyHeaders["Content-Length"] = str(len(bytes))
+#         if srt:
+#             if (
+#                 "user-agent" in request.headers
+#                 and "infuse" in request.headers["user-agent"].lower()
+#             ):
+#                 raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+#         return Response(content=bytes)
+#     except Exception as e:
+#         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+#         return Response(content=serverResponse.content)
 
 
-def getServer(port,serverLoop):
-    serverConfig = Config(
-        app=app,
-        # host="::",
-        host="0.0.0.0",
-        port=port,
-        log_level="info",
-        loop=serverLoop,
-        ws_max_size=1024 * 1024 * 1024 * 1024,
-    )
-    return Server(serverConfig)
+# def getServer(port,serverLoop):
+#     serverConfig = Config(
+#         app=app,
+#         # host="::",
+#         host="0.0.0.0",
+#         port=port,
+#         log_level="info",
+#         loop=serverLoop,
+#         ws_max_size=1024 * 1024 * 1024 * 1024,
+#     )
+    # return Server(serverConfig)
 
 if __name__ == "__main__":
     # 进程池最大数量
@@ -201,10 +240,12 @@ if __name__ == "__main__":
     event_handler = dirmonitor(fontDirList)
     event_handler.start()
     # 启动web服务
-    serverInstance = getServer(8011,serverLoop)
+    # serverInstance = getServer(8011,serverLoop)
     # 初始化日记
     init_logger()
-    serverLoop.run_until_complete(serverInstance.serve())
+    # serverLoop.run_until_complete(serverInstance.serve())
+    app.run(host='0.0.0.0', port=8011)
+    
     event_handler.stop()
     event_handler.join() # 等待文件监视退出
     pool.close()

@@ -1,3 +1,4 @@
+from io import BytesIO
 import os
 import logging
 import re
@@ -5,6 +6,8 @@ import uharfbuzz
 import traceback
 import ass as ssa
 import fontLoader
+from fontTools.ttLib import TTFont, TTCollection
+from fontTools.subset import Subsetter
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -120,6 +123,32 @@ def makeOneEmbedFontsText(args):
             enc = uuencode(face.blob.data)
             del face
             return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+            
+            
+            # bio = BytesIO()
+            # bio.write(fontBytes[0])
+            # bio.seek(0)
+            # target = None
+            # if fontBytes[0][:4] == b"ttcf":
+            #     ttc = TTCollection(bio)
+            #     for font in ttc.fonts:
+            #         for record in font["name"].names:
+            #             if record.nameID == 1 and str(record).strip() == fontName:
+            #                 target = font
+            #                 break
+            # else:
+            #     target = TTFont(bio)
+            
+            # originNames = target["name"].names
+            # subsetter = Subsetter()
+            # subsetter.populate(unicodes=unicodeSet)
+            # subsetter.subset(target)
+            # target["name"].names = originNames
+            # fontOutIO = BytesIO()
+            # target.save(fontOutIO)
+            # enc = uuencode(fontOutIO.getvalue())
+            # return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+                
         except Exception as e:
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
             return f" {fontName} : {str(e)}", None
