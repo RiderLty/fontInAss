@@ -36,7 +36,7 @@ FROM python:3.10-slim-buster
 ARG NGINX=YES
 COPY --from=builder /wheels /wheels
 COPY --from=builder /requirements.txt .
-COPY fontMap.json localFontMap.json requirements.txt run.sh /
+COPY fontMap.json requirements.txt run.sh /
 RUN pip install --no-cache /wheels/* && rm -rf /wheels && chmod 777 /run.sh
 RUN if [ "${NGINX}" = "YES" ]; then apt-get update && apt-get -y --no-install-recommends install nginx; fi
 COPY nginx /etc/nginx
