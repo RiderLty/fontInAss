@@ -251,3 +251,22 @@ def bytes_to_hashName(bytes, hash_algorithm='sha256'):
     }.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
     hash_func.update(bytes)
     return hash_func.hexdigest()
+
+def tag_to_integer(tag_string):
+    """
+    计算公式：
+    #define HB_TAG(c1,c2,c3,c4) ((hb_tag_t)((((uint32_t)(c1)&0xFF)<<24)|(((uint32_t)(c2)&0xFF)<<16)|(((uint32_t)(c3)&0xFF)<<8)|((uint32_t)(c4)&0xFF)))
+    将一个 4 个字符的字符串转换为 hb_tag_t 整数值。
+    参数：
+    tag_string：一个 4 个字符的字符串。
+    返回：
+    对应的 hb_tag_t 整数值。
+    """
+    if len(tag_string) != 4:
+        raise ValueError("输入的字符串必须恰好包含 4 个字符。")
+
+    # 将字符串转换为对应的 hb_tag_t 整数值
+    return ((ord(tag_string[0]) & 0xFF) << 24) | \
+           ((ord(tag_string[1]) & 0xFF) << 16) | \
+           ((ord(tag_string[2]) & 0xFF) << 8) | \
+           (ord(tag_string[3]) & 0xFF)
