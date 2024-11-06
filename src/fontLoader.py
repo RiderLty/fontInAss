@@ -53,7 +53,6 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
         fontCache[fontName] = cachedResult
         logger.info(f"{fontName} 字体缓存命中 - 占用: {len(cachedResult[0]) / (1024 * 1024):.2f}MB")
         return copy.deepcopy(cachedResult)
-
     try:
         if fontName in externalFonts:
             path = externalFonts[fontName]
@@ -78,7 +77,6 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
             logger.info(f"字体已下载到本地 {file_path}")
         else:
             return None
-
         if fontBytes[:4] == b"ttcf":
             fontInIO = BytesIO(fontBytes)
             ttc = TTCollection(fontInIO)

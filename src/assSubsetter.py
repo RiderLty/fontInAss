@@ -1,12 +1,12 @@
 import os
 import logging
 import re
+import threading
 import uharfbuzz
 import traceback
 import ass as ssa
 import fontLoader
-
-from src import utils
+import utils
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -90,62 +90,9 @@ def uuencode(binaryData):
     encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20 :]))
     return "\n".join(encoded_lines)
 
-# def makeOneEmbedFontsText(args):
-#     # 在每个子进程中设置日志
-#     logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
-#
-#     # fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
-#     # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
-#     fontBytes, fontName, unicodeSet,= args
-#     if fontBytes is None:
-#         return f"缺少字体 {fontName}", None
-#     else:
-#         try:
-#             # logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
-#             # 转harfbuzz.Face对象 指定blob的faces_index
-#             face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
-#             # ================================================
-#             bio = BytesIO()
-#             bio.write(fontBytes[0])
-#             bio.seek(0)
-#             if fontBytes[0][:4] == b"ttcf":
-#                 target = TTCollection(bio).fonts[fontBytes[1]]
-#             else:
-#                 target = TTFont(bio)
-#             originNames = target["name"].names
-#             print(fontName + "那我是之前的：" + str(len(target["name"].names)))
-#             # ================================================
-#             # 初始化子集化UNICODE
-#             inp = uharfbuzz.SubsetInput()
-#             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
-#             # 子集化
-#             face = uharfbuzz.subset(face, inp)
-#             # ================================================
-#             bio = BytesIO()
-#             bio.write(face.blob.data)
-#             bio.seek(0)
-#             target = TTFont(bio)
-#             target["name"].names = originNames#子集化后需要将原始名称替换回去，否则会找不到字体导致子集化无效
-#             print(fontName + "我是处理后的：" + str(len(target["name"].names)))
-#             fontOutIO = BytesIO()
-#             target.save(fontOutIO)
-#             enc = uuencode(fontOutIO.getvalue())
-#             return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
-#             # # 编码，直接传入bytes类型face.blob.data
-#             # enc = uuencode(face.blob.data)
-#             # print("\n==============================\n" + txt)
-#             # del face
-#             # return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
-#         except Exception as e:
-#             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
-#             return f" {fontName} : {str(e)}", None
-
 def makeOneEmbedFontsText(args):
     # 在每个子进程中设置日志
     logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
-
-    # fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
-    # fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
     fontBytes, fontName, unicodeSet,= args
     if fontBytes is None:
         return f"缺少字体 {fontName}", None
@@ -153,42 +100,13 @@ def makeOneEmbedFontsText(args):
         try:
             # logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
             # 转harfbuzz.Face对象 指定blob的faces_index
-            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
-            # ================================================
-            # bio = BytesIO()
-            # bio.write(fontBytes[0])
-            # bio.seek(0)
-            # if fontBytes[0][:4] == b"ttcf":
-            #     target = TTCollection(bio).fonts[fontBytes[1]]
-            # else:
-            #     target = TTFont(bio)
-            # print(fontName + "那我是之前的：" + str((target["name"].names)))
-            # ================================================
-            # 初始化子集化UNICODE
+            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])# 初始化子集化UNICODE
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
-            '''
-            看看有什么tags
-            print(face.table_tags)
-            SubsetInputSets的TAG
-            https://harfbuzz.github.io/harfbuzz-hb-subset.html
-            TAG计算方式
-            https://harfbuzz.github.io/harfbuzz-hb-common.html#HB-TAG:CAPS
-            '''
-            if "name" in face.table_tags:
-                inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({utils.tag_to_integer("name") })
-            # 子集化
+            assert "name" in face.table_tags , ValueError("name table not found")
+            inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({utils.tag_to_integer("name") })
             face = uharfbuzz.subset(face, inp)
-            # ================================================
-            # bio = BytesIO()
-            # bio.write(face.blob.data)
-            # bio.seek(0)
-            # target = TTFont(bio)
-            # print(fontName + "我是处理后的：" + str((target["name"].names)))
-
-            # 编码，直接传入bytes类型face.blob.data
             enc = uuencode(face.blob.data)
-            # print("\n==============================\n" + txt)
             del face
             return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
@@ -201,12 +119,18 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
     errors = []
     # 准备任务参数
     tasks = []
+    sem = threading.Semaphore(8)
+    lock = threading.Lock()
     for fontName, unicodeSet in font_charList.items():
-        if len(unicodeSet) != 0:  # 考虑到从网络获取字体的情况，使用多线程
-            # task = (fontName, unicodeSet, externalFonts, fontPathMap, fontCache)
-            fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
-            task = (fontBytes, fontName, unicodeSet)
-            tasks.append(task)
+        sem.acquire()
+        def handel():
+            if len(unicodeSet) != 0:  # 考虑到从网络获取字体的情况，使用多线程
+                fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+                with lock:
+                    tasks.append((fontBytes, fontName, unicodeSet))
+            sem.release()
+        threading.Thread(target=handel).start()
+    [sem.acquire() for _ in range(8)]
     # 异步地处理任务
     results = pool.map(makeOneEmbedFontsText, tasks)
 

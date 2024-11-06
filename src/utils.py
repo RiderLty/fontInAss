@@ -12,7 +12,7 @@ from fontTools.ttLib import TTFont, TTCollection
 import assSubsetter
 import fontLoader
 import hdrify
-from config import DEFAULT_FONT_PATH, FONT_MAP_PATH, LOCAL_FONT_MAP_PATH
+from config import LOCAL_FONT_MAP_PATH
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -254,6 +254,10 @@ def bytes_to_hashName(bytes, hash_algorithm='sha256'):
 
 def tag_to_integer(tag_string):
     """
+    SubsetInputSets的TAG
+    https://harfbuzz.github.io/harfbuzz-hb-subset.html
+    TAG计算方式
+    https://harfbuzz.github.io/harfbuzz-hb-common.html#HB-TAG:CAPS
     计算公式：
     #define HB_TAG(c1,c2,c3,c4) ((hb_tag_t)((((uint32_t)(c1)&0xFF)<<24)|(((uint32_t)(c2)&0xFF)<<16)|(((uint32_t)(c3)&0xFF)<<8)|((uint32_t)(c4)&0xFF)))
     将一个 4 个字符的字符串转换为 hb_tag_t 整数值。
