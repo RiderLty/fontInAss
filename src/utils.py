@@ -69,7 +69,6 @@ def updateFontMap(dirPathList, old={}):
 
 
 def updateLocal(fontDirList):
-    global externalFonts
     """更新本地字体库"""
     logger.info("更新本地字体库中...")
     with open(LOCAL_FONT_MAP_PATH, "r", encoding="UTF-8") as f:
@@ -78,6 +77,7 @@ def updateLocal(fontDirList):
     with open(LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
         json.dump(localFonts, f, indent=4, ensure_ascii=True)
     externalFonts = fontLoader.makeFontMap(localFonts)
+    return externalFonts
     # return JSONResponse(localFonts)
     # return externalFonts
 
@@ -201,7 +201,6 @@ def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fon
             cachedResult = subCache[sub_HNmae]
             # 刷新字幕缓存过期时间
             subCache[sub_HNmae] = cachedResult
-            # logger.info(f"字幕缓存命中")
             logger.info(f"字幕缓存命中 - 占用: {len(cachedResult[1]) / (1024 * 1024):.2f}MB")
             return cachedResult[0], cachedResult[1]
         assText = bytes2str(assBytes)

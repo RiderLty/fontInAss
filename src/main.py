@@ -23,8 +23,7 @@ import ssl
 
 import utils
 from dirmonitor import dirmonitor
-
-from config import DEFAULT_FONT_PATH, FONT_MAP_PATH, LOCAL_FONT_MAP_PATH
+import config
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 # app = FastAPI()
@@ -107,7 +106,7 @@ def catch_all(path):
         subtitleBytes = serverResponse.content
         logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, externalFonts, fontPathMap, subCache, fontCache)
+        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, config.externalFonts, fontPathMap, subCache, fontCache)
         logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
         if srt:
             if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
@@ -185,20 +184,20 @@ if __name__ == "__main__":
     builtins.print = custom_print
     # 手动修改此处，或者使用环境变量
     EMBY_SERVER_URL = "尚未EMBY_SERVER_URL环境变量"
-    fontDirList = [DEFAULT_FONT_PATH]
-    if not os.path.exists(LOCAL_FONT_MAP_PATH):
-        with open(LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
+    fontDirList = [config.DEFAULT_FONT_PATH]
+    if not os.path.exists(config.LOCAL_FONT_MAP_PATH):
+        with open(config.LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
             json.dump({}, f)
-    os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
+    os.makedirs(config.DEFAULT_FONT_PATH, exist_ok=True)
     # externalFonts = utils.updateLocal(fontDirList)
-    with open(LOCAL_FONT_MAP_PATH, "r", encoding="UTF-8") as f:
-        localFonts = utils.updateFontMap(fontDirList, json.load(f))
+    # with open(config.LOCAL_FONT_MAP_PATH, "r", encoding="UTF-8") as f:
+    #     localFonts = utils.updateFontMap(fontDirList, json.load(f))
+    #
+    # with open(config.LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
+    #     json.dump(localFonts, f, indent=4, ensure_ascii=True)
 
-    with open(LOCAL_FONT_MAP_PATH, "w", encoding="UTF-8") as f:
-        json.dump(localFonts, f, indent=4, ensure_ascii=True)
-
-    externalFonts = fontLoader.makeFontMap(localFonts)
-    with open(FONT_MAP_PATH, "r", encoding="UTF-8") as f:
+    config.externalFonts = utils.updateLocal(fontDirList)
+    with open(config.FONT_MAP_PATH, "r", encoding="UTF-8") as f:
         fontPathMap = fontLoader.makeFontMap(json.load(f))
 
     if os.environ.get("FONT_DIRS"):

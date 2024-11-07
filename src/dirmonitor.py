@@ -7,6 +7,7 @@ from threading import Timer
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
 import utils
+import config
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -33,7 +34,7 @@ class FileEventHandler(events.FileSystemEventHandler):
         self.timer = None
         if len(diff.files_created) or len(diff.files_deleted) or len(diff.files_modified) or len(diff.files_moved):
             # print("file change", diff.files_created)
-            utils.updateLocal(self.fontDirList)
+            config.externalFonts = utils.updateLocal(self.fontDirList)
         # 下面是应处理的各种事项
         # if len(diff.files_created):
         #     print("file create", diff.files_created)
