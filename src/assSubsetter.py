@@ -113,6 +113,15 @@ def makeOneEmbedFontsText(args):
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
             return f" {fontName} : {str(e)}", None
 
+
+def taskMaker(args):
+    sem, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
+    with sem:
+        fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+    with lock:
+        tasks.append((fontBytes, fontName, unicodeSet))
+
+
 def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
     """对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本"""
     embedFontsText = "[Fonts]\n"
@@ -121,19 +130,12 @@ def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
     tasks = []
     sem = threading.Semaphore(8)
     lock = threading.Lock()
+    threads = []
     for fontName, unicodeSet in font_charList.items():
-        sem.acquire()
-        def handel():
-            if len(unicodeSet) != 0:  # 考虑到从网络获取字体的情况，使用多线程
-                fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
-                with lock:
-                    tasks.append((fontBytes, fontName, unicodeSet))
-            sem.release()
-        threading.Thread(target=handel).start()
-    [sem.acquire() for _ in range(8)]
-    # 异步地处理任务
+        threads.append(threading.Thread(target=taskMaker, args=((sem, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache),)))
+    [x.start() for x in threads]
+    [x.join() for x in threads]
     results = pool.map(makeOneEmbedFontsText, tasks)
-
     # 处理结果
     for err, result in results:
         if err:
