@@ -137,8 +137,6 @@ def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap,
     # sem = threading.Semaphore(8)
     lock = threading.Lock()
     threads = []
-    # 使用线程池
-    futures = []
     for fontName, unicodeSet in font_charList.items():
         if fontName in fontCache:
             fontBytes = fontCache[fontName]
