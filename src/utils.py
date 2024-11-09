@@ -5,6 +5,7 @@ import os
 import re
 import time
 import traceback
+from io import BytesIO
 
 import chardet
 from fontTools.ttLib import TTFont, TTCollection
@@ -180,7 +181,7 @@ def split_ass_text(ass_text_chunk):
         # 如果没有找到 "[Events]"，可以返回一个默认值或抛出异常
         return "", ass_text_chunk  # 返回空的 head 和原始 chunk 作为 tai
 
-def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fontCache):
+def process(pool, thread_pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fontCache):
     devFlag = (
             os.getenv("DEV") == "true"
             and os.path.exists("DEV")
@@ -227,7 +228,7 @@ def process(pool, sub_HNmae, assBytes, externalFonts, fontPathMap, subCache, fon
             logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
     font_charList = assSubsetter.analyseAss(assText)
-    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache)
+    errors, embedFontsText = assSubsetter.makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap, fontCache)
     head, tai = assText.split("[Events]")
     # print(assText)
     logger.info(f"嵌入完成 用时 {time.time() - start:.2f}s - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
@@ -273,3 +274,24 @@ def tag_to_integer(tag_string):
            ((ord(tag_string[1]) & 0xFF) << 16) | \
            ((ord(tag_string[2]) & 0xFF) << 8) | \
            (ord(tag_string[3]) & 0xFF)
+
+def get_ttc_index(fontBytes, fontName):
+    if fontBytes[:4] == b"ttcf":
+        fontInIO = BytesIO(fontBytes)
+        ttc = TTCollection(fontInIO)
+        for index, font in enumerate(ttc.fonts):
+            for record in font["name"].names:
+                if record.nameID == 1 and str(record).strip() == fontName:
+                    # fontCache[fontName] = [fontBytes, index]
+                    return [fontBytes, index]
+    else:
+        # fontCache[fontName] = [fontBytes, 0]
+        return [fontBytes, 0]
+
+def exist_path(rootdir, path):
+    # 构造完整的本地路径
+    file_path = os.path.join(os.path.join(rootdir, "download"), path.lstrip("/"))
+    # 确保路径中的文件夹存在
+    local_path = os.path.dirname(file_path)
+    os.makedirs(local_path, exist_ok=True)
+    return file_path

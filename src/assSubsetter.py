@@ -7,6 +7,7 @@ import traceback
 import ass as ssa
 import fontLoader
 import utils
+from concurrent.futures import as_completed
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -114,27 +115,44 @@ def makeOneEmbedFontsText(args):
             return f" {fontName} : {str(e)}", None
 
 
-def taskMaker(args):
-    sem, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache = args
-    with sem:
-        fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap, fontCache)
+def taskMaker(lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache):
+    # with sem:
+    # 分离逻辑处理，尽量只保留I/O操作，释放GIL锁，较大的/较长时间下载的字体所耗时间可以留给其他load-ready的字体进行逻辑处理
+    fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap)
+    # 获取ttc的index
+    fontBytes = utils.get_ttc_index(fontBytes, fontName)
+    # 读取到的字体bytes存入内存缓存
+    fontCache[fontName] = fontBytes
+    # 提前创建任务列表，减少 lock 占用时间
+    task = (fontBytes, fontName, unicodeSet)
     with lock:
-        tasks.append((fontBytes, fontName, unicodeSet))
+        tasks.append(task)
 
-
-def makeEmbedFonts(pool, font_charList, externalFonts, fontPathMap, fontCache):
+def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap, fontCache):
     """对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本"""
     embedFontsText = "[Fonts]\n"
     errors = []
-    # 准备任务参数
+    # 准备子集化任务参数
     tasks = []
-    sem = threading.Semaphore(8)
+    # sem = threading.Semaphore(8)
     lock = threading.Lock()
     threads = []
     for fontName, unicodeSet in font_charList.items():
-        threads.append(threading.Thread(target=taskMaker, args=((sem, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache),)))
-    [x.start() for x in threads]
-    [x.join() for x in threads]
+        if fontName in fontCache:
+            fontBytes = fontCache[fontName]
+            # 刷新字体缓存过期时间
+            fontCache[fontName] = fontBytes
+            tasks.append((fontBytes, fontName, unicodeSet))
+            logger.info(f"{fontName} 字体缓存命中 - 占用: {len(fontBytes[0]) / (1024 * 1024):.2f}MB")
+        else:
+            threads.append(thread_pool.submit(taskMaker, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap,fontCache))
+
+    # print("哼想逃")
+    # 使用 as_completed 遍历已完成的任务
+    for future in as_completed(threads):
+        future.result()  # 阻塞直到该任务完成
+        # print("我滴任务完成辣")
+
     results = pool.map(makeOneEmbedFontsText, tasks)
     # 处理结果
     for err, result in results:

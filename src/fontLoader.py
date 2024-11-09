@@ -1,13 +1,10 @@
+import asyncio
 import logging
-import copy
-import os
 import traceback
-
+import aiofiles
 import requests
-from io import BytesIO
-from fontTools.ttLib import TTCollection
 import utils
-from config import DEFAULT_FONT_PATH
+import config
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
@@ -44,15 +41,15 @@ def makeFontMap(data):
             font_miniSize[font_name] = info["size"]
     return font_file_map
 
+async def save_to_disk(path, fontBytes):
+    # print("我要等100秒再写入" + str(path))
+    # await asyncio.sleep(100)
+    async with aiofiles.open(path, "wb") as f:
+        await f.write(fontBytes)
+        logger.info(f"字体已保存到本地 {path}")
 
 @utils.printPerformance
-def loadFont(fontName, externalFonts, fontPathMap, fontCache):
-    if fontName in fontCache:
-        cachedResult = fontCache[fontName]
-        # 刷新字体缓存过期时间
-        fontCache[fontName] = cachedResult
-        logger.info(f"{fontName} 字体缓存命中 - 占用: {len(cachedResult[0]) / (1024 * 1024):.2f}MB")
-        return copy.deepcopy(cachedResult)
+def loadFont(fontName, externalFonts, fontPathMap):
     try:
         if fontName in externalFonts:
             path = externalFonts[fontName]
@@ -61,33 +58,21 @@ def loadFont(fontName, externalFonts, fontPathMap, fontCache):
                 fontBytes = requests.get(path).content
             else:
                 fontBytes = open(path, "rb").read()
+            return fontBytes
         elif fontName in fontPathMap:
             path = fontPathMap[fontName]
             logger.info(f"从网络加载字体 https://fonts.storage.rd5isto.org{path}")
-            fontBytes = requests.get("https://fonts.storage.rd5isto.org" + path).content
+            fontBytes = requests.get("https://fonts.storage.rd5isto.org" + path, timeout=10).content
 
-            # 构造完整的本地路径
-            file_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), path.lstrip("/"))
-            # 确保路径中的文件夹存在
-            local_path = os.path.dirname(file_path)
-            os.makedirs(local_path, exist_ok=True)
-            # 保存到本地
-            with open(file_path, "wb") as f:
-                f.write(fontBytes)
-            logger.info(f"字体已下载到本地 {file_path}")
+            # 判断字体的文件夹是否存在
+            file_path = utils.exist_path(config.DEFAULT_FONT_PATH, path)
+
+            # 协程保存到本地,直接返回 fontBytes,减少因为写入时间而增加的总处理时长
+            asyncio.run_coroutine_threadsafe(save_to_disk(file_path, fontBytes), config.loop)
+            # print("我先走了：" + str(file_path))
+            return fontBytes
         else:
             return None
-        if fontBytes[:4] == b"ttcf":
-            fontInIO = BytesIO(fontBytes)
-            ttc = TTCollection(fontInIO)
-            for index, font in enumerate(ttc.fonts):
-                for record in font["name"].names:
-                    if record.nameID == 1 and str(record).strip() == fontName:
-                        fontCache[fontName] = [fontBytes, index]
-                        return copy.deepcopy([fontBytes, index])
-        else:
-            fontCache[fontName] = [fontBytes, 0]
-            return copy.deepcopy([fontBytes, 0])
     except Exception as e:
         logger.error(f"加载字体出错 {fontName} : \n{traceback.format_exc()}")
         return None
