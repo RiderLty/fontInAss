@@ -1,4 +1,5 @@
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 
 warnings.filterwarnings("ignore")
 
@@ -106,7 +107,7 @@ def catch_all(path):
         subtitleBytes = serverResponse.content
         logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
         sub_HNmae = utils.bytes_to_hashName(subtitleBytes)
-        srt, bytes = utils.process(pool, sub_HNmae, subtitleBytes, config.externalFonts, fontPathMap, subCache, fontCache)
+        srt, bytes = utils.process(pool, thread_pool, sub_HNmae, subtitleBytes, config.externalFonts, fontPathMap, subCache, fontCache)
         logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
         if srt:
             if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
@@ -175,8 +176,10 @@ if __name__ == "__main__":
     POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
     if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
         POOL_CPU_MAX = cpu_count
-    # 根据CPU逻辑处理器数创建子进程池
+    # 根据CPU逻辑处理器数创建进程池
     pool = multiprocessing.Pool(POOL_CPU_MAX)
+    # 创建线程池
+    thread_pool = ThreadPoolExecutor(max_workers= POOL_CPU_MAX * 2)
 
     fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
     coloredlogs.install(level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt)
@@ -237,7 +240,14 @@ if __name__ == "__main__":
     # serverLoop.run_until_complete(serverInstance.serve())
     app.run(host="0.0.0.0", port=8011)
 
-    event_handler.stop()
+    # 关闭和清理资源
+    event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
-    pool.close()
+
+    pool.close()  # 关闭进程池
     pool.join()  # 等待所有进程完成
+
+    thread_pool.shutdown()  # 关闭线程池
+
+    config.loop.stop()  # 停止事件循环
+    config.loop.close()  # 清理资源
