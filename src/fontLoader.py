@@ -41,6 +41,7 @@ def makeFontMap(data):
             font_miniSize[font_name] = info["size"]
     return font_file_map
 
+
 async def save_to_disk(path, fontBytes):
     # print("我要等100秒再写入" + str(path))
     # await asyncio.sleep(100)
@@ -48,17 +49,14 @@ async def save_to_disk(path, fontBytes):
         await f.write(fontBytes)
         logger.info(f"字体已保存到本地 {path}")
 
+
 @utils.printPerformance
 def loadFont(fontName, externalFonts, fontPathMap):
     try:
         if fontName in externalFonts:
             path = externalFonts[fontName]
             logger.info(f"从本地加载字体 {path}")
-            if path.lower().startswith("http"):
-                fontBytes = requests.get(path).content
-            else:
-                fontBytes = open(path, "rb").read()
-            return fontBytes
+            return open(path, "rb").read()
         elif fontName in fontPathMap:
             path = fontPathMap[fontName]
             logger.info(f"从网络加载字体 https://fonts.storage.rd5isto.org{path}")

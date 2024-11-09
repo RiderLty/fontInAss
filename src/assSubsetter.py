@@ -21,7 +21,6 @@ def analyseAss(ass_str):
         styleName = style.name.strip()
         fontName = style.fontname.strip().replace("@", "")
         style_fontName[styleName] = fontName
-        font_charList[fontName] = set()
     for event in sub.events:
         os.getenv("DEV") == "true" and logger.debug("")
         os.getenv("DEV") == "true" and logger.debug("原始Event文本 : " + event.text)
