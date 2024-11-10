@@ -1,5 +1,5 @@
 ARG BUILDER=riderlty/fontinass-builder:4ab13f154a5064f35f0900dacdb1ac50343c6c5db7fbfaf28e68eadaf74f47c0
-FROM ${BUILDER} as builder
+FROM ${BUILDER} AS builder
 FROM python:3.10-slim-buster 
 COPY --from=builder /wheels /wheels
 COPY fontMap.json run.sh /
