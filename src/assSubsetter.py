@@ -118,10 +118,13 @@ def taskMaker(lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fon
     # with sem:
     # 分离逻辑处理，尽量只保留I/O操作，释放GIL锁，较大的/较长时间下载的字体所耗时间可以留给其他load-ready的字体进行逻辑处理
     fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap)
-    # 获取ttc的index
-    fontBytes = utils.get_ttc_index(fontBytes, fontName)
-    # 读取到的字体bytes存入内存缓存
-    fontCache[fontName] = fontBytes
+    if fontBytes is not None:
+        # 获取ttc的index
+        fontBytes = utils.get_ttc_index(fontBytes, fontName)
+        # 读取到的字体bytes存入内存缓存
+        fontCache[fontName] = fontBytes
+    else:
+        unicodeSet = {}
     # 提前创建任务列表，减少 lock 占用时间
     task = (fontBytes, fontName, unicodeSet)
     with lock:
