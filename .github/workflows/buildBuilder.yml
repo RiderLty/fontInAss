@@ -1,8 +1,12 @@
 name: buildBuilder
+
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - requirements.txt
+      
 jobs:
-  build:
+  buildBuilder:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
