@@ -34,4 +34,4 @@ jobs:
           platforms: |
             linux/amd64
           push: true
-          tags: riderlty/fontinassBuilder:${{ env.FILE_HASH }}
+          tags: riderlty/fontinass-builder:${{ env.FILE_HASH }}
