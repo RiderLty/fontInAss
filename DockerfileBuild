@@ -1,0 +1,5 @@
+FROM python:3.10-slim-buster 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc build-essential
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
