@@ -19,10 +19,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
+      - name: Calculate file hash
+        id: calculate_hash
+        run: |
+          FILE_PATH="requirements.txt"
+          HASH=$(sha256sum "$FILE_PATH" | awk '{ print $1 }')
+          echo "FILE_HASH=$HASH" >> $GITHUB_ENV
+
       - name: Build and push default
         uses: docker/build-push-action@v4
         with:
-          build-args: NGINX=YES
+          build-args: |
+            NGINX=YES
+            BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
           context: .
           platforms: |
             linux/amd64
