@@ -22,8 +22,7 @@ jobs:
       - name: Calculate file hash
         id: calculate_hash
         run: |
-          FILE_PATH="requirements.txt"
-          HASH=$(sha256sum "$FILE_PATH" | awk '{ print $1 }')
+          HASH=$(cat requirements.txt src/py2cy/c_utils.pyx src/py2cy/setup.py | sha256sum  | awk '{ print $1 }')
           echo "FILE_HASH=$HASH" >> $GITHUB_ENV
 
       - name: Build and push default

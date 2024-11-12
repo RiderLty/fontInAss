@@ -47,6 +47,11 @@ Docker > 添加容器 > 选择一个模版 > fontinass
 ```
 pip install -r ./requirements.txt
 ```
+编译c部分
+```
+cd src/py2cy
+python setup.py build_ext --inplace
+```
 修改main.py，中，EMBY_SERVER_URL为你的emby服务器地址，例如：
 ```
 EMBY_SERVER_URL = "http://192.168.3.3:7096"

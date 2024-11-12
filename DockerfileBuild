@@ -1,5 +1,7 @@
 FROM python:3.10-slim-buster 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc build-essential
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
+COPY . /app
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt && pip install Cython
+RUN cd /app/src/py2cy && \
+    python setup.py build_ext --inplace
