@@ -8,9 +8,9 @@ import ass as ssa
 import fontLoader
 import utils
 from concurrent.futures import as_completed
+from py2cy.c_utils import uuencode
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
-
 
 def analyseAss(ass_str):
     """分析ass文件 返回 字体：{unicodes}"""
@@ -54,41 +54,40 @@ def analyseAss(ass_str):
     # print(font_charList)
     return font_charList
 
-
-def uuencode(binaryData):
-    """编码工具"""
-    OFFSET = 33
-    encoded = []
-    for i in range(0, (len(binaryData) // 3) * 3, 3):
-        bytes_chunk = binaryData[i : i + 3]
-        if len(bytes_chunk) < 3:
-            bytes_chunk += b"\x00" * (3 - len(bytes_chunk))
-        packed = int.from_bytes(bytes_chunk, "big")
-        # packed = (packed & 0xFFFFFF)  # 确保只有24位
-        six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-        encoded_group = "".join(chr(OFFSET + num) for num in six_bits)
-        encoded.append(encoded_group)
-    # print(f"输入({len(data)}){data} => {data[:(len(data) // 3) * 3]}|{data[(len(data) // 3) * 3:]}")
-    last = None
-    if len(binaryData) % 3 == 0:
-        pass
-    elif len(binaryData) % 3 == 1:
-        last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00\x00"
-        packed = int.from_bytes(last, "big")
-        six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-        encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:2]
-        encoded.append(encoded_group)
-    elif len(binaryData) % 3 == 2:
-        last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00"
-        packed = int.from_bytes(last, "big")
-        six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-        encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:3]
-        encoded.append(encoded_group)
-    encoded_lines = []
-    for i in range(0, (len(encoded) // 20) * 20, 20):
-        encoded_lines.append("".join(encoded[i : i + 20]))
-    encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20 :]))
-    return "\n".join(encoded_lines)
+# def uuencode(binaryData):
+#     """编码工具"""
+#     OFFSET = 33
+#     encoded = []
+#     for i in range(0, (len(binaryData) // 3) * 3, 3):
+#         bytes_chunk = binaryData[i : i + 3]
+#         if len(bytes_chunk) < 3:
+#             bytes_chunk += b"\x00" * (3 - len(bytes_chunk))
+#         packed = int.from_bytes(bytes_chunk, "big")
+#         # packed = (packed & 0xFFFFFF)  # 确保只有24位
+#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
+#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)
+#         encoded.append(encoded_group)
+#     # print(f"输入({len(data)}){data} => {data[:(len(data) // 3) * 3]}|{data[(len(data) // 3) * 3:]}")
+#     last = None
+#     if len(binaryData) % 3 == 0:
+#         pass
+#     elif len(binaryData) % 3 == 1:
+#         last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00\x00"
+#         packed = int.from_bytes(last, "big")
+#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
+#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:2]
+#         encoded.append(encoded_group)
+#     elif len(binaryData) % 3 == 2:
+#         last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00"
+#         packed = int.from_bytes(last, "big")
+#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
+#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:3]
+#         encoded.append(encoded_group)
+#     encoded_lines = []
+#     for i in range(0, (len(encoded) // 20) * 20, 20):
+#         encoded_lines.append("".join(encoded[i : i + 20]))
+#     encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20 :]))
+#     return "\n".join(encoded_lines)
 
 def makeOneEmbedFontsText(args):
     # 在每个子进程中设置日志
@@ -98,9 +97,9 @@ def makeOneEmbedFontsText(args):
         return f"缺少字体 {fontName}", None
     else:
         try:
-            # logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
             # 转harfbuzz.Face对象 指定blob的faces_index
-            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])# 初始化子集化UNICODE
+            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
+            # 初始化子集化UNICODE
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
             assert "name" in face.table_tags , ValueError("name table not found")
@@ -136,7 +135,6 @@ def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap,
     errors = []
     # 准备子集化任务参数
     tasks = []
-    # sem = threading.Semaphore(8)
     lock = threading.Lock()
     threads = []
     for fontName, unicodeSet in font_charList.items():
@@ -149,13 +147,13 @@ def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap,
         else:
             threads.append(thread_pool.submit(taskMaker, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap,fontCache))
 
-    # print("哼想逃")
     # 使用 as_completed 遍历已完成的任务
     for future in as_completed(threads):
-        future.result()  # 阻塞直到该任务完成
-        # print("我滴任务完成辣")
+        # 阻塞直到该任务完成
+        future.result()
 
     results = pool.map(makeOneEmbedFontsText, tasks)
+
     # 处理结果
     for err, result in results:
         if err:
