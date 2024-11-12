@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - requirements.txt
+      - src/py2cy/c_utils.pyx
+      - src/py2cy/setup.py
       
 jobs:
   buildBuilder:
