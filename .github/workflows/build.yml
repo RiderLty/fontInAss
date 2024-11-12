@@ -41,7 +41,9 @@ jobs:
       - name: Build and push without nginx
         uses: docker/build-push-action@v4
         with:
-          build-args: NGINX=NO
+          build-args: |
+            NGINX=NO
+            BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
           context: .
           platforms: |
             linux/amd64
