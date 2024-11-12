@@ -6,7 +6,7 @@ def uuencode(const unsigned char[:] binaryData):
     cdef int CHUNK_SIZE = 20
     cdef int data_len = len(binaryData)
     cdef int remainder = data_len % 3
-    cdef list encoded = [None] * ((data_len + 2) // 3)  # 预分配 `encoded` 大小
+    cdef list encoded = [None] * ((data_len + 2) // 3)  # 预分配 encoded 大小
     cdef list encoded_lines = []
     cdef int packed, i
     cdef int six_bits[4]
