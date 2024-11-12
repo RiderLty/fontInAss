@@ -12,7 +12,6 @@ from py2cy.c_utils import uuencode
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 
-
 def analyseAss(ass_str):
     """分析ass文件 返回 字体：{unicodes}"""
     sub = ssa.parse_string(ass_str)
@@ -98,9 +97,9 @@ def makeOneEmbedFontsText(args):
         return f"缺少字体 {fontName}", None
     else:
         try:
-            # logger.error(f"当前字体[{fontName}]处于ttc的index : {fontBytes[1]}")
             # 转harfbuzz.Face对象 指定blob的faces_index
-            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])# 初始化子集化UNICODE
+            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
+            # 初始化子集化UNICODE
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
             assert "name" in face.table_tags , ValueError("name table not found")
@@ -136,7 +135,6 @@ def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap,
     errors = []
     # 准备子集化任务参数
     tasks = []
-    # sem = threading.Semaphore(8)
     lock = threading.Lock()
     threads = []
     for fontName, unicodeSet in font_charList.items():
@@ -149,18 +147,13 @@ def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap,
         else:
             threads.append(thread_pool.submit(taskMaker, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap,fontCache))
 
-    # print("哼想逃")
     # 使用 as_completed 遍历已完成的任务
     for future in as_completed(threads):
-        future.result()  # 阻塞直到该任务完成
-        # print("我滴任务完成辣")
+        # 阻塞直到该任务完成
+        future.result()
 
-    # results = []
-    # start = time.time()
     results = pool.map(makeOneEmbedFontsText, tasks)
-    # for task in tasks:
-    #     results.append(makeOneEmbedFontsText(task))
-    # logger.error(f"编码用时 {time.time() - start:.2f}s")
+
     # 处理结果
     for err, result in results:
         if err:
