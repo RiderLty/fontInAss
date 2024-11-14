@@ -25,19 +25,6 @@ jobs:
           HASH=$(cat requirements.txt src/py2cy/c_utils.pyx src/py2cy/setup.py | sha256sum  | awk '{ print $1 }')
           echo "FILE_HASH=$HASH" >> $GITHUB_ENV
 
-      - name: Build and push default
-        uses: docker/build-push-action@v4
-        with:
-          build-args: |
-            NGINX=YES
-            BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
-          context: .
-          platforms: |
-            linux/amd64
-            linux/arm64
-          push: true
-          tags: riderlty/fontinass:latest
-      
       - name: Build and push without nginx
         uses: docker/build-push-action@v4
         with:
@@ -50,3 +37,21 @@ jobs:
             linux/arm64
           push: true
           tags: riderlty/fontinass:noproxy
+          no-cache: true
+
+
+      - name: Build and push default
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            NGINX=YES
+            BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
+          context: .
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          tags: riderlty/fontinass:latest
+          no-cache: true
+      
+    
