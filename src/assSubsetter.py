@@ -50,9 +50,9 @@ class assSubsetter:
     async def process(self, subtitleBytes):
         bytesHash = bytesToHashName(subtitleBytes)
         if bytesHash in self.cache:
-            result = self.cache[bytesHash]
-            self.cache[bytesHash] = result
-            return bytesHash
+            (srt, resultBytes) = self.cache[bytesHash]
+            self.cache[bytesHash] = (srt, resultBytes)
+            return (srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
 
@@ -88,5 +88,5 @@ class assSubsetter:
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")
-        self.cache[bytesHash] = resultBytes
+        self.cache[bytesHash] = (srt, resultBytes)
         return (srt, resultBytes)
