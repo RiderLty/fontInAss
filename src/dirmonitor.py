@@ -17,7 +17,7 @@ class FileEventHandler(events.FileSystemEventHandler):
     def on_any_event(self, event):
         if self.timer:
             self.timer.cancel()
-        self.timer = Timer(1, self.checkSnapshot)
+        self.timer = Timer(10, self.checkSnapshot)
         self.timer.start()
 
     def checkSnapshot(self):
