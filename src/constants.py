@@ -19,7 +19,7 @@ builtins.print = custom_print
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_FONT_PATH = os.path.join(ROOT_PATH, r"../fonts")
+DEFAULT_FONT_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"fonts")
 
 FONT_DIRS = [DEFAULT_FONT_PATH]
 
@@ -28,9 +28,9 @@ if os.environ.get("FONT_DIRS"):
         if dirPath.strip() != "" and os.path.exists(dirPath):
             FONT_DIRS.append(dirPath.strip())
 
-ONLINE_FONTS_PATH = os.path.join(ROOT_PATH, r"../onlineFonts.json")
-LOCAL_FONTS_PATH = os.path.join(ROOT_PATH, r"../localFonts.json")
-
+ONLINE_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
+LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
+os.makedirs(os.path.join(os.path.dirname(ROOT_PATH), r"data"), exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
 cpu_count = int(os.cpu_count())
 POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))

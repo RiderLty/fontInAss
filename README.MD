@@ -14,6 +14,7 @@
 docker run -d --name=fontinass --restart=unless-stopped \
   -p 8012:8012 \
   -e EMBY_SERVER_URL=http://[ip]:[port] \
+  -v /etc/fontinassData:/data
   riderlty/fontinass:latest
 ```
 设置EMBY_SERVER_URL为你的EMBY服务器的地址
@@ -97,15 +98,8 @@ server {
   -v /path/to/your/fonts3:/fonts/dir3 \
 ```
 
-将/localFonts.json映射到容器外部，避免更新时重新扫描
-
-```
--v /etc/localFonts.json:/localFonts.json \
-```
-
 > [!NOTE]
-> 强烈建议映射本地字体路径与localFonts.json 
-> 避免重复扫描与联网下载的字体丢失
+> 建议映射fonts路径避免重复扫描与联网下载的字体丢失
 
 通过设置环境变量，可实现SRT转ASS，统一在不同设备上的播放效果
 ```
