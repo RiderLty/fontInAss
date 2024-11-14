@@ -49,4 +49,4 @@ SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
 SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
 
 DEBUG = os.environ.get("DEBUG", "") != ""
-HDR = int(os.environ.get("HDR", -1))
+HDR = int(os.environ.get("HDR", "-1"))
