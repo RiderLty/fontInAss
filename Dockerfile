@@ -7,5 +7,6 @@ RUN pip install --no-cache /wheels/* && rm -rf /wheels && chmod 777 /run.sh
 ARG NGINX=YES
 RUN if [ "${NGINX}" = "YES" ]; then apt-get update && apt-get -y --no-install-recommends install nginx; fi
 COPY nginx /etc/nginx
-COPY --from=builder /app/src /src
+COPY src /src/
+COPY --from=builder /app/src/py2cy/* /src/py2cy/
 CMD ["/bin/sh" , "-c" , "/run.sh"]
