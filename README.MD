@@ -105,6 +105,7 @@ server {
 
 > [!NOTE]
 > 强烈建议映射本地字体路径与localFonts.json
+
 > 避免重复扫描与联网下载的字体丢失
 
 
