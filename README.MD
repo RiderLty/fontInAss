@@ -14,7 +14,7 @@
 docker run -d --name=fontinass --restart=unless-stopped \
   -p 8012:8012 \
   -e EMBY_SERVER_URL=http://[ip]:[port] \
-  -v /etc/localFontMap.json:/localFontMap.json \
+  -v /etc/localFonts.json:/localFonts.json \
   riderlty/fontinass:latest
 ```
 设置EMBY_SERVER_URL为你的EMBY服务器的地址
@@ -52,7 +52,7 @@ pip install -r ./requirements.txt
 cd src/py2cy
 python setup.py build_ext --inplace
 ```
-修改main.py，中，EMBY_SERVER_URL为你的emby服务器地址，例如：
+添加环境变量 EMBY_SERVER_URL ，例如：
 ```
 EMBY_SERVER_URL = "http://192.168.3.3:7096"
 ```
@@ -111,9 +111,9 @@ server {
 -e SUB_CACHE_SIZE=50
 ```
 
-字幕缓存在内存的过期时间，默认60，单位（分钟），SUB_TTL <= 0 禁用过期
+字幕缓存在内存的过期时间，默认60，单位（分钟），SUB_CACHE_TTL <= 0 禁用过期
 ```
--e SUB_TTL=60
+-e SUB_CACHE_TTL=60
 ```
 
 字体缓存上限，默认30，单位（条）
@@ -121,12 +121,12 @@ server {
 -e FONT_CACHE_SIZE=30
 ```
 
-字体缓存在内存的过期时间，默认30，单位（分钟），FONT_TTL <= 0 禁用过期
+字体缓存在内存的过期时间，默认30，单位（分钟），FONT_CACHE_TTL <= 0 禁用过期
 ```
--e FONT_TTL=30
+-e FONT_CACHE_TTL=30
 ```
 
-多进程池最大数量/多线程池数为POOL_CPU_MAX乘以2，不设置就默认为CPU总线程数，类型（整数）
+多进程池最大数量/多线程池数为POOL_CPU_MAX乘以2，不设置默认为CPU总线程数，类型（整数）
 ```
 -e POOL_CPU_MAX=4
 ```

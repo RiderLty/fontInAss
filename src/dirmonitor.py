@@ -1,24 +1,18 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-import logging
 import os
 import traceback
 from threading import Timer
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
-import utils
-import config
-
-logger = logging.getLogger(f'{"main"}:{"loger"}')
+from constants import *
 
 
 class FileEventHandler(events.FileSystemEventHandler):
-    def __init__(self, fontDir, fontDirList):
+    def __init__(self, fontDir,callBack):
         events.FileSystemEventHandler.__init__(self)
         self.fontDir = fontDir
-        self.fontDirList = fontDirList
         self.snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
         self.timer = None
+        self.callBack = callBack
 
     def on_any_event(self, event):
         if self.timer:
@@ -26,62 +20,35 @@ class FileEventHandler(events.FileSystemEventHandler):
         self.timer = Timer(1, self.checkSnapshot)
         self.timer.start()
 
-
     def checkSnapshot(self):
         snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
         diff = dirsnapshot.DirectorySnapshotDiff(self.snapshot, snapshot)
         self.snapshot = snapshot
         self.timer = None
         if len(diff.files_created) or len(diff.files_deleted) or len(diff.files_modified) or len(diff.files_moved):
-            # print("file change", diff.files_created)
-            config.externalFonts = utils.updateLocal(self.fontDirList)
-        # 下面是应处理的各种事项
-        # if len(diff.files_created):
-        #     print("file create", diff.files_created)
-        #     utils.updateLocal(self.fontDirList)
-        # if len(diff.files_deleted):
-        #     print("file delete", diff.files_deleted)
-        #     utils.updateLocal(self.fontDirList)
-        # if len(diff.files_modified):
-        #     print("file modify", diff.files_modified)
-        #     utils.updateLocal(self.fontDirList)
-        # if len(diff.files_moved):
-        #     print("file move", diff.files_moved)
-        #     utils.updateLocal(self.fontDirList)
-        # if len(diff.dirs_modified):
-        #     print("dir modify", diff.dirs_modified)
-        # if len(diff.dirs_moved):
-        #     print("dir move", diff.dirs_moved)
-        # if len(diff.dirs_deleted):
-        #     print("dir delete", diff.dirs_deleted)
-        # if len(diff.dirs_created):
-        #     print("dir cteate", diff.dirs_created)
+            # 更新
+            self.callBack()
 
 
 class dirmonitor(object):
-    """文件夹监视类"""
 
-    def __init__(self, fontDirList: list):
-        """构造函数"""
-        self.fontDirList = fontDirList
+    def __init__(self, callBack :callable):
         self.observer = observers.Observer()
+        self.callBack = callBack
 
     def start(self):
-        """启动"""
         try:
-            for fontDir in self.fontDirList:
+            for fontDir in FONT_DIRS:
                 fontpath = os.path.abspath(fontDir)
                 logger.info("监控中:" + fontpath)
-                event_handler = FileEventHandler(fontpath, self.fontDirList)
-                self.observer.schedule(event_handler, fontpath, recursive=True)
+                eventHandler = FileEventHandler(fontpath,callBack=self.callBack)
+                self.observer.schedule(eventHandler, fontpath, recursive=True)
             self.observer.start()
         except Exception as e:
-            print(f"监视文件错误 : \n{traceback.format_exc()}")
+            logger.error(f"监视文件错误 : \n{traceback.format_exc()}")
 
     def stop(self):
-        """停止"""
         self.observer.stop()
 
     def join(self):
-        """停止"""
         self.observer.join()

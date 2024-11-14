@@ -1,164 +1,92 @@
-import os
-import logging
-import re
-import threading
-import uharfbuzz
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
+import time
 import traceback
-import ass as ssa
-import fontLoader
-import utils
-from concurrent.futures import as_completed
+from cachetools import LRUCache, TTLCache
+import uharfbuzz
+from fontManager import fontManager
+import hdrify
+from utils import analyseAss, bytesToStr, isSRT, tagToInteger, bytesToHashName , srtToAss
 from py2cy.c_utils import uuencode
+from constants import *
 
-logger = logging.getLogger(f'{"main"}:{"loger"}')
 
-def analyseAss(ass_str):
-    """分析ass文件 返回 字体：{unicodes}"""
-    sub = ssa.parse_string(ass_str)
-    style_fontName = {}  # 样式 => 字体
-    font_charList = {}  # 字体 => unicode list
-    for style in sub.styles:
-        styleName = style.name.strip()
-        fontName = style.fontname.strip().replace("@", "")
-        style_fontName[styleName] = fontName
-    for event in sub.events:
-        os.getenv("DEV") == "true" and logger.debug("")
-        os.getenv("DEV") == "true" and logger.debug("原始Event文本 : " + event.text)
-        eventStyle = event.style.replace("*", "")
-        if eventStyle not in style_fontName:
-            logger.error(f"event[{eventStyle}]使用了未知样式")
-            continue
-        fontLine = r"{\fn" + style_fontName[eventStyle] + "}" + event.text
-        # 在首部加上对应的style的字体
-        for inlineStyle in re.findall(r"({[^\\]*\\r[^}|\\]+[\\|}])", event.text):  # 用于匹配 {\rXXX} 其中xxx为style名称
-            # {\r} 会有这种 空的
-            styleName = re.findall(r"{[^\\]*\\r([^}|\\]+)[\\|}]", inlineStyle)[0]
-            if styleName in style_fontName:
-                fontLine = fontLine.replace(inlineStyle, r"{\fn" + style_fontName[styleName] + "}")  # 将内联style，改为指定字体名称的形式
-            else:
-                logger.error(f"event内联[{styleName}]使用了未知样式")
-        res = [(fn.groups()[0], fn.start(), fn.end()) for fn in re.finditer(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", fontLine)]
-        # 获取所有的内联字体位置名称信息
-        for i in range(len(res)):
-            fontName = res[i][0].replace("@", "")
-            textStart = res[i][2]
-            textEnd = None if i == len(res) - 1 else res[i + 1][1]
-            text = re.sub(r"(?<!{)\{\\([^{}]*)\}(?!})", "", fontLine[textStart:textEnd])
-            os.getenv("DEV") == "true" and logger.debug(f"{fontName} :  {fontLine[textStart:textEnd]}  ===> {text}")
-            for ch in text:
-                if fontName not in font_charList:
-                    font_charList[fontName] = set()
-                font_charList[fontName].add(ord(ch))
-        # print("")
-        # 最终获取 字体 : 文本code
-    # print(font_charList)
-    return font_charList
+class assSubsetter:
+    def __init__(self, fontManagerInstance: fontManager) -> None:
+        self.fontManagerInstance = fontManagerInstance
+        self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
+        self.cache = TTLCache(maxsize=SUB_CACHE_SIZE, ttl=SUB_CACHE_TTL) if SUB_CACHE_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE)
 
-# def uuencode(binaryData):
-#     """编码工具"""
-#     OFFSET = 33
-#     encoded = []
-#     for i in range(0, (len(binaryData) // 3) * 3, 3):
-#         bytes_chunk = binaryData[i : i + 3]
-#         if len(bytes_chunk) < 3:
-#             bytes_chunk += b"\x00" * (3 - len(bytes_chunk))
-#         packed = int.from_bytes(bytes_chunk, "big")
-#         # packed = (packed & 0xFFFFFF)  # 确保只有24位
-#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)
-#         encoded.append(encoded_group)
-#     # print(f"输入({len(data)}){data} => {data[:(len(data) // 3) * 3]}|{data[(len(data) // 3) * 3:]}")
-#     last = None
-#     if len(binaryData) % 3 == 0:
-#         pass
-#     elif len(binaryData) % 3 == 1:
-#         last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00\x00"
-#         packed = int.from_bytes(last, "big")
-#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:2]
-#         encoded.append(encoded_group)
-#     elif len(binaryData) % 3 == 2:
-#         last = binaryData[(len(binaryData) // 3) * 3 :] + b"\x00"
-#         packed = int.from_bytes(last, "big")
-#         six_bits = [((packed >> (18 - i * 6)) & 0x3F) for i in range(4)]
-#         encoded_group = "".join(chr(OFFSET + num) for num in six_bits)[:3]
-#         encoded.append(encoded_group)
-#     encoded_lines = []
-#     for i in range(0, (len(encoded) // 20) * 20, 20):
-#         encoded_lines.append("".join(encoded[i : i + 20]))
-#     encoded_lines.append("".join(encoded[(len(encoded) // 20) * 20 :]))
-#     return "\n".join(encoded_lines)
+    def close(self):
+        self.processPool.shutdown()
 
-def makeOneEmbedFontsText(args):
-    # 在每个子进程中设置日志
-    logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
-    fontBytes, fontName, unicodeSet,= args
-    if fontBytes is None:
-        return f"缺少字体 {fontName}", None
-    else:
+    @staticmethod
+    def fontSubsetter(fontBytes, index, fontName, unicodeSet):
+        if fontBytes is None:
+            logger.error(f"{fontName} 字体缺失")
+            return ""
         try:
-            # 转harfbuzz.Face对象 指定blob的faces_index
-            face = uharfbuzz.Face(fontBytes[0], fontBytes[1])
-            # 初始化子集化UNICODE
+            face = uharfbuzz.Face(fontBytes, index)
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
-            assert "name" in face.table_tags , ValueError("name table not found")
-            inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({utils.tag_to_integer("name") })
+            assert "name" in face.table_tags, ValueError("name 表未找到")
+            inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({tagToInteger("name")})
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             del face
-            return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+            return f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
-            return f" {fontName} : {str(e)}", None
+            return ""
 
+    async def loadSubsetEncode(self, fontName, unicodeSet):
+        try:
+            fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
+        except Exception as e:
+            logger.error(f"{fontName} 加载字体出错 : \n{traceback.format_exc()}")
+            return ""
+        return await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet)
 
-def taskMaker(lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap, fontCache):
-    # with sem:
-    # 分离逻辑处理，尽量只保留I/O操作，释放GIL锁，较大的/较长时间下载的字体所耗时间可以留给其他load-ready的字体进行逻辑处理
-    fontBytes = fontLoader.loadFont(fontName, externalFonts, fontPathMap)
-    if fontBytes is not None:
-        # 获取ttc的index
-        fontBytes = utils.get_ttc_index(fontBytes, fontName)
-        # 读取到的字体bytes存入内存缓存
-        fontCache[fontName] = fontBytes
-    else:
-        unicodeSet = {}
-    # 提前创建任务列表，减少 lock 占用时间
-    task = (fontBytes, fontName, unicodeSet)
-    with lock:
-        tasks.append(task)
+    async def process(self, subtitleBytes):
+        bytesHash = bytesToHashName(subtitleBytes)
+        if bytesHash in self.cache:
+            result = self.cache[bytesHash]
+            self.cache[bytesHash] = result
+            return bytesHash
 
-def makeEmbedFonts(pool, thread_pool, font_charList, externalFonts, fontPathMap, fontCache):
-    """对于给定的 字体:使用到的编码列表 返回编码后的，可嵌入ASS的文本"""
-    embedFontsText = "[Fonts]\n"
-    errors = []
-    # 准备子集化任务参数
-    tasks = []
-    lock = threading.Lock()
-    threads = []
-    for fontName, unicodeSet in font_charList.items():
-        if fontName in fontCache:
-            fontBytes = fontCache[fontName]
-            # 刷新字体缓存过期时间
-            fontCache[fontName] = fontBytes
-            tasks.append((fontBytes, fontName, unicodeSet))
-            logger.info(f"{fontName} 字体缓存命中 - 占用: {len(fontBytes[0]) / (1024 * 1024):.2f}MB")
-        else:
-            threads.append(thread_pool.submit(taskMaker, lock, tasks, fontName, unicodeSet, externalFonts, fontPathMap,fontCache))
+        assText = bytesToStr(subtitleBytes)
 
-    # 使用 as_completed 遍历已完成的任务
-    for future in as_completed(threads):
-        # 阻塞直到该任务完成
-        future.result()
+        srt = isSRT(assText)
+        if srt:
+            if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
+                logger.info("SRT ===> ASS")
+                assText = srtToAss(assText)
+            else:
+                logger.info("未开启SRT转ASS")
+                return (True, assText.encode("UTF-8-sig"))
+        
+        if "[Fonts]\n" in assText:
+            logger.error("已有内嵌字体")
+            return (False, subtitleBytes)
+        
+        if HDR != -1:
+            logger.info(f"HDR适配")
+            try:
+                assText = hdrify.ssaProcessor(assText, HDR)
+            except Exception as e:
+                logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
-    results = pool.map(makeOneEmbedFontsText, tasks)
-
-    # 处理结果
-    for err, result in results:
-        if err:
-            errors.append(err)
-        else:
-            embedFontsText += result
-
-    return errors, embedFontsText
+        head, tai = assText.split("[Events]")
+        embedFontsText = "[Fonts]\n"
+        fontCharList = analyseAss(assText)
+        start = time.perf_counter_ns()
+        tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
+        for task in asyncio.as_completed(tasks):
+            embedFontsText += await task
+        head, tai = assText.split("[Events]")
+        logger.info(f"嵌入完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
+        resultText = head + embedFontsText + "\n[Events]" + tai
+        # print(resultText)
+        resultBytes = resultText.encode("UTF-8-sig")
+        self.cache[bytesHash] = resultBytes
+        return (srt, resultBytes)
