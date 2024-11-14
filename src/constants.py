@@ -40,10 +40,10 @@ if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
 EMBY_SERVER_URL = os.environ.get("EMBY_SERVER_URL", default="尚未EMBY_SERVER_URL环境变量")
 
 SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE", default=50))
-SUB_CACHE_TTL = int(os.environ.get("SUB_CACHE_TTL", default=60 * 60))
+SUB_CACHE_TTL = int(os.environ.get("SUB_CACHE_TTL", default=60)) * 60
 
 FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE", default=30))
-FONT_CACHE_TTL = int(os.environ.get("FONT_CACHE_TTL", default=30 * 60))
+FONT_CACHE_TTL = int(os.environ.get("FONT_CACHE_TTL", default=30)) * 60
 
 SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
 SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
