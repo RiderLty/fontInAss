@@ -35,7 +35,7 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             del face
-            logger.error(f"{fontName} 子集化完成 字符数量 {len(unicodeSet)} 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+            logger.info(f"{fontName} 子集化完成 字符数量 {len(unicodeSet)} 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
             return f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
@@ -43,13 +43,20 @@ class assSubsetter:
 
     async def loadSubsetEncode(self, fontName, unicodeSet):
         try:
+            start = time.perf_counter_ns()
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
+            logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
         except Exception as e:
             logger.error(f"{fontName} 加载字体出错 : \n{traceback.format_exc()}")
             return ""
-        return await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet)
+        start = time.perf_counter_ns()
+        result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet)
+        logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        return result
+
 
     async def process(self, subtitleBytes):
+        
         bytesHash = bytesToHashName(subtitleBytes)
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
@@ -81,16 +88,16 @@ class assSubsetter:
 
         head, tai = assText.split("[Events]")
         embedFontsText = "[Fonts]\n"
-        fontCharList = analyseAss(assText)
         start = time.perf_counter_ns()
+        fontCharList = analyseAss(assText)
         tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
         error = False
         for task in asyncio.as_completed(tasks):
-            if task == "":
+            result = await task
+            if result == "":
                 error = True
             else:
-                embedFontsText += await task
-        head, tai = assText.split("[Events]")
+                embedFontsText += result
         logger.info(f"嵌入完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)

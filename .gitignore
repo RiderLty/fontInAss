@@ -4,10 +4,10 @@ fonts
 TEST
 *.pyc
 localFontMap.json
-src/test.py
+
 localFontMap.json
 test.ass
-test
+# test
 data/localFonts.json
 profile.html
 profile.json
