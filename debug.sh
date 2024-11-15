@@ -19,3 +19,32 @@ export EMBY_SERVER_URL="http://192.168.3.3:7096"
 export SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'
 export SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 export DEV="true"
+
+
+
+
+docker run \
+  -d \
+  --name='fontinass' \
+  --net='bridge' \
+  -e TZ="Asia/Shanghai" \
+  -e HOST_OS="Unraid" \
+  -e HOST_HOSTNAME="NAS" \
+  -e HOST_CONTAINERNAME="fontinass" \
+  -e 'EMBY_SERVER_URL'='http://192.168.3.3:7096' \
+  -e 'SUB_CACHE_SIZE'='1024' \
+  -e 'SUB_CACHE_TTL'='60' \
+  -e 'FONT_CACHE_SIZE'='1024' \
+  -e 'FONT_CACHE_TTL'='-1' \
+  -e 'HDR'='-1' \
+  -e 'DEBUG'='y' \
+  -e 'SRT_2_ASS_FORMAT'='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding' \
+  -e 'SRT_2_ASS_STYLE'='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1' \
+  -l net.unraid.docker.managed=dockerman \
+  -l net.unraid.docker.webui='http://[IP]:[PORT:8097]/' \
+  -l net.unraid.docker.icon='https://www.foundertype.com/favicon.ico' \
+  -p '8097:8012/tcp' \
+  -p '8011:8011/tcp' \
+  -v '/mnt/user/storage/Fonts/':'/fonts':'rw' \
+  -v '/mnt/user/appdata/fontinass':'/data':'rw' \
+  'riderlty/fontinass:noproxy'

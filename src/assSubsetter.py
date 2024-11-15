@@ -26,6 +26,7 @@ class assSubsetter:
             logger.error(f"{fontName} 字体缺失")
             return ""
         try:
+            start = time.perf_counter_ns()
             face = uharfbuzz.Face(fontBytes, index)
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
@@ -34,6 +35,7 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             del face
+            logger.error(f"{fontName} 子集化完成 字符数量 {len(unicodeSet)} 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
             return f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
@@ -52,6 +54,7 @@ class assSubsetter:
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
+            logger.info(f"字幕缓存命中 - 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
             return (srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
@@ -81,12 +84,19 @@ class assSubsetter:
         fontCharList = analyseAss(assText)
         start = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
+        error = False
         for task in asyncio.as_completed(tasks):
-            embedFontsText += await task
+            if task == "":
+                error = True
+            else:
+                embedFontsText += await task
         head, tai = assText.split("[Events]")
         logger.info(f"嵌入完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")
-        self.cache[bytesHash] = (srt, resultBytes)
+        if not error:
+            self.cache[bytesHash] = (srt, resultBytes)
+        else:
+            logger.warning("存在错误，未缓存")
         return (srt, resultBytes)

@@ -8,3 +8,6 @@ src/test.py
 localFontMap.json
 test.ass
 test
+data/localFonts.json
+profile.html
+profile.json
