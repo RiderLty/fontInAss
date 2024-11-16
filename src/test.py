@@ -1,3 +1,4 @@
+from concurrent.futures import ProcessPoolExecutor
 import traceback
 import warnings
 import requests
@@ -99,7 +100,29 @@ async def test():
             subtitleBytes = f.read() 
         start = time.perf_counter_ns()
         await process(subtitleBytes)
-        logger.debug(f"用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms\n\n")
+        logger.debug(f"用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+
+
+def initpass():
+    pass
+
+def worker(start):
+    logger.error(f"启动用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+    return time.perf_counter_ns()
+
+async def submit(pool):
+    start = time.perf_counter_ns()
+    end = await MAIN_LOOP.run_in_executor(pool, worker,start)
+    logger.debug(f"运行用时 {(end - start) / 1000000:.2f} ms")
+
+
+async def testPool():
+    pool = ProcessPoolExecutor(max_workers=int(os.cpu_count()))
+    pool.submit(initpass)
+    await asyncio.gather(*[ submit(pool) for _ in range(10) ])    
+    pool.shutdown()
+
+
 
 
 if __name__ == "__main__":
@@ -119,6 +142,7 @@ if __name__ == "__main__":
     serverInstance = getServer(8011, MAIN_LOOP)
     init_logger()
     MAIN_LOOP.run_until_complete(test())
+    # MAIN_LOOP.run_until_complete(testPool())
     # # 关闭和清理资源
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出

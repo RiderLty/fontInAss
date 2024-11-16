@@ -10,21 +10,23 @@ from utils import analyseAss, bytesToStr, isSRT, tagToInteger, bytesToHashName ,
 from py2cy.c_utils import uuencode
 from constants import *
 
+def initpass():
+    pass
 
 class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
         self.fontManagerInstance = fontManagerInstance
         self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
+         # 提交一个简单的任务来预热进程池
+        self.processPool.submit(initpass)
         self.cache = TTLCache(maxsize=SUB_CACHE_SIZE, ttl=SUB_CACHE_TTL) if SUB_CACHE_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE)
 
     def close(self):
         self.processPool.shutdown()
 
     @staticmethod
-    def fontSubsetter(fontBytes, index, fontName, unicodeSet):
-        if fontBytes is None:
-            logger.error(f"{fontName} 字体缺失")
-            return ""
+    def fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime):
+        logger.error(f"{fontName} 子集化 启动时{(time.perf_counter_ns() - submitTime) / 1000000:.2f} ms")
         try:
             start = time.perf_counter_ns()
             face = uharfbuzz.Face(fontBytes, index)
@@ -46,12 +48,15 @@ class assSubsetter:
             start = time.perf_counter_ns()
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
             logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+            if fontBytes is None:
+                logger.error(f"{fontName} 字体缺失")
+                return ""
         except Exception as e:
             logger.error(f"{fontName} 加载字体出错 : \n{traceback.format_exc()}")
             return ""
-        start = time.perf_counter_ns()
-        result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet)
-        logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        submitTime = time.perf_counter_ns()
+        result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
+        logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f} ms")
         return result
 
 
