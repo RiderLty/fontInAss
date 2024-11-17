@@ -1,12 +1,13 @@
-import hashlib
 import os
-
-import aiofiles
 import os
 import re
+import hashlib
+import aiofiles
 import chardet
 import ass as ssa
-from constants import *
+
+from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE
+
 
 def getAllFiles(path):
     Filelist = []
@@ -20,7 +21,7 @@ async def saveToDisk(path, fontBytes):
     async with aiofiles.open(path, "wb") as f:
         await f.write(fontBytes)
         logger.info(f"网络字体已保存\t\t[{path}]")
-        
+
 
 def tagToInteger(tagString):
     """
@@ -40,19 +41,14 @@ def tagToInteger(tagString):
         raise ValueError("输入的字符串必须恰好包含 4 个字符。")
 
     # 将字符串转换为对应的 hb_tag_t 整数值
-    return ((ord(tagString[0]) & 0xFF) << 24) | \
-           ((ord(tagString[1]) & 0xFF) << 16) | \
-           ((ord(tagString[2]) & 0xFF) << 8) | \
-           (ord(tagString[3]) & 0xFF)
+    return ((ord(tagString[0]) & 0xFF) << 24) | ((ord(tagString[1]) & 0xFF) << 16) | ((ord(tagString[2]) & 0xFF) << 8) | (ord(tagString[3]) & 0xFF)
 
-def bytesToHashName(bytes, hash_algorithm='sha256'):
-    hash_func = {
-        'md5': hashlib.md5,
-        'sha1': hashlib.sha1,
-        'sha256': hashlib.sha256
-    }.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
+
+def bytesToHashName(bytes, hash_algorithm="sha256"):
+    hash_func = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256}.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
     hash_func.update(bytes)
     return hash_func.hexdigest()
+
 
 def analyseAss(ass_str):
     """分析ass文件 返回 字体：{unicodes}"""
@@ -98,6 +94,7 @@ def isSRT(text):
     matches = re.findall(srt_pattern, "@".join(text.splitlines()))
     return len(matches) > 0
 
+
 def srtToAss(srtText):
     srtText = srtText.replace("\r", "")
     lines = [x.strip() for x in srtText.split("\n") if x.strip()]
@@ -132,12 +129,11 @@ def srtToAss(srtText):
     # replace style
     subLines = re.sub(r"<([ubi])>", "{\\\\\g<1>1}", subLines)
     subLines = re.sub(r"</([ubi])>", "{\\\\\g<1>0}", subLines)
-    subLines = re.sub(
-        r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>', "{\\\\c&H\\3\\2\\1&}", subLines
-    )
+    subLines = re.sub(r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>', "{\\\\c&H\\3\\2\\1&}", subLines)
     subLines = re.sub(r"</font>", "", subLines)
 
-    head_str = ("""[Script Info]
+    head_str = (
+        """[Script Info]
 ; This is an Advanced Sub Station Alpha v4+ script.
 Title:
 ScriptType: v4.00+
@@ -160,7 +156,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     output_str = head_str + "\n" + subLines
     logger.debug("SRT转ASS\n" + output_str)
     return output_str
-    
+
+
 def bytesToStr(bytes):
     result = chardet.detect(bytes)
     logger.info(f"判断编码:{str(result)}")

@@ -3,11 +3,11 @@ import traceback
 from threading import Timer
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
-from constants import *
+from constants import logger, FONT_DIRS
 
 
 class FileEventHandler(events.FileSystemEventHandler):
-    def __init__(self, fontDir,callBack):
+    def __init__(self, fontDir, callBack):
         events.FileSystemEventHandler.__init__(self)
         self.fontDir = fontDir
         self.snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
@@ -32,7 +32,7 @@ class FileEventHandler(events.FileSystemEventHandler):
 
 class dirmonitor(object):
 
-    def __init__(self, callBack :callable):
+    def __init__(self, callBack: callable):
         self.observer = observers.Observer()
         self.callBack = callBack
 
@@ -41,7 +41,7 @@ class dirmonitor(object):
             for fontDir in FONT_DIRS:
                 fontpath = os.path.abspath(fontDir)
                 logger.info("监控中:" + fontpath)
-                eventHandler = FileEventHandler(fontpath,callBack=self.callBack)
+                eventHandler = FileEventHandler(fontpath, callBack=self.callBack)
                 self.observer.schedule(eventHandler, fontpath, recursive=True)
             self.observer.start()
         except Exception as e:

@@ -1,25 +1,23 @@
-from concurrent.futures import ProcessPoolExecutor
-import traceback
 import warnings
-import requests
-
-from utils import analyseAss, bytesToStr
-
 warnings.filterwarnings("ignore")
 
 import os
+import ssl
+import time
 import json
 import asyncio
-from assSubsetter import assSubsetter
-from fontManager import fontManager
+import requests
+import logging
+import traceback
+import coloredlogs
 from fastapi import FastAPI, Request, Response
 from uvicorn import Config, Server
-import asyncio
-import ssl
+from concurrent.futures import ProcessPoolExecutor
 
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, LOCAL_FONTS_PATH, LOCAL_FONTS_PATH, DEFAULT_FONT_PATH, MAIN_LOOP
+from assSubsetter import assSubsetter
+from fontManager import fontManager
 from dirmonitor import dirmonitor
-from constants import *
-import time
 
 
 def init_logger():
@@ -96,8 +94,8 @@ async def test():
         # analyseAss 约5ms
     ]
     for file in files:
-        with open(file,'rb') as f:
-            subtitleBytes = f.read() 
+        with open(file, "rb") as f:
+            subtitleBytes = f.read()
         start = time.perf_counter_ns()
         await process(subtitleBytes)
         logger.debug(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
@@ -106,23 +104,23 @@ async def test():
 def initpass():
     pass
 
+
 def worker(start):
     logger.error(f"启动用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
     return time.perf_counter_ns()
 
+
 async def submit(pool):
     start = time.perf_counter_ns()
-    end = await MAIN_LOOP.run_in_executor(pool, worker,start)
+    end = await MAIN_LOOP.run_in_executor(pool, worker, start)
     logger.debug(f"运行用时 {(end - start) / 1000000:.2f} ms")
 
 
 async def testPool():
     pool = ProcessPoolExecutor(max_workers=int(os.cpu_count()))
     pool.submit(initpass)
-    await asyncio.gather(*[ submit(pool) for _ in range(10) ])    
+    await asyncio.gather(*[submit(pool) for _ in range(10)])
     pool.shutdown()
-
-
 
 
 if __name__ == "__main__":
@@ -147,7 +145,7 @@ if __name__ == "__main__":
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
     fontManagerInstance.close()  # 关闭aiohttp的session
-    assSubsetterInstance.close()  # 关闭进程池
+    # assSubsetterInstance.close()  # 关闭进程池
     pending = asyncio.all_tasks(MAIN_LOOP)
     MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))  # 等待异步任务结束
     MAIN_LOOP.stop()  # 停止事件循环

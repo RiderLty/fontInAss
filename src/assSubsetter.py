@@ -1,32 +1,36 @@
-import asyncio
-from concurrent.futures import ProcessPoolExecutor
 import time
+import asyncio
 import traceback
-from cachetools import LRUCache, TTLCache
 import uharfbuzz
+from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
-import hdrify
-from utils import analyseAss, bytesToStr, isSRT, tagToInteger, bytesToHashName , srtToAss
-from py2cy.c_utils import uuencode
-from constants import *
 
-def initpass():
-    pass
+import hdrify
+from utils import analyseAss, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
+from py2cy.c_utils import uuencode
+from constants import logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+
+# from concurrent.futures import ProcessPoolExecutor
+
+
+# def initpass():
+#     pass
+
 
 class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
         self.fontManagerInstance = fontManagerInstance
-        self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
-        logger.info(f"子集化进程数量：{POOL_CPU_MAX}")
+        # self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
+        # logger.info(f"子集化进程数量：{POOL_CPU_MAX}")
         # 提交一个简单的任务来预热进程池
-        self.processPool.submit(initpass)
+        # self.processPool.submit(initpass)
         self.cache = TTLCache(maxsize=SUB_CACHE_SIZE, ttl=SUB_CACHE_TTL) if SUB_CACHE_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE)
 
-    def close(self):
-        self.processPool.shutdown()
+    # def close(self):
+    # self.processPool.shutdown()
 
     @staticmethod
-    def fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime):
+    def fontSubsetter(fontBytes, index, fontName, unicodeSet, submitTime):
         # logger.debug(f"{fontName} 子集化 启动时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         try:
             start = time.perf_counter_ns()
@@ -55,13 +59,12 @@ class assSubsetter:
             return ""
         submitTime = time.perf_counter_ns()
         # result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
-        result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime)
+        result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet, submitTime)
         # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         return result
 
-
     async def process(self, subtitleBytes):
-        
+
         bytesHash = bytesToHashName(subtitleBytes)
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
@@ -79,11 +82,11 @@ class assSubsetter:
             else:
                 logger.info("未开启SRT转ASS")
                 return (True, assText.encode("UTF-8-sig"))
-        
+
         if "[Fonts]\n" in assText:
             logger.error("已有内嵌字体")
             return (False, subtitleBytes)
-        
+
         if HDR != -1:
             logger.info(f"HDR适配")
             try:
@@ -103,7 +106,7 @@ class assSubsetter:
                 error = True
             else:
                 embedFontsText += result
-        logger.info(f"嵌入完成 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")# {len(embedFontsText) / (1024 * 1024):.2f}MB in 
+        logger.info(f"嵌入完成 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")

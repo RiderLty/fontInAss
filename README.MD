@@ -127,10 +127,10 @@ server {
 -e FONT_CACHE_TTL=30
 ```
 
-多进程池最大数量/多线程池数为POOL_CPU_MAX乘以2，不设置默认为CPU总线程数，类型（整数）
+<!-- 多进程池最大数量/多线程池数为POOL_CPU_MAX乘以2，不设置默认为CPU总线程数，类型（整数）
 ```
 -e POOL_CPU_MAX=4
-```
+``` -->
 
 支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
 

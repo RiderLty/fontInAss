@@ -1,17 +1,18 @@
-import builtins
+import os
 import asyncio
 import logging
-import os
-
+import builtins
 import coloredlogs
+
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt)
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
-assert LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] , f"LOG_LEVEL={LOG_LEVEL}, 可用值 DEBUG INFO WARNING ERROR CRITICAL"
+assert LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], f"LOG_LEVEL={LOG_LEVEL}, 可用值 DEBUG INFO WARNING ERROR CRITICAL"
 logger.setLevel(LOG_LEVEL)
+
 
 def custom_print(*args, **kwargs):
     logger.info("".join([str(x) for x in args]))
@@ -35,10 +36,10 @@ ONLINE_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json"
 LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
 os.makedirs(os.path.join(os.path.dirname(ROOT_PATH), r"data"), exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
-cpu_count = int(os.cpu_count())
-POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
-if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
-    POOL_CPU_MAX = cpu_count
+# cpu_count = int(os.cpu_count())
+# POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
+# if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
+#     POOL_CPU_MAX = cpu_count
 
 EMBY_SERVER_URL = os.environ.get("EMBY_SERVER_URL", default="尚未EMBY_SERVER_URL环境变量")
 

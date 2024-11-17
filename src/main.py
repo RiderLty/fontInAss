@@ -1,21 +1,22 @@
-import traceback
 import warnings
-import requests
+
 
 warnings.filterwarnings("ignore")
 
 import os
-import json
-import asyncio
-from assSubsetter import assSubsetter
-from fontManager import fontManager
-from fastapi import FastAPI,Request, Response
-from uvicorn import Config, Server
-import asyncio
 import ssl
-
+import json
+import logging
+import asyncio
+import requests
+import traceback
+import coloredlogs
+from fastapi import FastAPI, Request, Response
+from uvicorn import Config, Server
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, LOCAL_FONTS_PATH, LOCAL_FONTS_PATH, DEFAULT_FONT_PATH, MAIN_LOOP
 from dirmonitor import dirmonitor
-from constants import *
+from fontManager import fontManager
+from assSubsetter import assSubsetter
 
 
 def init_logger():
@@ -34,10 +35,12 @@ def init_logger():
             fmt=fmt,
         )
 
+
 # app = Bottle()
 app = FastAPI()
 
 process = None
+
 
 @app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
@@ -88,9 +91,9 @@ if __name__ == "__main__":
     fontManagerInstance = fontManager()
     fontManagerInstance.updateLocalFont()  # 更新本地字体
     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-    event_handler = dirmonitor(callBack=fontManagerInstance.updateLocalFont)# 创建fonts字体文件夹监视实体
+    event_handler = dirmonitor(callBack=fontManagerInstance.updateLocalFont)  # 创建fonts字体文件夹监视实体
     event_handler.start()
-    process = assSubsetterInstance.process # 绑定函数
+    process = assSubsetterInstance.process  # 绑定函数
     serverInstance = getServer(8011, MAIN_LOOP)
     init_logger()
     MAIN_LOOP.run_until_complete(serverInstance.serve())
@@ -98,7 +101,7 @@ if __name__ == "__main__":
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
     fontManagerInstance.close()  # 关闭aiohttp的session
-    assSubsetterInstance.close()  # 关闭进程池
+    # assSubsetterInstance.close()  # 关闭进程池
     pending = asyncio.all_tasks(MAIN_LOOP)
     MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))  # 等待异步任务结束
     MAIN_LOOP.stop()  # 停止事件循环

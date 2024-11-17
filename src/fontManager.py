@@ -1,15 +1,15 @@
-import asyncio
 import os
-import threading
-import time
-import aiofiles
-import aiohttp
-from cachetools import LRUCache, TTLCache
 import json
+import time
+import aiohttp
+import asyncio
+import aiofiles
+import threading
+from cachetools import LRUCache, TTLCache
 from fontTools.ttLib import TTFont, TTCollection
 
+from constants import logger, FONT_DIRS, LOCAL_FONTS_PATH, LOCAL_FONTS_PATH, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_PATH
 from utils import getAllFiles, saveToDisk
-from constants import *
 
 
 def makeMiniSizeFontMap(data):
