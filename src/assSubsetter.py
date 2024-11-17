@@ -17,7 +17,8 @@ class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
         self.fontManagerInstance = fontManagerInstance
         self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
-         # 提交一个简单的任务来预热进程池
+        logger.info(f"子集化进程数量：{POOL_CPU_MAX}")
+        # 提交一个简单的任务来预热进程池
         self.processPool.submit(initpass)
         self.cache = TTLCache(maxsize=SUB_CACHE_SIZE, ttl=SUB_CACHE_TTL) if SUB_CACHE_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE)
 
@@ -55,7 +56,7 @@ class assSubsetter:
             logger.error(f"{fontName} 加载字体出错 : \n{traceback.format_exc()}")
             return ""
         submitTime = time.perf_counter_ns()
-        result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
+        result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime)
         logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f} ms")
         return result
 
