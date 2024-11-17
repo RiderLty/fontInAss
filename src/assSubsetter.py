@@ -50,7 +50,7 @@ class assSubsetter:
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
             # logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
             if fontBytes is None:
-                logger.error(f"字体缺失 \t[{fontName}]")
+                logger.error(f"字体缺失 \t\t[{fontName}]")
                 return ""
         except Exception as e:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
@@ -104,12 +104,12 @@ class assSubsetter:
                 error = True
             else:
                 embedFontsText += result
-        logger.info(f"嵌入完成 {len(embedFontsText) / (1024 * 1024):.2f}MB in {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
+        logger.info(f"嵌入完成 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")# {len(embedFontsText) / (1024 * 1024):.2f}MB in 
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")
         if not error:
             self.cache[bytesHash] = (srt, resultBytes)
         else:
-            logger.warning("存在错误，未缓存")
+            logger.error("存在错误，未缓存")
         return (srt, resultBytes)
