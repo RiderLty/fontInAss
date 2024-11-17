@@ -8,7 +8,10 @@ import coloredlogs
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt)
-# logger.setLevel("INFO")
+
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+assert LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] , f"LOG_LEVEL={LOG_LEVEL}, 可用值 DEBUG INFO WARNING ERROR CRITICAL"
+logger.setLevel(LOG_LEVEL)
 
 def custom_print(*args, **kwargs):
     logger.info("".join([str(x) for x in args]))
@@ -49,4 +52,3 @@ SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
 SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
 
 HDR = int(os.environ.get("HDR", "-1"))
-DEBUG = os.environ.get("DEBUG", "") != ""

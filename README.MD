@@ -84,7 +84,7 @@ server {
 }
 ```
 
-## 配置说明
+## 其他配置说明
 
 容器内部端口`8011`为字体处理服务，`8012`为nginx反向代理Emby
 
@@ -101,7 +101,7 @@ server {
 > [!NOTE]
 > 建议映射fonts路径避免重复扫描与联网下载的字体丢失
 
-通过设置环境变量，可实现SRT转ASS，统一在不同设备上的播放效果
+添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果
 ```
   -e SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
@@ -137,6 +137,10 @@ server {
 通过HDR来设置字幕亮度峰值, 例如1000nit
 ```
 -e HDR=1000
+```
+日志等级，可设置为 DEBUG INFO WARNING ERROR CRITICAL
+```
+-e LOG_LEVEL=DEBUG
 ```
 
 

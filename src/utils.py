@@ -64,7 +64,7 @@ def analyseAss(ass_str):
         fontName = style.fontname.strip().replace("@", "")
         style_fontName[styleName] = fontName
     for event in sub.events:
-        DEBUG and  logger.debug("原始Event文本 : " + event.text)
+        # logger.debug("原始Event文本 : " + event.text)
         eventStyle = event.style.replace("*", "")
         if eventStyle not in style_fontName:
             logger.error(f"event[{eventStyle}]使用了未知样式")
@@ -85,7 +85,7 @@ def analyseAss(ass_str):
             textStart = res[i][2]
             textEnd = None if i == len(res) - 1 else res[i + 1][1]
             text = re.sub(r"(?<!{)\{\\([^{}]*)\}(?!})", "", fontLine[textStart:textEnd])
-            DEBUG and  logger.debug(f"{fontName} :  {fontLine[textStart:textEnd]}  ==> {text}")
+            logger.debug(f"{fontName} : {fontLine[textStart:textEnd]}  ==> {text}")
             for ch in text:
                 if fontName not in font_charList:
                     font_charList[fontName] = set()
@@ -158,7 +158,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
     # Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
     output_str = head_str + "\n" + subLines
-    # DEBUG and  logger.debug("SRT转ASS\n" + output_str)
+    logger.debug("SRT转ASS\n" + output_str)
     return output_str
     
 def bytesToStr(bytes):

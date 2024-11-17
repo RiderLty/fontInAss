@@ -58,8 +58,11 @@ class fontManager:
 
     def updateLocalFont(self):
         """更新本地字体"""
+        logger.info("本地字体更新中...")
         with self.updateLocalLock:  # 确保不同时更新localFontDB与loadFont
             newLocalFontDB = {}
+            count = 0
+            start = time.perf_counter_ns()
             for dirPath in FONT_DIRS:
                 for file in getAllFiles(dirPath):
                     if file in self.localFontDB:
@@ -67,7 +70,7 @@ class fontManager:
                     else:
                         try:
                             if file.lower()[-3:] in ["ttc", "ttf", "otf"]:
-                                logger.info(f"更新外部字体 {file}")
+                                logger.debug(f"更新本地字体 {file}")
                                 with open(file, "rb") as f:
                                     sfntVersion = f.read(4)
                                 fonts = TTCollection(file).fonts if sfntVersion == b"ttcf" else [TTFont(file)]
@@ -77,9 +80,10 @@ class fontManager:
                                         if record.nameID == 1:  # Font Family name
                                             fontIndex[str(record).strip()] = index
                                 newLocalFontDB[file] = {"size": os.path.getsize(file), "fonts": fontIndex}
+                                count += 1
                         except Exception as e:
-                            logger.error(f"更新外部字体出错 {file} : {str(e)}")
-
+                            logger.error(f"更新本地字体出错 {file} : {str(e)}")
+            logger.info(f"更新了{count}个本地字体 用时{(time.perf_counter_ns() - start) / 1000000000:.2f}s")
             self.localFontDB = newLocalFontDB
             self.localMap = makeMiniSizeFontMap(newLocalFontDB)
             with open(LOCAL_FONTS_PATH, "w", encoding="UTF-8") as f:

@@ -46,9 +46,7 @@ class assSubsetter:
 
     async def loadSubsetEncode(self, fontName, unicodeSet):
         try:
-            # start = time.perf_counter_ns()
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
-            # logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
             if fontBytes is None:
                 logger.error(f"字体缺失 \t\t[{fontName}]")
                 return ""
@@ -56,6 +54,7 @@ class assSubsetter:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return ""
         submitTime = time.perf_counter_ns()
+        # result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
         result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime)
         # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         return result
