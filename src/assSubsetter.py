@@ -27,7 +27,7 @@ class assSubsetter:
 
     @staticmethod
     def fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime):
-        logger.error(f"{fontName} 子集化 启动时{(time.perf_counter_ns() - submitTime) / 1000000:.2f} ms")
+        # logger.debug(f"{fontName} 子集化 启动时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         try:
             start = time.perf_counter_ns()
             face = uharfbuzz.Face(fontBytes, index)
@@ -38,26 +38,26 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             del face
-            logger.info(f"{fontName} 子集化完成 字符数量 {len(unicodeSet)} 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+            logger.info(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             return f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
-            logger.error(f"子集化{fontName}出错 : \n{traceback.format_exc()}")
+            logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return ""
 
     async def loadSubsetEncode(self, fontName, unicodeSet):
         try:
-            start = time.perf_counter_ns()
+            # start = time.perf_counter_ns()
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
-            logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+            # logger.debug(f"{fontName} 加载字体 实际用时 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
             if fontBytes is None:
-                logger.error(f"{fontName} 字体缺失")
+                logger.error(f"字体缺失 \t[{fontName}]")
                 return ""
         except Exception as e:
-            logger.error(f"{fontName} 加载字体出错 : \n{traceback.format_exc()}")
+            logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return ""
         submitTime = time.perf_counter_ns()
         result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet , submitTime)
-        logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f} ms")
+        # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         return result
 
 
@@ -67,15 +67,15 @@ class assSubsetter:
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
-            logger.info(f"字幕缓存命中 - 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
+            logger.info(f"字幕缓存命中 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
             return (srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
 
         srt = isSRT(assText)
         if srt:
-            if os.environ.get("SRT_2_ASS_FORMAT") and os.environ.get("SRT_2_ASS_STYLE"):
-                logger.info("SRT ===> ASS")
+            if SRT_2_ASS_FORMAT and SRT_2_ASS_FORMAT:
+                logger.info("SRT ==> ASS")
                 assText = srtToAss(assText)
             else:
                 logger.info("未开启SRT转ASS")
@@ -104,7 +104,7 @@ class assSubsetter:
                 error = True
             else:
                 embedFontsText += result
-        logger.info(f"嵌入完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms - 生成Fonts部分大小: {len(embedFontsText) / (1024 * 1024):.2f}MB")
+        logger.info(f"嵌入完成 {len(embedFontsText) / (1024 * 1024):.2f}MB in {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")

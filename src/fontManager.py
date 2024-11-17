@@ -90,7 +90,7 @@ class fontManager:
         if fontName in self.cache:
             (fontBytes, index) = self.cache[fontName]  # 刷新缓存
             self.cache[fontName] = (fontBytes, index)
-            logger.info(f"{fontName} 字体缓存命中 - 占用: {len(fontBytes) / (1024 * 1024):.2f}MB")
+            logger.info(f"已缓存 {len(fontBytes) / (1024 * 1024):.2f}MB \t\t[{fontName}]")
             return (fontBytes, index)
 
         if fontName in self.localMap:
@@ -98,17 +98,17 @@ class fontManager:
             start = time.perf_counter_ns()
             async with aiofiles.open(path, "rb") as f:
                 fontBytes = await f.read()
-                logger.info(f"从本地加载字体 {path} {len(fontBytes) / (1024 * 1024):.2f}MB over in {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+                logger.info(f"本地 {len(fontBytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName} <== {path}]")
                 self.cache[fontName] = (fontBytes, index)
                 return (fontBytes, index)
 
         if fontName in self.onlineMap:
             (url, index) = self.onlineMap[fontName]
-            logger.info(f"从网络加载字体 https://fonts.storage.rd5isto.org{url}")
+            logger.info(f"从网络下载字体\t\t[{fontName} <== https://fonts.storage.rd5isto.org{url}]")
             start = time.perf_counter_ns()
             resp = await self.session.get(f"https://fonts.storage.rd5isto.org{url}", timeout=10)
             fontBytes = await resp.read()
-            logger.info(f"从网络加载字体 https://fonts.storage.rd5isto.org{url} {len(fontBytes) / (1024 * 1024):.2f}MB over in {(time.perf_counter_ns() - start) / 1000000000:.2f} s")
+            logger.info(f"下载 {len(fontBytes) / (1024 * 1024):.2f}MB in {(time.perf_counter_ns() - start) / 1000000000:.2f}s\t[{fontName} <== https://fonts.storage.rd5isto.org{url}]")
             self.cache[fontName] = (fontBytes, index)
             fontSavePath = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), url.lstrip("/"))
             fontSaveDir = os.path.dirname(fontSavePath)

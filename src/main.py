@@ -48,17 +48,16 @@ async def proxy_pass(request: Request, response: Response):
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
         # copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
-        logger.error(f"fontinass获取原始字幕出错:{str(e)}")
+        logger.error(f"获取原始字幕出错:{str(e)}")
         return ""
     try:
         subtitleBytes = serverResponse.content
-        logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
         srt, bytes = await process(subtitleBytes)
-        logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
+        logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
         # copyHeaders["Content-Length"] = str(len(bytes))
-        if srt:
-            if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
-                raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+        if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
+            logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+            return Response(content=subtitleBytes)
         return Response(content=bytes)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")

@@ -100,7 +100,7 @@ async def test():
             subtitleBytes = f.read() 
         start = time.perf_counter_ns()
         await process(subtitleBytes)
-        logger.debug(f"用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        logger.debug(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
 
 
 def initpass():
