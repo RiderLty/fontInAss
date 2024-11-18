@@ -89,16 +89,30 @@ def getServer(port, serverLoop):
 
 async def test():
     files = [
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
-        # analyseAss 约5ms
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
+        "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
     ]
     for file in files:
         with open(file, "rb") as f:
             subtitleBytes = f.read()
         start = time.perf_counter_ns()
         await process(subtitleBytes)
-        logger.debug(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        logger.error(f"")
+        
+        
+        
+
+    for file in files:
+        with open(file, "rb") as f:
+            subtitleBytes = f.read() + b"0"
+        start = time.perf_counter_ns()
+        await process(subtitleBytes)
+        logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+        logger.error(f"")
 
 
 def initpass():

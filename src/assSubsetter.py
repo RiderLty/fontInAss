@@ -6,12 +6,15 @@ from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
 
 import hdrify
-from utils import analyseAss, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
+from utils import  bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
 from constants import logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 
-# from concurrent.futures import ProcessPoolExecutor
 
+# from utils import analyseAss 
+from analyseAss import analyseAss 
+
+# from concurrent.futures import ProcessPoolExecutor
 
 # def initpass():
 #     pass
@@ -98,6 +101,19 @@ class assSubsetter:
         embedFontsText = "[Fonts]\n"
         start = time.perf_counter_ns()
         fontCharList = analyseAss(assText)
+        # fontCharList_OLD = analyseAss_OLD(assText)
+
+        # def res2str(res):
+        #     tmp = set()
+        #     for name, codes in res.items():
+        #         for code in codes:
+        #             tmp.add(f"{name}_{code}")
+        #     return str(len(list(tmp)))
+
+        # # print(res2str(fontCharList) == res2str(fontCharList_OLD))
+        # print(res2str(fontCharList)  )
+        # print(res2str(fontCharList_OLD) )
+        assFinish = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
         error = False
         for task in asyncio.as_completed(tasks):
@@ -106,7 +122,8 @@ class assSubsetter:
                 error = True
             else:
                 embedFontsText += result
-        logger.info(f"嵌入完成 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+        logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+        logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")
