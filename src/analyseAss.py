@@ -33,7 +33,7 @@ def analyseAss(ass_str: str):
                 styleData = line[6:].strip().split(",")
                 styleName = styleData[styleNameIndex].strip()
                 fontName = styleData[fontNameIndex].strip()
-                styleFontName[styleName] = fontName
+                styleFontName[styleName.replace("*","")] = fontName
         elif state == 3:
             assert line.startswith("Format:"), ValueError("解析Event格式失败 : " + line)
             eventFormat = line[7:].replace(" ", "").split(",")
@@ -57,8 +57,8 @@ def analyseAss(ass_str: str):
                 eventText = line[textStart + 1 :]
                 logger.debug(f"")
                 logger.debug(f"原始文本 : {eventText}")
-                defaultFontName = styleFontName[styleName]
-                currentFontName = defaultFontName.replace("@", "")
+                defaultFontName = styleFontName[styleName.replace("*","")]
+                currentFontName = defaultFontName.replace("@", "").replace("@", "")
                 lastEnd = 0
                 for code in codePatern.finditer(eventText):  # 匹配所有代码部分，
                     start, end = code.span()
@@ -83,8 +83,8 @@ def analyseAss(ass_str: str):
                                     # logger.error(f"event[{eventStyle}]使用了未知样式")
                                     pass # 样式表中不存在Default样式 忽略
                             else:  # {\rstyleName}
-                                if content in styleFontName:
-                                    currentFontName = styleFontName[content].replace("@", "")
+                                if content.replace("*","") in styleFontName:
+                                    currentFontName = styleFontName[content.replace("*","")].replace("@", "")
                                 else:
                                     # logger.error(f"event[{eventStyle}]使用了未知样式")
                                     pass # 样式表中不存在code中指定的样式 忽略
