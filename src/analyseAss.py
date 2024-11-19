@@ -13,6 +13,7 @@ def analyseAss(ass_str: str):
     fontCharList = {}
     codePatern = re.compile(r"(?<!{)\{\\([^{}]*)\}(?!})")
     rfnPatern = re.compile(r"[^\\]*(\\r|\\fn(?=@?))([^}|\\]*)")  # 匹配 \r 或者 \fn 并捕获之后的内容
+    firstStyleFontName = None
     for line in lines:
         if line == "":
             pass
@@ -33,7 +34,9 @@ def analyseAss(ass_str: str):
                 styleData = line[6:].strip().split(",")
                 styleName = styleData[styleNameIndex].strip()
                 fontName = styleData[fontNameIndex].strip()
-                styleFontName[styleName.replace("*","")] = fontName
+                styleFontName[styleName.replace("*","")] = fontName.replace("@", "")
+                if firstStyleFontName == None:
+                    firstStyleFontName = fontName.replace("@", "")
         elif state == 3:
             assert line.startswith("Format:"), ValueError("解析Event格式失败 : " + line)
             eventFormat = line[7:].replace(" ", "").split(",")
@@ -57,8 +60,11 @@ def analyseAss(ass_str: str):
                 eventText = line[textStart + 1 :]
                 logger.debug(f"")
                 logger.debug(f"原始文本 : {eventText}")
-                defaultFontName = styleFontName[styleName.replace("*","")]
-                currentFontName = defaultFontName.replace("@", "").replace("@", "")
+                if styleName.replace("*","") in styleFontName: # Style不在定义的Style中，使用第一个style
+                    defaultFontName = styleFontName[styleName.replace("*","")]
+                else:
+                    defaultFontName = firstStyleFontName
+                currentFontName = defaultFontName.replace("@", "")
                 lastEnd = 0
                 for code in codePatern.finditer(eventText):  # 匹配所有代码部分，
                     start, end = code.span()

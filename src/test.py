@@ -89,11 +89,13 @@ def getServer(port, serverLoop):
 
 async def test():
     files = [
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
-        "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
-        "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
+        # "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
+        # "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stone Ocean [S05E01][Ma10p_2160p][x265_flac_ass].extract.ass"
+        "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stardust Crusaders [S02E47][Ma10p_2160p][x265_DTS-HDMA_ass].chs.ass"
     ]
     for file in files:
         with open(file, "rb") as f:
