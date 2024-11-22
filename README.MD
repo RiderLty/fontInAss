@@ -134,10 +134,14 @@ server {
 
 支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
 
+可通过```http://[ip]:[port]/setHDR```临时调整
+
 通过HDR来设置字幕亮度峰值, 例如1000nit
 ```
 -e HDR=1000
 ```
+
+
 日志等级，可设置为 DEBUG INFO WARNING ERROR CRITICAL
 ```
 -e LOG_LEVEL=DEBUG

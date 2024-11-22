@@ -66,9 +66,8 @@ class assSubsetter:
         # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         return result
 
-    async def process(self, subtitleBytes):
-
-        bytesHash = bytesToHashName(subtitleBytes)
+    async def process(self, subtitleBytes , userHDR = 0):
+        bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder='big', signed=True))
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
@@ -90,10 +89,12 @@ class assSubsetter:
             logger.error("已有内嵌字体")
             return (False, subtitleBytes)
 
-        if HDR != -1:
-            logger.info(f"HDR适配")
+        
+        targetHDR = HDR if userHDR == 0 else userHDR
+        if targetHDR != -1:
+            logger.info(f"HDR适配 {targetHDR}")
             try:
-                assText = hdrify.ssaProcessor(assText, HDR)
+                assText = hdrify.ssaProcessor(assText, targetHDR)
             except Exception as e:
                 logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
@@ -101,18 +102,6 @@ class assSubsetter:
         embedFontsText = "[Fonts]\n"
         start = time.perf_counter_ns()
         fontCharList = analyseAss(assText)
-        # fontCharList_OLD = analyseAss_OLD(assText)
-
-        # def res2str(res):
-        #     tmp = set()
-        #     for name, codes in res.items():
-        #         for code in codes:
-        #             tmp.add(f"{name}_{code}")
-        #     return str(len(list(tmp)))
-
-        # # print(res2str(fontCharList) == res2str(fontCharList_OLD))
-        # print(res2str(fontCharList)  )
-        # print(res2str(fontCharList_OLD) )
         assFinish = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
         error = False
