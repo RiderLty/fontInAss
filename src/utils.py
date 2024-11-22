@@ -1,19 +1,51 @@
-import os
+import json
 import os
 import re
 import hashlib
+from pathlib import Path
 import aiofiles
 import chardet
 import ass as ssa
+from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
 
-from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE
+def makeMiniSizeFontMap(data):
+    """
+    {
+        /path/to/ttf/or/otf : {
+            size: 62561,
+            fonts:{
+                YAHEI:0,
+                FANGSONG,5
+            }
+        }
+    }
+    转化为
 
+    {
+        fontname : [path,index]
+    }
+
+    """
+    fontFileMap = {}
+    fontMiniSize = {}
+    for path in data.keys():
+        size = data[path]["size"]
+        for fontName, index in data[path]["fonts"].items():
+            if fontName not in fontFileMap or fontMiniSize[fontName] > size:
+                fontFileMap[fontName] = (path, index)
+                fontMiniSize[fontName] = size
+    return fontFileMap
+
+def conv2unicodee(string: str) -> str:
+    return json.dumps(string, ensure_ascii=True)[1:-1]
 
 def getAllFiles(path):
     Filelist = []
     for home, _, files in os.walk(path):
         for filename in files:
-            Filelist.append(os.path.join(home, filename))
+            if Path(filename).suffix.lower()[1:] in FONTS_TYPE:
+                #保证所有系统下\\转变成/
+                Filelist.append(Path(home, filename).as_posix())
     return Filelist
 
 

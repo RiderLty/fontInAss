@@ -1,9 +1,11 @@
 import os
 import traceback
+from pathlib import Path
 from threading import Timer
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
-from constants import logger, FONT_DIRS
+from constants import logger, FONT_DIRS, FONTS_TYPE
+
 
 
 class FileEventHandler(events.FileSystemEventHandler):
@@ -17,7 +19,7 @@ class FileEventHandler(events.FileSystemEventHandler):
     def on_any_event(self, event):
         if self.timer:
             self.timer.cancel()
-        self.timer = Timer(10, self.checkSnapshot)
+        self.timer = Timer(1, self.checkSnapshot)
         self.timer.start()
 
     def checkSnapshot(self):
@@ -25,9 +27,44 @@ class FileEventHandler(events.FileSystemEventHandler):
         diff = dirsnapshot.DirectorySnapshotDiff(self.snapshot, snapshot)
         self.snapshot = snapshot
         self.timer = None
-        if len(diff.files_created) or len(diff.files_deleted) or len(diff.files_modified) or len(diff.files_moved):
-            # 更新
-            self.callBack()
+        if diff.files_moved:
+            list = self.filter_font_files(diff.files_moved, is_moved=True)
+            self.callBack.update_fontinfo_with_filepath(list)
+        if diff.files_created:
+            list = self.filter_font_files(diff.files_created)
+            self.callBack.ins_fontinfo_and_fontdetail(list)
+        if diff.files_deleted:
+            list = self.filter_font_files(diff.files_deleted)
+            self.callBack.del_fontinfo_with_filepath(list)
+        if diff.files_modified:
+            list = self.filter_font_files(diff.files_modified)
+            self.callBack.del_fontinfo_with_filepath(list)
+            self.callBack.ins_fontinfo_and_fontdetail(list)
+
+    def filter_font_files(self, files, is_moved=False):
+        """
+        过滤文件列表，仅保留后缀属于 FONTS_TYPE 的文件，并将路径转换为 POSIX 格式。
+        :param files: 文件路径列表（单路径或双路径） [x,x,...] [(x,y),(x,y),...]
+        :param is_moved: 是否为移动文件操作（需要双路径处理），顺便构造数据结构
+        :return: 过滤后的文件路径列表或路径对列表
+        """
+        if is_moved:
+            return [
+                {"file_path": str(Path(file[0]).as_posix()), "new_file_path": str(Path(file[1]).as_posix())}
+                for file in files
+                if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
+            ]
+            # return [
+            #     (str(Path(file[0]).as_posix()), str(Path(file[1]).as_posix()))
+            #     for file in files
+            #     if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
+            # ]
+        else:
+            return [
+                str(Path(file_path).as_posix())
+                for file_path in files
+                if Path(file_path).suffix.lower()[1:] in FONTS_TYPE
+            ]
 
 
 class dirmonitor(object):

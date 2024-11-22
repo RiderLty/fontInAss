@@ -33,13 +33,14 @@ if os.environ.get("FONT_DIRS"):
             FONT_DIRS.append(dirPath.strip())
 
 ONLINE_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
-LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
+# LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
+LOCAL_FONTS_DB = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.db")
 os.makedirs(os.path.join(os.path.dirname(ROOT_PATH), r"data"), exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
-# cpu_count = int(os.cpu_count())
-# POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
-# if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
-#     POOL_CPU_MAX = cpu_count
+cpu_count = int(os.cpu_count())
+POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
+if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
+    POOL_CPU_MAX = cpu_count
 
 EMBY_SERVER_URL = os.environ.get("EMBY_SERVER_URL", default="尚未EMBY_SERVER_URL环境变量")
 
@@ -53,3 +54,5 @@ SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
 SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
 
 HDR = int(os.environ.get("HDR", "-1"))
+
+FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
