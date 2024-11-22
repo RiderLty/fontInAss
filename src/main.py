@@ -5,7 +5,6 @@ warnings.filterwarnings("ignore")
 
 import os
 import ssl
-import json
 import logging
 import asyncio
 import requests
@@ -13,11 +12,10 @@ import traceback
 import coloredlogs
 from fastapi import FastAPI, Request, Response
 from uvicorn import Config, Server
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, LOCAL_FONTS_PATH, LOCAL_FONTS_PATH, DEFAULT_FONT_PATH, MAIN_LOOP
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP
 from dirmonitor import dirmonitor
 from fontManager import fontManager
 from assSubsetter import assSubsetter
-
 
 def init_logger():
     LOGGER_NAMES = (
@@ -82,16 +80,12 @@ def getServer(port, serverLoop):
 
 if __name__ == "__main__":
     logger.info("本地字体文件夹:" + ",".join(FONT_DIRS))
-    if not os.path.exists(LOCAL_FONTS_PATH):
-        with open(LOCAL_FONTS_PATH, "w", encoding="UTF-8") as f:
-            json.dump({}, f)
     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
     asyncio.set_event_loop(MAIN_LOOP)
     ssl._create_default_https_context = ssl._create_unverified_context
     fontManagerInstance = fontManager()
-    fontManagerInstance.updateLocalFont()  # 更新本地字体
     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-    event_handler = dirmonitor(callBack=fontManagerInstance.updateLocalFont)  # 创建fonts字体文件夹监视实体
+    event_handler = dirmonitor(callBack=fontManagerInstance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = assSubsetterInstance.process  # 绑定函数
     serverInstance = getServer(8011, MAIN_LOOP)

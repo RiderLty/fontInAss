@@ -45,7 +45,7 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             del face
-            logger.info(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
+            logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             return f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
@@ -122,7 +122,7 @@ class assSubsetter:
                 error = True
             else:
                 embedFontsText += result
-        logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+        logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         resultText = head + embedFontsText + "\n[Events]" + tai
         # print(resultText)
