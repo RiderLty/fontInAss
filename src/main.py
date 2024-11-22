@@ -69,28 +69,31 @@ async def setHDRIndex():
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            background-color: #f4f4f4;
+            height: 80vh;
+            color: #BDBDBD;
+            background-color: #212121;
         }
         .slider-container {
             text-align: center;
             margin-bottom: 20px;
         }
         input[type="range"] {
-            width: 100%;
-            max-width: 600px;
+            width: 80vw;
         }
         button {
             margin: 5px;
             padding: 10px 20px;
             font-size: 16px;
+            border-radius: 16px;
+            color: #000000;
         }
     </style>
 </head>
 <body>
     <div class="slider-container">
         <h1>Set HDR Value</h1>
-        <input type="range" id="hdrSlider" min="1" max="10000" value="1000">
-        <p>Current Value: <span id="sliderValue">1000</span></p>
+        <input type="range" id="hdrSlider" min="1" max="10000" value="0">
+        <p>Current Value: <span id="sliderValue">0</span></p>
         <button id="disableButton">禁用</button>
         <button id="defaultButton">默认</button>
     </div>
@@ -101,13 +104,19 @@ async def setHDRIndex():
         const disableButton = document.getElementById('disableButton');
         const defaultButton = document.getElementById('defaultButton');
 
+        function calculateNonLinearValue(value) {
+            const normalizedValue = value / 10000; // Normalize to 0-1
+            return Math.pow(normalizedValue, 3) * 10000; // Apply exponent of 3
+        }
+
         slider.addEventListener('input', () => {
-            sliderValue.textContent = slider.value;
+            const nonLinearValue = calculateNonLinearValue(slider.value);
+            sliderValue.textContent = Math.round(nonLinearValue);
         });
 
         slider.addEventListener('change', async () => {
-            const value = slider.value;
-            await sendValue(value);
+            const value = calculateNonLinearValue(slider.value);
+            await sendValue(Math.round(value));
         });
 
         disableButton.addEventListener('click', async () => {
