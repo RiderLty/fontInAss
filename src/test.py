@@ -1,24 +1,22 @@
 import warnings
+
+
 warnings.filterwarnings("ignore")
 
 import os
 import ssl
-import time
-import json
+import logging
 import asyncio
 import requests
-import logging
 import traceback
 import coloredlogs
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse
 from uvicorn import Config, Server
-from concurrent.futures import ProcessPoolExecutor
-
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, LOCAL_FONTS_PATH, LOCAL_FONTS_PATH, DEFAULT_FONT_PATH, MAIN_LOOP
-from assSubsetter import assSubsetter
-from fontManager import fontManager
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP
 from dirmonitor import dirmonitor
-
+from fontManager import fontManager
+from assSubsetter import assSubsetter
 
 def init_logger():
     LOGGER_NAMES = (
@@ -42,6 +40,106 @@ app = FastAPI()
 
 process = None
 
+userHDR = 0
+
+@app.post("/setHDR/{value}")
+async def setHDR(value: int):
+    """实时调整HDR，-1 禁用HDR，0 使用环境变量值，大于0 替代当前值"""
+    global userHDR
+    userHDR = value
+    logger.error(f"临时HDR 已设置为 {userHDR}")
+    return value
+
+
+@app.get("/setHDR",response_class=HTMLResponse)
+async def setHDRIndex():
+    return """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>临时调整HDR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 80vh;
+            color: #BDBDBD;
+            background-color: #212121;
+        }
+        .slider-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="range"] {
+            width: 80vw;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 16px;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <h1>Set HDR Value</h1>
+        <input type="range" id="hdrSlider" min="1" max="10000" value="0">
+        <p>Current Value: <span id="sliderValue">0</span></p>
+        <button id="disableButton">禁用</button>
+        <button id="defaultButton">默认</button>
+    </div>
+
+    <script>
+        const slider = document.getElementById('hdrSlider');
+        const sliderValue = document.getElementById('sliderValue');
+        const disableButton = document.getElementById('disableButton');
+        const defaultButton = document.getElementById('defaultButton');
+
+        function calculateNonLinearValue(value) {
+            const normalizedValue = value / 10000; // Normalize to 0-1
+            return Math.pow(normalizedValue, 3) * 10000; // Apply exponent of 3
+        }
+
+        slider.addEventListener('input', () => {
+            const nonLinearValue = calculateNonLinearValue(slider.value);
+            sliderValue.textContent = Math.round(nonLinearValue);
+        });
+
+        slider.addEventListener('change', async () => {
+            const value = calculateNonLinearValue(slider.value);
+            await sendValue(Math.round(value));
+        });
+
+        disableButton.addEventListener('click', async () => {
+            await sendValue(-1);
+        });
+
+        defaultButton.addEventListener('click', async () => {
+            await sendValue(0);
+        });
+
+        async function sendValue(value) {
+            const response = await fetch(`/setHDR/${value}`, {
+                method: 'POST' // 使用 POST 方法
+            });
+            if (response.ok) {
+                console.log(`Value ${value} sent to /setHDR/${value}`);
+            } else {
+                console.error('Error sending value:', response.status);
+            }
+        }
+    </script>
+</body>
+</html>
+"""
+
 
 @app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
@@ -52,17 +150,16 @@ async def proxy_pass(request: Request, response: Response):
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
         # copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
-        logger.error(f"fontinass获取原始字幕出错:{str(e)}")
+        logger.error(f"获取原始字幕出错:{str(e)}")
         return ""
     try:
         subtitleBytes = serverResponse.content
-        logger.info(f"原始大小: {len(subtitleBytes) / (1024 * 1024):.2f}MB")
-        srt, bytes = await process(subtitleBytes)
-        logger.info(f"处理后大小: {len(bytes) / (1024 * 1024):.2f}MB")
+        srt, bytes = await process(subtitleBytes, userHDR)
+        logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
         # copyHeaders["Content-Length"] = str(len(bytes))
-        if srt:
-            if "user-agent" in request.headers and "infuse" in request.headers["user-agent"].lower():
-                raise ValueError("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+        if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
+            logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+            return Response(content=subtitleBytes)
         return Response(content=bytes)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
@@ -81,79 +178,82 @@ def getServer(port, serverLoop):
     )
     return Server(serverConfig)
 
-
 # "[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
 # "[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
 # analyseAss 约40ms
 
 
-async def test():
-    files = [
-        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
-        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
-        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
-        # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
-        # "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
-        # "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stone Ocean [S05E01][Ma10p_2160p][x265_flac_ass].extract.ass"
-        "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stardust Crusaders [S02E47][Ma10p_2160p][x265_DTS-HDMA_ass].chs.ass"
-    ]
-    for file in files:
-        with open(file, "rb") as f:
-            subtitleBytes = f.read()
-        start = time.perf_counter_ns()
-        await process(subtitleBytes)
-        logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
-        logger.error(f"")
+# async def test():
+#     files = [
+#         # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
+#         # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
+#         # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
+#         # "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
+#         # "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
+#         # "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stone Ocean [S05E01][Ma10p_2160p][x265_flac_ass].extract.ass"
+#         "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stardust Crusaders [S02E47][Ma10p_2160p][x265_DTS-HDMA_ass].chs.ass"
+#     ]
+#     for file in files:
+#         with open(file, "rb") as f:
+#             subtitleBytes = f.read()
+#         start = time.perf_counter_ns()
+#         await process(subtitleBytes)
+#         logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+#         logger.error(f"")
         
-    for file in files:
-        with open(file, "rb") as f:
-            subtitleBytes = f.read() + b"0"
-        start = time.perf_counter_ns()
-        await process(subtitleBytes)
-        logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
-        logger.error(f"")
+#     for file in files:
+#         with open(file, "rb") as f:
+#             subtitleBytes = f.read() + b"0"
+#         start = time.perf_counter_ns()
+#         await process(subtitleBytes)
+#         logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+#         logger.error(f"")
 
 
-def initpass():
+# def initpass():
+#     pass
+
+
+# def worker(start):
+#     logger.error(f"启动用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
+#     return time.perf_counter_ns()
+
+
+# async def submit(pool):
+#     start = time.perf_counter_ns()
+#     end = await MAIN_LOOP.run_in_executor(pool, worker, start)
+#     logger.debug(f"运行用时 {(end - start) / 1000000:.2f} ms")
+
+
+# async def testPool():
+#     pool = ProcessPoolExecutor(max_workers=int(os.cpu_count()))
+#     pool.submit(initpass)
+#     await asyncio.gather(*[submit(pool) for _ in range(10)])
+#     pool.shutdown()
+
+def test():
     pass
 
-
-def worker(start):
-    logger.error(f"启动用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
-    return time.perf_counter_ns()
-
-
-async def submit(pool):
-    start = time.perf_counter_ns()
-    end = await MAIN_LOOP.run_in_executor(pool, worker, start)
-    logger.debug(f"运行用时 {(end - start) / 1000000:.2f} ms")
-
-
-async def testPool():
-    pool = ProcessPoolExecutor(max_workers=int(os.cpu_count()))
-    pool.submit(initpass)
-    await asyncio.gather(*[submit(pool) for _ in range(10)])
-    pool.shutdown()
 
 
 if __name__ == "__main__":
     logger.info("本地字体文件夹:" + ",".join(FONT_DIRS))
-    if not os.path.exists(LOCAL_FONTS_PATH):
-        with open(LOCAL_FONTS_PATH, "w", encoding="UTF-8") as f:
-            json.dump({}, f)
     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
     asyncio.set_event_loop(MAIN_LOOP)
     ssl._create_default_https_context = ssl._create_unverified_context
     fontManagerInstance = fontManager()
-    fontManagerInstance.updateLocalFont()  # 更新本地字体
     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-    event_handler = dirmonitor(callBack=fontManagerInstance.updateLocalFont)  # 创建fonts字体文件夹监视实体
+    event_handler = dirmonitor(callBack=fontManagerInstance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = assSubsetterInstance.process  # 绑定函数
     serverInstance = getServer(8011, MAIN_LOOP)
     init_logger()
-    MAIN_LOOP.run_until_complete(test())
-    # MAIN_LOOP.run_until_complete(testPool())
+    
+    async def t():
+        print(len(await fontManagerInstance.loadFont("MOSuuji H A")))
+    
+    MAIN_LOOP.run_until_complete(t())
+    
     # # 关闭和清理资源
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出

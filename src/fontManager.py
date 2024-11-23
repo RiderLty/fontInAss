@@ -58,7 +58,7 @@ class fontManager:
             self.onlineMap = makeMiniSizeFontMap(json.load(f))  # 在线字体map
         self.http_session = aiohttp.ClientSession(loop=MAIN_LOOP)  # 下载的session
 
-        self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 2)
+        self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 4)
         # 初始化数据库
         Base.metadata.create_all(engine)
         self.db_session = Session()
@@ -164,15 +164,20 @@ class fontManager:
 
     def get_fontinfo_by_familyname(self, family_name: str):
         try:
-            # start = time.perf_counter_ns()
-            stmt = select(FontDetail.file_path, FontDetail.family_index).where(
-                FontDetail.family_name == family_name
+            start = time.perf_counter_ns()
+            stmt = (
+                select(FontDetail.file_path, FontDetail.family_index, FontInfo.file_size)
+                .select_from(FontDetail)
+                .join(FontInfo, FontDetail.file_path == FontInfo.file_path)
+                .where(FontDetail.family_name == conv2unicodee(family_name))
+                .order_by(FontInfo.file_size)  # 按 file_size 升序排列
+                .limit(1)  # 只取最小的 file_size
             )
             # 返回第一条
             result = self.db_session.execute(stmt).first()
             # 返回全部
             # result = self.db_session.execute(stmt).all()
-            # logger.info(f"{family_name} 查询耗时{(time.perf_counter_ns() - start) / 1000000:.2f}ms")
+            logger.info(f"{family_name} 查询耗时{(time.perf_counter_ns() - start) / 1000000:.2f}ms")
             return result
         except Exception as e:
             logger.error(f"查询字体信息时出错: {e}")
@@ -218,7 +223,7 @@ class fontManager:
         finally:
             MAIN_LOOP.create_task(self.http_session.close())
             self.db_session.close()
-            self.db_session.remove()
+            # self.db_session.remove()
             engine.dispose()
 
     async def loadFont(self, fontName):
@@ -231,7 +236,7 @@ class fontManager:
 
         # if fontName in res:
         if (res := self.get_fontinfo_by_familyname(fontName)):
-            path, index = res
+            path, index , size = res
             start = time.perf_counter_ns()
             async with aiofiles.open(path, "rb") as f:
                 fontBytes = await f.read()

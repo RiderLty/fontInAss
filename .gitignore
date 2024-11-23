@@ -13,3 +13,4 @@ profile.html
 profile.json
 src/processPool.py
 .vscode
+data/localFonts.db
