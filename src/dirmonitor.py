@@ -4,7 +4,7 @@ from pathlib import Path
 from threading import Timer
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
-from constants import logger, FONT_DIRS, FONTS_TYPE
+from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
 
 
 
@@ -15,11 +15,15 @@ class FileEventHandler(events.FileSystemEventHandler):
         self.snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
         self.timer = None
         self.callBack = callBack
+        if LOG_LEVEL == "DEBUG":
+            self.delay = 1
+        else:
+            self.delay = 10
 
     def on_any_event(self, event):
         if self.timer:
             self.timer.cancel()
-        self.timer = Timer(1, self.checkSnapshot)
+        self.timer = Timer(self.delay, self.checkSnapshot)
         self.timer.start()
 
     def checkSnapshot(self):
@@ -54,11 +58,6 @@ class FileEventHandler(events.FileSystemEventHandler):
                 for file in files
                 if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
             ]
-            # return [
-            #     (str(Path(file[0]).as_posix()), str(Path(file[1]).as_posix()))
-            #     for file in files
-            #     if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
-            # ]
         else:
             return [
                 str(Path(file_path).as_posix())
