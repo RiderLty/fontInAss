@@ -1,8 +1,10 @@
 import json
+import sys
 import aiohttp
 import asyncio
 import aiofiles
 from cachetools import LRUCache, TTLCache
+from tqdm import tqdm
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, \
     ONLINE_FONTS_PATH, LOCAL_FONTS_DB, POOL_CPU_MAX
 from utils import getAllFiles, saveToDisk, conv2unicodee, makeMiniSizeFontMap
@@ -11,7 +13,7 @@ from sqlalchemy.dialects.sqlite import insert  #2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from fontTools.ttLib import TTCollection, TTFont
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict
 import os
 import time
@@ -58,7 +60,7 @@ class fontManager:
             self.onlineMap = makeMiniSizeFontMap(json.load(f))  # 在线字体map
         self.http_session = aiohttp.ClientSession(loop=MAIN_LOOP)  # 下载的session
 
-        self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 4)
+        self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 2)
         # 初始化数据库
         Base.metadata.create_all(engine)
         self.db_session = Session()
@@ -111,15 +113,18 @@ class fontManager:
         '''
         try:
             start = time.perf_counter_ns()
-            #这里使用线程池比进程池速度更快
-            results = self.executor.map(self.gen_font_info, data)
-            # logger.info(f"处理新增字体信息耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+            results = {self.executor.submit(self.gen_font_info, item): item for item in data}
+            logger.debug(f"准备任务耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
             font_info_list = []
             font_detail_list = []
-            for font_info, font_details in results:
-                font_info_list.extend(font_info)
-                font_detail_list.extend(font_details)
-            # 批量插入 FontInfo 和 FontDetail
+            # 添加进度条
+            with tqdm(total=len(results), desc="Load", unit=" font", bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} | {rate_fmt} | {remaining}\n", file=sys.stdout,miniters= len(results) // 100, dynamic_ncols=False, mininterval=3, maxinterval=10, position=0) as pbar:
+                for future in as_completed(results):
+                    font_info, font_details = future.result()
+                    font_info_list.extend(font_info)
+                    font_detail_list.extend(font_details)
+                    pbar.update(1)
+            logger.debug(f"处理结果耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
             self.db_session.execute(insert(FontInfo), font_info_list)
             self.db_session.execute(insert(FontDetail), font_detail_list)
             self.db_session.commit()
@@ -177,7 +182,7 @@ class fontManager:
             result = self.db_session.execute(stmt).first()
             # 返回全部
             # result = self.db_session.execute(stmt).all()
-            logger.info(f"{family_name} 查询耗时{(time.perf_counter_ns() - start) / 1000000:.2f}ms")
+            logger.debug(f"{family_name} 查询耗时{(time.perf_counter_ns() - start) / 1000000:.2f}ms")
             return result
         except Exception as e:
             logger.error(f"查询字体信息时出错: {e}")
@@ -200,13 +205,13 @@ class fontManager:
         }]
         font_detail_list = []
         for index, font in enumerate(fonts):
-            family = []
+            family = set()
             for record in font["name"].names:
                 if record.nameID == 1:
                     fontName = str(record).strip()
                     family_name = conv2unicodee(fontName)
                     if family_name not in family:
-                        family.append(family_name)
+                        family.add(family_name)
                         font_detail_list.append({
                             "file_path": file_path,
                             "family_name": family_name,
@@ -223,7 +228,6 @@ class fontManager:
         finally:
             MAIN_LOOP.create_task(self.http_session.close())
             self.db_session.close()
-            # self.db_session.remove()
             engine.dispose()
 
     async def loadFont(self, fontName):
