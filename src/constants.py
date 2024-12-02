@@ -32,9 +32,13 @@ if os.environ.get("FONT_DIRS"):
         if dirPath.strip() != "" and os.path.exists(dirPath):
             FONT_DIRS.append(dirPath.strip())
 
-ONLINE_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
+ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
 # LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
-LOCAL_FONTS_DB = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.db")
+LOCAL_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.ver.2.0.db")
+
+# ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
+# LOCAL_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
+
 os.makedirs(os.path.join(os.path.dirname(ROOT_PATH), r"data"), exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
 cpu_count = int(os.cpu_count())
@@ -56,3 +60,6 @@ SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
 HDR = int(os.environ.get("HDR", "-1"))
 
 FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
+
+FT_STYLE_FLAG_ITALIC = 0x01
+FT_STYLE_FLAG_BOLD = 0x02

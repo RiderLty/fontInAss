@@ -1,11 +1,10 @@
 import os
 import traceback
 from pathlib import Path
-from threading import Timer
+from threading import Timer , Lock
 from watchdog import observers, events
 from watchdog.utils import dirsnapshot
-from constants import logger, FONT_DIRS, FONTS_TYPE
-
+from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
 
 
 class FileEventHandler(events.FileSystemEventHandler):
@@ -15,31 +14,40 @@ class FileEventHandler(events.FileSystemEventHandler):
         self.snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
         self.timer = None
         self.callBack = callBack
+        self.lock = Lock()
+        if LOG_LEVEL == "DEBUG":
+            self.delay = 1
+        else:
+            self.delay = 10
 
     def on_any_event(self, event):
         if self.timer:
             self.timer.cancel()
-        self.timer = Timer(1, self.checkSnapshot)
+        self.timer = Timer(self.delay, self.checkSnapshot)
         self.timer.start()
 
-    def checkSnapshot(self):
-        snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
-        diff = dirsnapshot.DirectorySnapshotDiff(self.snapshot, snapshot)
-        self.snapshot = snapshot
-        self.timer = None
-        if diff.files_moved:
-            list = self.filter_font_files(diff.files_moved, is_moved=True)
-            self.callBack.update_fontinfo_with_filepath(list)
-        if diff.files_created:
-            list = self.filter_font_files(diff.files_created)
-            self.callBack.ins_fontinfo_and_fontdetail(list)
-        if diff.files_deleted:
-            list = self.filter_font_files(diff.files_deleted)
-            self.callBack.del_fontinfo_with_filepath(list)
-        if diff.files_modified:
-            list = self.filter_font_files(diff.files_modified)
-            self.callBack.del_fontinfo_with_filepath(list)
-            self.callBack.ins_fontinfo_and_fontdetail(list)
+    def checkSnapshot(self): # 如果文件被修改，会先触发添加再触发删除 待解决
+        with self.lock:
+            try:
+                snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
+                diff = dirsnapshot.DirectorySnapshotDiff(self.snapshot, snapshot)
+                self.snapshot = snapshot
+                self.timer = None
+                if diff.files_moved:
+                    list = self.filter_font_files(diff.files_moved, is_moved=True)
+                    self.callBack.update_fontinfo_with_filepath(list)
+                if diff.files_created:
+                    list = self.filter_font_files(diff.files_created)
+                    self.callBack.ins_fontinfo_and_fontdetail(list)
+                if diff.files_deleted:
+                    list = self.filter_font_files(diff.files_deleted)
+                    self.callBack.del_fontinfo_with_filepath(list)
+                if diff.files_modified:
+                    list = self.filter_font_files(diff.files_modified)
+                    self.callBack.del_fontinfo_with_filepath(list)
+                    self.callBack.ins_fontinfo_and_fontdetail(list)
+            except Exception as e:
+                print(e)
 
     def filter_font_files(self, files, is_moved=False):
         """
@@ -54,11 +62,6 @@ class FileEventHandler(events.FileSystemEventHandler):
                 for file in files
                 if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
             ]
-            # return [
-            #     (str(Path(file[0]).as_posix()), str(Path(file[1]).as_posix()))
-            #     for file in files
-            #     if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
-            # ]
         else:
             return [
                 str(Path(file_path).as_posix())

@@ -1,12 +1,16 @@
+import asyncio
 import json
 import os
 import re
 import hashlib
 from pathlib import Path
+import sys
 import aiofiles
 import chardet
 import ass as ssa
-from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
+from fontTools.ttLib import TTCollection, TTFont
+from constants import FT_STYLE_FLAG_BOLD, FT_STYLE_FLAG_ITALIC, logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
+
 
 def makeMiniSizeFontMap(data):
     """
@@ -36,20 +40,27 @@ def makeMiniSizeFontMap(data):
                 fontMiniSize[fontName] = size
     return fontFileMap
 
-def conv2unicodee(string: str) -> str:
+
+def conv2unicode(string: str) -> str:
     return json.dumps(string, ensure_ascii=True)[1:-1]
+
+
+def unicode2origin(string: str) -> str:
+    return json.loads(f'"{string}"')
+
 
 def getAllFiles(path):
     Filelist = []
     for home, _, files in os.walk(path):
         for filename in files:
             if Path(filename).suffix.lower()[1:] in FONTS_TYPE:
-                #保证所有系统下\\转变成/
+                # 保证所有系统下\\转变成/
                 Filelist.append(Path(home, filename).as_posix())
     return Filelist
 
 
 async def saveToDisk(path, fontBytes):
+    # await asyncio.sleep(3)
     async with aiofiles.open(path, "wb") as f:
         await f.write(fontBytes)
         logger.info(f"网络字体已保存\t\t[{path}]")
@@ -80,45 +91,6 @@ def bytesToHashName(bytes, hash_algorithm="sha256"):
     hash_func = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256}.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
     hash_func.update(bytes)
     return hash_func.hexdigest()
-
-
-def analyseAss(ass_str):
-    """分析ass文件 返回 字体：{unicodes}"""
-    sub = ssa.parse_string(ass_str)
-    style_fontName = {}  # 样式 => 字体
-    font_charList = {}  # 字体 => unicode list
-    for style in sub.styles:
-        styleName = style.name.strip()
-        fontName = style.fontname.strip().replace("@", "")
-        style_fontName[styleName] = fontName
-    for event in sub.events:
-        # logger.debug("原始Event文本 : " + event.text)
-        eventStyle = event.style.replace("*", "")
-        if eventStyle not in style_fontName:
-            logger.error(f"event[{eventStyle}]使用了未知样式")
-            continue
-        fontLine = r"{\fn" + style_fontName[eventStyle] + "}" + event.text
-        # 在首部加上对应的style的字体
-        for inlineStyle in re.findall(r"({[^\\]*\\r[^}|\\]+[\\|}])", event.text):  # 用于匹配 {\rXXX} 其中xxx为style名称
-            # {\r} 会有这种 空的
-            styleName = re.findall(r"{[^\\]*\\r([^}|\\]+)[\\|}]", inlineStyle)[0]
-            if styleName in style_fontName:
-                fontLine = fontLine.replace(inlineStyle, r"{\fn" + style_fontName[styleName] + "}")  # 将内联style，改为指定字体名称的形式
-            else:
-                logger.error(f"event内联[{styleName}]使用了未知样式")
-        res = [(fn.groups()[0], fn.start(), fn.end()) for fn in re.finditer(r"{[^\\]*\\fn([^}|\\]*)[\\|}]", fontLine)]
-        # 获取所有的内联字体位置名称信息
-        for i in range(len(res)):
-            fontName = res[i][0].replace("@", "")
-            textStart = res[i][2]
-            textEnd = None if i == len(res) - 1 else res[i + 1][1]
-            text = re.sub(r"(?<!{)\{\\([^{}]*)\}(?!})", "", fontLine[textStart:textEnd])
-            logger.debug(f"{fontName} : {fontLine[textStart:textEnd]}  ==> {text}")
-            for ch in text:
-                if fontName not in font_charList:
-                    font_charList[fontName] = set()
-                font_charList[fontName].add(ord(ch))
-    return font_charList
 
 
 def isSRT(text):
@@ -194,3 +166,130 @@ def bytesToStr(bytes):
     result = chardet.detect(bytes)
     logger.info(f"判断编码:{str(result)}")
     return bytes.decode(result["encoding"])
+
+
+def strCaseCmp(str1: str, str2: str) -> bool:
+    return str1.lower().strip() == str2.lower().strip()
+
+
+def getFontScore(
+    fontName: str,
+    weight: int,
+    italic: bool,
+    fontInfo: object,
+) -> int:
+    """
+    fontName：ass中用到的字体名称
+
+    weight： ass中字体bold或者指定了其他值
+
+    italic： ass中字体是否为斜体
+
+    fontInfo: 待打分的字体信息
+
+    返回分数，越小越好，为0则直接选中
+
+    跳过字形检测~~在取得分数后，还需要检测是否包含指定字形，如不包含字形则不会采用~~
+    """
+    if any([strCaseCmp(fontName, x) for x in fontInfo["family"]]):
+        score = 0
+        if italic and (fontInfo["italic"] == False):
+            score += 1
+        elif (italic == False) and fontInfo["italic"]:
+            score += 4
+        a_weight = fontInfo["weight"]
+        if (weight > fontInfo["weight"] + 150) and (fontInfo["bold"] == False):
+            a_weight += 120
+        score += (73 * abs(a_weight - weight)) // 256
+        return score
+    else:
+        fullNamesMatch = any([strCaseCmp(fontName, x) for x in fontInfo["fullName"]])
+        postscriptNameMatch = any([strCaseCmp(fontName, x) for x in fontInfo["postscriptName"]])
+        if fullNamesMatch == postscriptNameMatch:
+            if fullNamesMatch:
+                return 0
+            else:
+                return sys.maxsize
+        if fontInfo["postscriptCheck"]:
+            if postscriptNameMatch:
+                return 0
+            else:
+                return sys.maxsize
+        else:
+            if fullNamesMatch:
+                return 0
+            else:
+                return sys.maxsize
+
+
+def getFontInfo(font, path, size, index):
+    fontInfo = {
+        "path": path,
+        "size": size,
+        "index": index,
+        "family": set(),
+        "postscriptName": set(),
+        "postscriptCheck": False,
+        "fullName": set(),
+        "weight": 400,  # 默认值
+        "bold": False,  # 默认值
+        "italic": False,  # 默认值
+    }
+    for record in font["name"].names:
+        if record.nameID == 1:
+            fontInfo["family"].add(conv2unicode(str(record).strip()))
+        elif record.nameID == 4:
+            fontInfo["fullName"].add(conv2unicode(str(record).strip()))
+        elif record.nameID == 6:
+            fontInfo["postscriptName"].add(conv2unicode(str(record).strip()))
+            # if fontInfo["postscriptName"] != "":
+            #     assert fontInfo["postscriptName"] == str(record).strip(), f'{path} {index} postscriptName 不唯一 : {str(record).strip()} , {fontInfo["postscriptName"]} : AI {font["name"].getName(6, 3, 1, 0x409)}'
+            # else:
+            #     fontInfo["postscriptName"] = str(record).strip()
+            # 按照 fullname与family的方式处理了
+
+    fontInfo["postscriptCheck"] = ("CFF " in font) or ("CFF2" in font) or (("glyf" in font) and ("post" in font))
+    if "OS/2" in font:
+        os2_table = font["OS/2"]
+        fontInfo["weight"] = int(os2_table.usWeightClass)
+        fontInfo["bold"] = bool(os2_table.fsSelection & FT_STYLE_FLAG_BOLD)
+        fontInfo["italic"] = bool(os2_table.fsSelection & FT_STYLE_FLAG_ITALIC)
+        # fontInfo["family"] = list(fontInfo["family"])
+        # fontInfo["postscriptName"] = list(fontInfo["postscriptName"])
+        # fontInfo["fullName"] = list(fontInfo["fullName"])
+
+    return fontInfo
+
+
+def getFontFileInfos(fontPath):
+    with open(fontPath, "rb") as f:
+        sfntVersion = f.read(4)
+    fontSize = os.path.getsize(fontPath)
+    fonts = TTCollection(fontPath).fonts if sfntVersion == b"ttcf" else [TTFont(fontPath)]
+    return [getFontInfo(font, fontPath, fontSize, index) for index, font in enumerate(fonts)]
+
+
+"""
+匹配字体用到的参数
+family，即fontname
+bold，100的整数 100: Lowest, 400: Normal, 700: Bold, 900: Heaviest 默认为400 开启Bold为700 通过text中设置\b<weight>可以改为其他数字
+italic，是斜体则100 普通则为100 
+"""
+
+
+def selectFontFromList(targetFontName, targetWeight, targetItalic, fontInfos):
+    """
+    给定的fontInfos中的font，必定是满足family postscriptName fullName 其中有一个包含 targetFontName
+    """
+    if len(fontInfos) == 0:
+        return None
+    scores = {}
+    miniScore = sys.maxsize
+    for fontInfo in fontInfos:
+        score = getFontScore(targetFontName, targetWeight, targetItalic, fontInfo)
+        miniScore = min(miniScore, score)
+        scores.setdefault(score, []).append(fontInfo)
+    target = sorted(scores[miniScore], key=lambda x: x["size"], reverse=False)[0]
+    # print("选择字体:", scores.keys())
+    # print(json.dumps(target, indent=4, ensure_ascii=False))
+    return target["path"], target["index"]
