@@ -6,13 +6,13 @@ from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
 
 import hdrify
-from utils import  bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
+from utils import bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
 from constants import logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 
 
-# from utils import analyseAss 
-from analyseAss import analyseAss 
+# from utils import analyseAss
+from analyseAss import analyseAss
 
 # from concurrent.futures import ProcessPoolExecutor
 
@@ -51,9 +51,9 @@ class assSubsetter:
             logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return ""
 
-    async def loadSubsetEncode(self, fontName, unicodeSet):
+    async def loadSubsetEncode(self, fontName, weight, italic, unicodeSet):
         try:
-            fontBytes, index = await self.fontManagerInstance.loadFont(fontName)
+            fontBytes, index = await self.fontManagerInstance.loadFont(fontName, weight, italic)
             if fontBytes is None:
                 logger.error(f"字体缺失 \t\t[{fontName}]")
                 return ""
@@ -66,8 +66,8 @@ class assSubsetter:
         # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
         return result
 
-    async def process(self, subtitleBytes , userHDR = 0):
-        bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder='big', signed=True))
+    async def process(self, subtitleBytes, userHDR=0):
+        bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
         if bytesHash in self.cache:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
@@ -89,7 +89,6 @@ class assSubsetter:
             logger.error("已有内嵌字体")
             return (False, subtitleBytes)
 
-        
         targetHDR = HDR if userHDR == 0 else userHDR
         if targetHDR != -1:
             logger.info(f"HDR适配 {targetHDR}")
@@ -103,7 +102,7 @@ class assSubsetter:
         start = time.perf_counter_ns()
         fontCharList = analyseAss(assText)
         assFinish = time.perf_counter_ns()
-        tasks = [self.loadSubsetEncode(fontName, unicodeSet) for (fontName, unicodeSet) in fontCharList.items()]
+        tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
         error = False
         for task in asyncio.as_completed(tasks):
             result = await task
