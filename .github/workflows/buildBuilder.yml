@@ -1,6 +1,7 @@
 name: buildBuilder
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - requirements.txt
