@@ -63,3 +63,5 @@ FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
 
 FT_STYLE_FLAG_ITALIC = 0x01
 FT_STYLE_FLAG_BOLD = 0x02
+
+ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY" , default=0))

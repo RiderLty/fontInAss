@@ -3,7 +3,7 @@ import sys
 import time
 import warnings
 
-from analyseAss import analyseAss_libassLike
+from analyseAss import analyseAss
 
 
 warnings.filterwarnings("ignore")
@@ -25,7 +25,7 @@ from dirmonitor import dirmonitor
 from fontManager import fontManager
 from assSubsetter import assSubsetter
 from py2cy.c_utils import uuencode
-from utils import bytesToHashName, bytesToStr, getFontScore, strCaseCmp, tagToInteger
+from utils import assInsertLine, bytesToHashName, bytesToStr, getFontScore, strCaseCmp, tagToInteger
 
 
 def init_logger():
@@ -502,17 +502,17 @@ if __name__ == "__main__":
             "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
             "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass",
             "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E01][Ma10p_1080p][x265_flac_aac].chs.ass",
-            "test/[DMG&SumiSora&VCB-Studio] Engage Kiss [S01E07][Ma10p_1080p][x265_flac].chs.ass"
-            "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stone Ocean [S05E01][Ma10p_2160p][x265_flac_ass].extract.ass"
-            "test/[Ygm&MAI] JoJo's Bizarre Adventure - Stardust Crusaders [S02E47][Ma10p_2160p][x265_DTS-HDMA_ass].chs.ass"
-            "test.ass"
+            r"test/[Ygm&MAI] JoJo's Bizarre Adventure - Stone Ocean [S05E01][Ma10p_2160p][x265_flac_ass].extract.ass",
+            r"test/[Ygm&MAI] JoJo's Bizarre Adventure - Stardust Crusaders [S02E47][Ma10p_2160p][x265_DTS-HDMA_ass].chs.ass",
         ]
 
         for file in files:
             with open(file, "rb") as f:
                 subtitleBytes = f.read()
             start = time.perf_counter_ns()
-            print(analyseAss_libassLike( bytesToStr(subtitleBytes) ))
+            # print(analyseAss_libassLike( bytesToStr(subtitleBytes) ))
+            # assInsertLine(bytesToStr(subtitleBytes),"hello insert")
+            print(assInsertLine(bytesToStr(subtitleBytes),"hello insert"))
             logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
             logger.error(f"")
 

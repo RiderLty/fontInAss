@@ -6,9 +6,9 @@ from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
 
 import hdrify
-from utils import bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
+from utils import assInsertLine, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
-from constants import logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+from constants import ERROR_DISPLAY, logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 
 
 # from utils import analyseAss
@@ -56,15 +56,15 @@ class assSubsetter:
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName, weight, italic)
             if fontBytes is None:
                 logger.error(f"字体缺失 \t\t[{fontName}]")
-                return ""
+                return f"字体缺失 \t\t[{fontName}]", None
         except Exception as e:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
-            return ""
+            return f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}", None
         submitTime = time.perf_counter_ns()
         # result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
         result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet, submitTime)
         # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
-        return result
+        return None, result
 
     async def process(self, subtitleBytes, userHDR=0):
         bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
@@ -97,25 +97,26 @@ class assSubsetter:
             except Exception as e:
                 logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
-        head, tai = assText.split("[Events]")
         embedFontsText = "[Fonts]\n"
         start = time.perf_counter_ns()
         fontCharList = analyseAss(assText)
         assFinish = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
-        error = False
+        errors = []
         for task in asyncio.as_completed(tasks):
-            result = await task
-            if result == "":
-                error = True
+            err, result = await task
+            if err:
+                errors.append(err)
             else:
                 embedFontsText += result
         logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+        if ERROR_DISPLAY > 0 and ERROR_DISPLAY <=60 and len(errors) != 0:
+            assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"{\fnArial\fs48\an7\1c&E0E0E0&\bord5\blur7}fontinass 子集化存在错误：\N" + r"\N".join(errors))
+        head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
-        # print(resultText)
         resultBytes = resultText.encode("UTF-8-sig")
-        if not error:
+        if len(errors) == 0:
             self.cache[bytesHash] = (srt, resultBytes)
         else:
             logger.error("存在错误，未缓存")

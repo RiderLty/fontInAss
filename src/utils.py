@@ -293,3 +293,58 @@ def selectFontFromList(targetFontName, targetWeight, targetItalic, fontInfos):
     # print("选择字体:", scores.keys())
     # print(json.dumps(target, indent=4, ensure_ascii=False))
     return target["path"], target["index"]
+
+
+def assInsertLine(ass_str, endTimeText ,insertContent):
+    try:
+        lines = ass_str.splitlines()
+        state = 0
+        for lineIndex, line in enumerate(lines):
+            if line == "":
+                pass
+            elif state == 0 and line.startswith("[Events]"):
+                state = 1
+            elif state == 1:
+                assert line.startswith("Format:"), ValueError("解析Style格式失败 : " + line)
+                eventFormat = line[7:].replace(" ", "").split(",")
+                eventStyleIndex = eventFormat.index("Style")
+                eventTextindex = eventFormat.index("Text")
+                eventStartIndex = eventFormat.index("Start")
+                eventEndIndex = eventFormat.index("End")
+                assert eventTextindex == len(eventFormat) - 1, ValueError("Text不是最后一个 : " + line)
+                assert eventStyleIndex != -1, ValueError("Format中未找到Style : " + line)
+                assert eventTextindex != -1, ValueError("Format中未找到Text : " + line)
+                assert eventStartIndex != -1, ValueError("Format中未找到Start : " + line)
+                assert eventEndIndex != -1, ValueError("Format中未找到End : " + line)
+                state = 2
+            elif state == 2:
+                if line.startswith("Dialogue:"):
+                    index = -1
+                    splitIndexs = []  # 逗号的位置
+                    for _ in range(eventTextindex):
+                        index = line.find(",", index + 1)
+                        splitIndexs.append(index)
+                    style = (splitIndexs[eventStyleIndex - 1] + 1, splitIndexs[eventStyleIndex])
+                    start = (splitIndexs[eventStartIndex - 1] + 1, splitIndexs[eventStartIndex])
+                    end = (splitIndexs[eventEndIndex - 1] + 1, splitIndexs[eventEndIndex])
+                    text = (splitIndexs[eventTextindex - 1] + 1, len(line))
+                    charList = list(line)
+                    # print(line)
+                    # print(f"style[{line[style[0]:style[1]]}]")
+                    # print(f"start[{line[start[0]:start[1]]}]")
+                    # print(f"end[{line[end[0]:end[1]]}]")
+                    # print(f"text[{line[text[0]:text[1]]}]")
+                    replacements = [
+                        (style[0], style[1], "NOEXISTSTYLETODEFAULT"),
+                        (start[0], start[1], "0:00:00.00"),
+                        (end[0], end[1], endTimeText),
+                        (text[0], text[1], insertContent),
+                    ]
+                    for start, end, new_str in sorted(replacements, key=lambda x: x[0], reverse=True):
+                        charList[start:end] = new_str
+                    insertLine = "".join(charList)
+                    return "\n".join(lines[:lineIndex] + [insertLine] + lines[lineIndex:])
+    except Exception as e:
+        print("插入内容出错"+str(e))
+    print("插入内容失败")
+    return ass_str
