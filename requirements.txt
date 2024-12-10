@@ -1,5 +1,4 @@
 ass==0.5.4
-fonttools==4.55.0
 requests==2.32.3
 watchdog==6.0.0
 cachetools==5.5.0
@@ -14,3 +13,4 @@ aiohttp==3.11.7
 uvicorn==0.32.1
 SQLAlchemy==2.0.36
 tqdm==4.67.0
+freetype-py==2.5.1

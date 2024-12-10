@@ -5,7 +5,7 @@ import asyncio
 import aiofiles
 from cachetools import LRUCache, TTLCache
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
-from utils import getAllFiles, getFontFileInfos, getFontInfo, getFontScore, saveToDisk, conv2unicode,  selectFontFromList, unicode2origin
+from utils import getAllFiles, getFontFileInfos, saveToDisk, conv2unicode,  selectFontFromList, unicode2origin
 from sqlalchemy import Column, Integer, String, Boolean, and_, create_engine, ForeignKey, Index, event, update, bindparam, delete, select
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
@@ -90,15 +90,14 @@ class fontManager:
 
         with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
             (self.onlineMapIndex, self.onlineMapData) = json.load(f)
-        self.http_session = aiohttp.ClientSession(loop=MAIN_LOOP)  # 下载的session
-
+        self.http_session = aiohttp.ClientSession(loop=MAIN_LOOP , connector=aiohttp.TCPConnector(verify_ssl=False , loop=MAIN_LOOP))  # 下载的session
         self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 2)
         # 初始化数据库
         Base.metadata.create_all(engine)
         self.db_session = Session()
         # 同步目录
         self.sync_db_with_dir()
-
+        # self.makeOnlineMap()
 
     def sync_db_with_dir(self):
         try:
@@ -237,6 +236,7 @@ class fontManager:
 
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
             json.dump([nameMapDetail, toSelectFontsList], f, ensure_ascii=True)
+        print("onlineFonts.json 已写入")
 
     def selectFontOnline(self, targetFontName, targetWeight, targetItalic):
         if targetFontName in self.onlineMapIndex:
@@ -380,6 +380,7 @@ class fontManager:
         elif result := self.selectFontOnline(targetFontName, targetWeight, targetItalic):
             path, index = result
             url = f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}"
+            logger.info(f"下载字体 [{url}]")
             start = time.perf_counter_ns()
             resp = await self.http_session.get(url, timeout=10)
             fontBytes = await resp.read()
