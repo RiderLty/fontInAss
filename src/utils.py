@@ -1,10 +1,10 @@
-
 import json
 import os
 import re
 import hashlib
 from pathlib import Path
 import sys
+import time
 import aiofiles
 import chardet
 import freetype
@@ -295,7 +295,7 @@ def selectFontFromList(targetFontName, targetWeight, targetItalic, fontInfos):
     return target["path"], target["index"]
 
 
-def assInsertLine(ass_str, endTimeText ,insertContent):
+def assInsertLine(ass_str, endTimeText, insertContent):
     try:
         lines = ass_str.splitlines()
         state = 0
@@ -345,7 +345,7 @@ def assInsertLine(ass_str, endTimeText ,insertContent):
                     insertLine = "".join(charList)
                     return "\n".join(lines[:lineIndex] + [insertLine] + lines[lineIndex:])
     except Exception as e:
-        print("插入内容出错"+str(e))
+        print("插入内容出错" + str(e))
     print("插入内容失败")
     return ass_str
 
@@ -480,10 +480,12 @@ libfreetype.FT_Get_Sfnt_Table.argtypes = [ctypes.c_void_p, ctypes.c_int]
 def getFontFileInfos(fontPath):
     with open(fontPath, "rb") as f:
         fontBytes = f.read()
+    # start = time.perf_counter_ns()
     face = freetype.Face.from_bytes(fontBytes)
     font_count = face.num_faces
     infos = []
     for index in range(font_count):
+        # print(f"handeling ... [{index}]  {fontPath} " )
         fontInfo = {
             "path": fontPath,
             "size": os.path.getsize(fontPath),
@@ -511,16 +513,20 @@ def getFontFileInfos(fontPath):
                     fontInfo["postscriptName"].add(conv2unicode(name))
             except Exception as e:
                 print(f"无法解码记录 {i}: {e}")
-
         try:
             style_flags = face.style_flags
             fontInfo["bold"] = bool(style_flags & freetype.FT_STYLE_FLAG_BOLD)
+            # print('fontInfo["bold"]',fontInfo["bold"])
             fontInfo["italic"] = bool(style_flags & freetype.FT_STYLE_FLAG_ITALIC)
+            # print('fontInfo["italic"]',fontInfo["italic"])
             ps_font_info = PS_FontInfoRec()
             fontInfo["postscriptCheck"] = not bool(freetype.FT_Get_PS_Font_Info(face._FT_Face, ctypes.byref(ps_font_info)))
+            # print('fontInfo["postscriptCheck"]',fontInfo["postscriptCheck"])
             os2 = libfreetype.FT_Get_Sfnt_Table(face._FT_Face, FT_SFNT_OS2).contents
             fontInfo["weight"] = os2.usWeightClass
+            # print('fontInfo["weight"]',fontInfo["weight"])
             infos.append(fontInfo)
         except Exception as e:
             print(e, fontPath, index)
+    # print(f"读取 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
     return infos

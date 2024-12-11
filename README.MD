@@ -24,9 +24,9 @@ docker run -d --name=fontinass --restart=unless-stopped \
 enjoy ~
 
 ### 无nginx版本
-使用```riderlty/fontinass:nonginx```tag，不整合nginx
+使用```riderlty/fontinass:nonginx```tag，不整合nginx，避免在使用302直链时套壳nginx
 
-有需求的用户可参考手动部署自行添加反向代理
+有需求的用户可参考手动部署，映射8011端口并配置字幕接口的nginx反向代理```location ~* /videos/(.*)/Subtitles```
 
 ## Unraid部署
 
@@ -36,7 +36,7 @@ curl -o /boot/config/plugins/dockerMan/templates-user/my-fontinass.xml  https://
 ```
 Docker > 添加容器 > 选择一个模版 > fontinass
 
-移除你不需要的配置项
+修改环境变量并移除你不需要的配置项
 
 应用
 ## 手动运行
@@ -99,7 +99,9 @@ server {
 ```
 
 > [!NOTE]
-> 建议映射fonts路径避免重复扫描与联网下载的字体丢失
+> 联网下载的字体存储在/fonts/download  
+即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
+
 
 添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果
 ```
@@ -127,29 +129,23 @@ server {
 -e FONT_CACHE_TTL=30
 ```
 
-<!-- 多进程池最大数量/多线程池数为POOL_CPU_MAX乘以2，不设置默认为CPU总线程数，类型（整数）
-```
--e POOL_CPU_MAX=4
-``` -->
-
 支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
 
-可通过```http://[ip]:[port]/setHDR```临时调整
+也可通过```http://[ip]:8011/setHDR```临时调整(需开放8011端口)
 
-通过HDR来设置字幕亮度峰值, 例如1000nit
+通过HDR来设置字幕亮度峰值, 例如1000nit，默认-1 不开启
 ```
 -e HDR=1000
 ```
-
 
 日志等级，可设置为 DEBUG INFO WARNING ERROR CRITICAL
 ```
 -e LOG_LEVEL=DEBUG
 ```
 
-错误信息显示时间，默认关闭。
+错误信息显示，默认关闭，单位（秒）范围大于0小于60，
 
-范围大于0小于60，将会在字幕0s处插入指定秒数的子集化错误信息。
+开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息
 ```
 -e ERROR_DISPLAY=3.5
 ```
@@ -170,5 +166,3 @@ server {
 # 其他说明
 
 自带的 [fontMap.json](https://github.com/RiderLty/fontInAss/blob/main/fontMap.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114) , 通过cloudflare R2提供
-
-程序会读取运行目录下`fonts`文件夹内的字体，创建本地字体数据库并优先调用本地字体
