@@ -734,15 +734,17 @@ import os
 import time
 import freetype
 import freetype.raw
-from utils import conv2unicode, getAllFiles, getFontFileInfos 
+from utils import conv2unicode, getAllFiles, getFontFileInfos
 from constants import ONLINE_FONTS_DB_PATH
 with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
     onlineMapIndex, onlineMapData = json.load(f)
 
+"56330MB"
+
 if __name__ == "__main__":
     font_path = "/mnt/storage/Projects/fontInAss/FZLTCH.ttf"
-
+    start = time.perf_counter_ns()
     for file in getAllFiles("/mnt/storage/Fonts/超级字体整合包 XZ"):
-        # if "何尼玛" not in file:
-        #     continue
         res = getFontFileInfos(file)
+        # print(res)
+    print(f"读取 {(time.perf_counter_ns() - start) / 1000000000:.2f}s")

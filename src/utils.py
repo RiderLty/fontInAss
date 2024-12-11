@@ -478,17 +478,14 @@ libfreetype.FT_Get_Sfnt_Table.argtypes = [ctypes.c_void_p, ctypes.c_int]
 
 
 def getFontFileInfos(fontPath):
-    with open(fontPath, "rb") as f:
-        fontBytes = f.read()
-    # start = time.perf_counter_ns()
-    face = freetype.Face.from_bytes(fontBytes)
-    font_count = face.num_faces
+    index = 0
     infos = []
-    for index in range(font_count):
+    fontSize = os.path.getsize(fontPath)
+    while True:
         # print(f"handeling ... [{index}]  {fontPath} " )
         fontInfo = {
             "path": fontPath,
-            "size": os.path.getsize(fontPath),
+            "size": fontSize,
             "index": index,
             "family": set(),
             "postscriptName": set(),
@@ -498,7 +495,7 @@ def getFontFileInfos(fontPath):
             "bold": False,  # 默认值
             "italic": False,  # 默认值
         }
-        face = freetype.Face.from_bytes(fontBytes, index)
+        face = freetype.Face(fontPath, index)
         for i in range(face.sfnt_name_count):
             sfnt_name = face.get_sfnt_name(i)
             try:
@@ -516,17 +513,15 @@ def getFontFileInfos(fontPath):
         try:
             style_flags = face.style_flags
             fontInfo["bold"] = bool(style_flags & freetype.FT_STYLE_FLAG_BOLD)
-            # print('fontInfo["bold"]',fontInfo["bold"])
             fontInfo["italic"] = bool(style_flags & freetype.FT_STYLE_FLAG_ITALIC)
-            # print('fontInfo["italic"]',fontInfo["italic"])
             ps_font_info = PS_FontInfoRec()
             fontInfo["postscriptCheck"] = not bool(freetype.FT_Get_PS_Font_Info(face._FT_Face, ctypes.byref(ps_font_info)))
-            # print('fontInfo["postscriptCheck"]',fontInfo["postscriptCheck"])
             os2 = libfreetype.FT_Get_Sfnt_Table(face._FT_Face, FT_SFNT_OS2).contents
             fontInfo["weight"] = os2.usWeightClass
-            # print('fontInfo["weight"]',fontInfo["weight"])
             infos.append(fontInfo)
         except Exception as e:
             print(e, fontPath, index)
-    # print(f"读取 {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
-    return infos
+        if index == face.num_faces - 1:
+            return infos
+        else:
+            index += 1
