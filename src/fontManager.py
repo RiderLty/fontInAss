@@ -149,8 +149,7 @@ class fontManager:
         # print("插入:",data)
         try:
             start = time.perf_counter_ns()
-            results = {self.executor.submit(getFontFileInfos, file): file for file in data}
-            logger.debug(f"准备任务耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+            fontInfos = []
             with tqdm(
                 total=len(data),
                 desc="Load",
@@ -163,12 +162,14 @@ class fontManager:
                 maxinterval=10,
                 position=0,
             ) as pbar:
-                for future in as_completed(results):
-                    fontInfos = future.result()
-                    self.insertFontInfos(fontInfos)
+                for file in data:
+                    fontInfos.extend(getFontFileInfos(file))
                     pbar.update(1)
-                self.db_session.commit()
-            logger.info(f"添加了 {len(data)} 条记录，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+            logger.info(f"分析了 {len(data)} 个字体，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+            insertStart = time.perf_counter_ns()
+            self.insertFontInfos(fontInfos)
+            self.db_session.commit()
+            logger.info(f"添加记录，耗时 {(time.perf_counter_ns() - insertStart) / 1_000_000:.2f}ms")
         except SQLAlchemyError as e:
             self.db_session.rollback()  # 回滚事务
             logger.error(f"添加数据时发生错误: {e}")
