@@ -99,8 +99,7 @@ server {
 ```
 
 > [!NOTE]
-> 联网下载的字体存储在/fonts/download  
-即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
+> 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
 
 
 添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果
@@ -165,4 +164,4 @@ server {
 
 # 其他说明
 
-自带的 [fontMap.json](https://github.com/RiderLty/fontInAss/blob/main/fontMap.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114) , 通过cloudflare R2提供
+自带的 [onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114) , 通过cloudflare R2提供
