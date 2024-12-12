@@ -734,7 +734,7 @@ import os
 import time
 import freetype
 import freetype.raw
-from utils import conv2unicode, getAllFiles, getFontFileInfos
+from utils import  getAllFiles, getFontFileInfos
 from constants import ONLINE_FONTS_DB_PATH
 with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
     onlineMapIndex, onlineMapData = json.load(f)

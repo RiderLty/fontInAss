@@ -5,7 +5,7 @@ import asyncio
 import aiofiles
 from cachetools import LRUCache, TTLCache
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
-from utils import getAllFiles, getFontFileInfos, saveToDisk, conv2unicode,  selectFontFromList, unicode2origin
+from utils import getAllFiles, getFontFileInfos, saveToDisk,  selectFontFromList
 from sqlalchemy import Column, Integer, String, Boolean, and_, create_engine, ForeignKey, Index, event, update, bindparam, delete, select
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
@@ -221,11 +221,11 @@ class fontManager:
                 toSelectFontsListIndex += 1
 
         for name, path, index in familyNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["family"].append(unicode2origin(name))
+            toSelectFontsList[toSelectFonts[(path, index)]]["family"].append(name)
         for name, path, index in fullNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["postscriptName"].append(unicode2origin(name))
+            toSelectFontsList[toSelectFonts[(path, index)]]["postscriptName"].append(name)
         for name, path, index in postscriptNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["fullName"].append(unicode2origin(name))
+            toSelectFontsList[toSelectFonts[(path, index)]]["fullName"].append(name)
 
         nameMapPathIndex = {}
         for result in [familyNameResult, fullNameResult, postscriptNameResult]:
@@ -233,7 +233,7 @@ class fontManager:
                 nameMapPathIndex.setdefault(name, set()).add((path, index))
         nameMapDetail = {}
         for name, indexSet in nameMapPathIndex.items():
-            nameMapDetail[unicode2origin(name)] = [toSelectFonts[x] for x in indexSet]
+            nameMapDetail[name] = [toSelectFonts[x] for x in indexSet]
 
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
             json.dump([nameMapDetail, toSelectFontsList], f, ensure_ascii=True)
@@ -247,10 +247,9 @@ class fontManager:
         return None
 
     def selectFontLocal(self, targetFontName, targetWeight, targetItalic):
-        fontNameUnicode = conv2unicode(targetFontName)
-        familyNameResult = self.db_session.execute((select(familyName.path, familyName.index).where(familyName.name == fontNameUnicode))).all()
-        fullNameResult = self.db_session.execute((select(fullName.path, fullName.index).where(fullName.name == fontNameUnicode))).all()
-        postscriptNameResult = self.db_session.execute((select(postscriptName.path, postscriptName.index).where(postscriptName.name == fontNameUnicode))).all()
+        familyNameResult = self.db_session.execute((select(familyName.path, familyName.index).where(familyName.name == targetFontName))).all()
+        fullNameResult = self.db_session.execute((select(fullName.path, fullName.index).where(fullName.name == targetFontName))).all()
+        postscriptNameResult = self.db_session.execute((select(postscriptName.path, postscriptName.index).where(postscriptName.name == targetFontName))).all()
         toSelectFonts = {}
         for result in [familyNameResult, fullNameResult, postscriptNameResult]:
             for path, index in result:

@@ -41,14 +41,6 @@ def makeMiniSizeFontMap(data):
     return fontFileMap
 
 
-def conv2unicode(string: str) -> str:
-    return json.dumps(string, ensure_ascii=True)[1:-1]
-
-
-def unicode2origin(string: str) -> str:
-    return json.loads(f'"{string}"')
-
-
 def getAllFiles(path):
     Filelist = []
     for home, _, files in os.walk(path):
@@ -501,13 +493,13 @@ def getFontFileInfos(fontPath):
             try:
                 if sfnt_name.name_id == 1:
                     name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
-                    fontInfo["family"].add(conv2unicode(name))
+                    fontInfo["family"].add(name)
                 elif sfnt_name.name_id == 4:
                     name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
-                    fontInfo["fullName"].add(conv2unicode(name))
+                    fontInfo["fullName"].add(name)
                 elif sfnt_name.name_id == 6:
                     name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
-                    fontInfo["postscriptName"].add(conv2unicode(name))
+                    fontInfo["postscriptName"].add(name)
             except Exception as e:
                 print(f"无法解码记录 {i}: {e}")
         try:
