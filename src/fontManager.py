@@ -363,7 +363,8 @@ class fontManager:
             # self.db_session.remove()
             engine.dispose()
 
-    async def loadFont(self, targetFontName, targetWeight, targetItalic):
+    async def loadFont(self, requestFontName, targetWeight, targetItalic):
+        targetFontName = requestFontName.strip().lower()
         if (targetFontName, targetWeight, targetItalic) in self.cache:
             (fontBytes, index) = self.cache[(targetFontName, targetWeight, targetItalic)]  # 刷新缓存
             self.cache[(targetFontName, targetWeight, targetItalic)] = (fontBytes, index)

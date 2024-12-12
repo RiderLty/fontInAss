@@ -492,13 +492,13 @@ def getFontFileInfos(fontPath):
             sfnt_name = face.get_sfnt_name(i)
             try:
                 if sfnt_name.name_id == 1:
-                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
+                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip().lower()
                     fontInfo["family"].add(name)
                 elif sfnt_name.name_id == 4:
-                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
+                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip().lower()
                     fontInfo["fullName"].add(name)
                 elif sfnt_name.name_id == 6:
-                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip()
+                    name = sfnt_name.string.decode("utf-16-be" if sfnt_name.platform_id == 3 else "latin-1").strip().lower()
                     fontInfo["postscriptName"].add(name)
             except Exception as e:
                 print(f"无法解码记录 {i}: {e}")
