@@ -380,12 +380,13 @@ class fontManager:
             return (fontBytes, index)
         elif result := self.selectFontOnline(targetFontName, targetWeight, targetItalic):
             path, index = result
-            url = f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}"
-            logger.info(f"下载字体 [{url}]")
+            # url = f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}"
+            url = f"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/{path}"
+            logger.info(f"下载字体 [{path}]")
             start = time.perf_counter_ns()
             resp = await self.http_session.get(url, timeout=10)
             fontBytes = await resp.read()
-            logger.info(f"下载 {len(fontBytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(targetFontName, targetWeight, targetItalic)} <== {url}]")
+            logger.info(f"下载 {len(fontBytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(targetFontName, targetWeight, targetItalic)} <== {path}]")
             self.cache[(targetFontName, targetWeight, targetItalic)] = (fontBytes, index)
             fontSavePath = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
             fontSaveDir = os.path.dirname(fontSavePath)
