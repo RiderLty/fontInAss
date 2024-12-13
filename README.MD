@@ -4,7 +4,7 @@
 
 # 能做什么？
 
-无需修改Emby服务器与客户端，实现使用Emby播放外挂ass字幕时，在没有安装字体的设备上正确显示字幕。
+无需修改Emby/Jellyfin服务器与客户端，实现使用播放外挂ass/srt字幕时，在没有安装字体的设备上正确显示字幕。
 
 # 快速开始
 
@@ -17,9 +17,9 @@ docker run -d --name=fontinass --restart=unless-stopped \
   -v /etc/fontinassData:/data
   riderlty/fontinass:latest
 ```
-设置EMBY_SERVER_URL为你的EMBY服务器的地址
+设置EMBY_SERVER_URL为你的Emby/Jellyfin服务器的地址
 
-在客户端上使用`http://[ip]:8012`访问容器代理的Emby
+在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
 
 enjoy ~
 
@@ -78,7 +78,7 @@ server {
     }
 
     location / {
-        #修改为你的EMBY服务器地址
+        #修改为你的Emby/Jellyfin服务器地址
         proxy_pass $EMBY_SERVER_URL;
     }
 }
@@ -86,9 +86,11 @@ server {
 
 ## 其他配置说明
 
-容器内部端口`8011`为字体处理服务，`8012`为nginx反向代理Emby
+容器内部端口`8011`为字体处理服务
 
-如有其他需求，可暴露`8011`端口
+`8012`为nginx反向代理端口，使用此端口访问代理后的服务器
+
+如有其他需求，可暴露`8011`端口用于字幕处理
 
 如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
 
@@ -102,7 +104,7 @@ server {
 > 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
 
 
-添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果
+添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果（Jellyfin无法使用）
 ```
   -e SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
@@ -164,4 +166,4 @@ server {
 
 # 其他说明
 
-自带的 [onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114) , 通过cloudflare R2提供
+自带的 [onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114)
