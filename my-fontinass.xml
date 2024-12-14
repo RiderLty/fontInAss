@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>fontinass</Name>
-  <Repository>riderlty/fontinass:noproxy</Repository>
+  <Repository>riderlty/fontinass:latest</Repository>
   <Registry>https://hub.docker.com/r/riderlty/fontinass/</Registry>
   <Network>bridge</Network>
   <MyIP/>
