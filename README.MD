@@ -6,7 +6,8 @@
 
 无需修改Emby/Jellyfin服务器与客户端，实现使用播放外挂ass/srt字幕时，在没有安装字体的设备上正确显示字幕。
 
-<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;margin-left:-244.5px; margin-top:-137.5px;width:489px; height:275px;" src="https://www.processon.com/embed/675d9584ab1a576ff9372583?cid=675d9584ab1a576ff9372586"></iframe>
+
+![](process.png)
 
 # 快速开始
 
