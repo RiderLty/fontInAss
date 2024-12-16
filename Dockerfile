@@ -1,12 +1,9 @@
-ARG BUILDER=riderlty/fontinass-builder:4ab13f154a5064f35f0900dacdb1ac50343c6c5db7fbfaf28e68eadaf74f47c0
-FROM ${BUILDER} AS builder
-FROM python:3.10-slim-buster 
-COPY --from=builder /wheels /wheels
-COPY onlineFonts.json run.sh /
-RUN pip install --no-cache /wheels/* && rm -rf /wheels && chmod 777 /run.sh && mkdir /data
+ARG BUILDER=riderlty/fontinass-builder:hashvalue
+FROM ${BUILDER} 
 ARG NGINX=YES
 RUN if [ "${NGINX}" = "YES" ]; then apt-get update && apt-get -y --no-install-recommends install nginx; fi
+COPY onlineFonts.json run.sh /
 COPY nginx /etc/nginx
 COPY src /src/
-COPY --from=builder /app/src/py2cy/* /src/py2cy/
+RUN chmod 777 /run.sh
 CMD ["/bin/sh" , "-c" , "/run.sh"]
