@@ -41,11 +41,11 @@ def makeMiniSizeFontMap(data):
     return fontFileMap
 
 
-def getAllFiles(path):
+def getAllFiles(path, types=FONTS_TYPE):
     Filelist = []
     for home, _, files in os.walk(path):
         for filename in files:
-            if Path(filename).suffix.lower()[1:] in FONTS_TYPE:
+            if Path(filename).suffix.lower()[1:] in types:
                 # 保证所有系统下\\转变成/
                 Filelist.append(Path(home, filename).as_posix())
     return Filelist

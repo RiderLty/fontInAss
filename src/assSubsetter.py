@@ -33,8 +33,7 @@ class assSubsetter:
     # self.processPool.shutdown()
 
     @staticmethod
-    def fontSubsetter(fontBytes, index, fontName, unicodeSet, submitTime):
-        # logger.debug(f"{fontName} 子集化 启动时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
+    def fontSubsetter(fontBytes, index, fontName, unicodeSet):
         try:
             start = time.perf_counter_ns()
             face = uharfbuzz.Face(fontBytes, index)
@@ -44,27 +43,27 @@ class assSubsetter:
             inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({tagToInteger("name")})
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
+            missGlyph = "".join([chr(x) for x in unicodeSet if x not in face.unicodes])
             del face
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
-            return f"fontname:{fontName}_0.ttf\n{enc}\n"
+            if missGlyph == "":
+                return None , f"fontname:{fontName}_0.ttf\n{enc}\n"
+            else:
+                return f"[{fontName}] 缺少字形:{missGlyph}" , f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
-            return ""
+            return str(e) , ""
 
     async def loadSubsetEncode(self, fontName, weight, italic, unicodeSet):
         try:
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName, weight, italic)
             if fontBytes is None:
                 logger.error(f"字体缺失 \t\t[{fontName}]")
-                return f"字体缺失 \t\t[{fontName}]", None
+                return f"字体缺失 \t\t[{fontName}]", ""
         except Exception as e:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
-            return f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}", None
-        submitTime = time.perf_counter_ns()
-        # result = await MAIN_LOOP.run_in_executor(self.processPool, assSubsetter.fontSubsetter, fontBytes, index, fontName, unicodeSet , submitTime)
-        result = assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet, submitTime)
-        # logger.debug(f"{fontName} 子集化 实际用时{(time.perf_counter_ns() - submitTime) / 1000000:.2f}ms")
-        return None, result
+            return f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}", ""
+        return assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet)
 
     async def process(self, subtitleBytes, userHDR=0):
         bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
@@ -107,8 +106,7 @@ class assSubsetter:
             err, result = await task
             if err:
                 errors.append(err)
-            else:
-                embedFontsText += result
+            embedFontsText += result
         logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         if ERROR_DISPLAY > 0 and ERROR_DISPLAY <=60 and len(errors) != 0:
@@ -120,4 +118,6 @@ class assSubsetter:
             self.cache[bytesHash] = (srt, resultBytes)
         else:
             logger.error("存在错误，未缓存")
+            for err in errors:
+                logger.error(err)
         return (srt, resultBytes)
