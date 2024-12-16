@@ -110,7 +110,7 @@ class assSubsetter:
         logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         if ERROR_DISPLAY > 0 and ERROR_DISPLAY <=60 and len(errors) != 0:
-            assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"{\fnArial\fs48\an7\1c&E0E0E0&\bord5\blur7}fontinass 子集化存在错误：\N" + r"\N".join(errors))
+            assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"{\fnArial\fs48\an7\1c&HE0E0E0&\2c&H000000&\3c&H000000&\4c&H000000&\bord5\blur7}fontinass 子集化存在错误：\N" + r"\N".join(errors))
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
         resultBytes = resultText.encode("UTF-8-sig")
