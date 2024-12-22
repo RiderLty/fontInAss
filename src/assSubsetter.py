@@ -8,7 +8,7 @@ from fontManager import fontManager
 import hdrify
 from utils import assInsertLine, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
-from constants import ERROR_DISPLAY, logger, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 
 
 # from utils import analyseAss
@@ -43,16 +43,16 @@ class assSubsetter:
             inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({tagToInteger("name")})
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
-            missGlyph = "".join([chr(x) for x in unicodeSet if x not in face.unicodes])
+            missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
             del face
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             if missGlyph == "":
-                return None , f"fontname:{fontName}_0.ttf\n{enc}\n"
+                return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
             else:
-                return f"[{fontName}] 缺少字形:{missGlyph}" , f"fontname:{fontName}_0.ttf\n{enc}\n"
+                return f"[{fontName}] 缺少字形:{missGlyph}", f"fontname:{fontName}_0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
-            return str(e) , ""
+            return str(e), ""
 
     async def loadSubsetEncode(self, fontName, weight, italic, unicodeSet):
         try:
@@ -109,8 +109,10 @@ class assSubsetter:
             embedFontsText += result
         logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
-        if ERROR_DISPLAY > 0 and ERROR_DISPLAY <=60 and len(errors) != 0:
-            assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"{\fnArial\fs48\an7\1c&HE0E0E0&\2c&H000000&\3c&H000000&\4c&H000000&\bord5\blur7}fontinass 子集化存在错误：\N" + r"\N".join(errors))
+        if ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60 and len(errors) != 0:
+            assText = assInsertLine(
+                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"{\fnArial\fs48\an7\1c&HE0E0E0&\2c&H000000&\3c&H000000&\4c&H000000&\bord5\blur7}fontinass 子集化存在错误：\N" + r"\N".join(errors)
+            )
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
         resultBytes = resultText.encode("UTF-8-sig")

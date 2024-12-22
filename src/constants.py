@@ -64,4 +64,23 @@ FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
 FT_STYLE_FLAG_ITALIC = 0x01
 FT_STYLE_FLAG_BOLD = 0x02
 
-ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY" , default=0))
+ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY", default=0))
+
+PUNCTUATION_UNICODES = set()
+ranges = [
+    # 基本拉丁文标点符号 (ASCII)
+    (0x0020, 0x007F),
+    # 拉丁文附加标点符号
+    (0x00A0, 0x00FF),
+    # 中日韩字符标点符号
+    (0x3000, 0x303F),
+    # 一般标点符号
+    (0x2000, 0x206F),
+    # 数学符号
+    (0x2000, 0x22FF),
+    # 全角标点符号
+    (0xFF00, 0xFFEF),
+]
+for start, end in ranges:
+    for code_point in range(start, end + 1):
+        PUNCTUATION_UNICODES.add(code_point)
