@@ -51,23 +51,29 @@ class FontInfo(Base):
     bold = Column(Boolean)
     italic = Column(Boolean)
 
-class FamilyName(Base):
-    __tablename__ = "family_name"
-    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-    uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
-    name = Column(String, index=True)
+class FontName(Base):
+    __tablename__ = "name"
+    # id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+    name = Column(String, primary_key=True, index=True)
+    uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, index=True, nullable=False)
 
-class FullName(Base):
-    __tablename__ = "full_name"
-    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-    uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
-    name = Column(String, index=True)
+# class FamilyName(Base):
+#     __tablename__ = "family_name"
+#     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
+#     name = Column(String, index=True)
 
-class PostscriptName(Base):
-    __tablename__ = "postscript_name"
-    id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-    uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
-    name = Column(String, index=True)
+# class FullName(Base):
+#     __tablename__ = "full_name"
+#     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
+#     name = Column(String, index=True)
+
+# class PostscriptName(Base):
+#     __tablename__ = "postscript_name"
+#     # id = Column(Integer, index=True, primary_key=True, autoincrement=True)
+#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, index=True, nullable=False)
+#     name = Column(String,primary_key=True, index=True)
 
 # 数据库管理类
 class fontManager:
@@ -182,9 +188,10 @@ class fontManager:
             start = time.perf_counter_ns()
             file_info = []
             font_info = []
-            family_name = []
-            full_name = []
-            postscript_name = []
+            # family_name = []
+            # full_name = []
+            # postscript_name = []
+            font_name = []
             with tqdm(
                 total=len(data),
                 desc="Load",
@@ -201,9 +208,12 @@ class fontManager:
                     file_info_list, font_info_list, family_name_list, full_name_list, postscript_name_list = getFontFileInfos(file)
                     file_info.extend(file_info_list)
                     font_info.extend(font_info_list)
-                    family_name.extend(family_name_list)
-                    full_name.extend(full_name_list)
-                    postscript_name.extend(postscript_name_list)
+                    # family_name.extend(family_name_list)
+                    # full_name.extend(full_name_list)
+                    # postscript_name.extend(postscript_name_list)
+                    font_name.extend(family_name_list)
+                    font_name.extend(full_name_list)
+                    font_name.extend(postscript_name_list)
                     pbar.update(1)
             logger.info(f"分析了 {len(data)} 个字体，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
             insertStart = time.perf_counter_ns()
@@ -211,12 +221,14 @@ class fontManager:
                 self.db_session.execute(insert(FileInfo).on_conflict_do_nothing(), file_info)
             if font_info:
                 self.db_session.execute(insert(FontInfo).on_conflict_do_nothing(), font_info)
-            if family_name:
-                self.db_session.execute(insert(FamilyName).on_conflict_do_nothing(), family_name)
-            if full_name:
-                self.db_session.execute(insert(FullName).on_conflict_do_nothing(), full_name)
-            if postscript_name:
-                self.db_session.execute(insert(PostscriptName).on_conflict_do_nothing(), postscript_name)
+            # if family_name:
+            #     self.db_session.execute(insert(FamilyName).on_conflict_do_nothing(), family_name)
+            # if full_name:
+            #     self.db_session.execute(insert(FullName).on_conflict_do_nothing(), full_name)
+            # if postscript_name:
+            #     self.db_session.execute(insert(PostscriptName).on_conflict_do_nothing(), postscript_name)
+            if font_name:
+                self.db_session.execute(insert(FontName).on_conflict_do_nothing(), font_name)
             self.db_session.commit()
             logger.info(f"添加记录，耗时 {(time.perf_counter_ns() - insertStart) / 1_000_000:.2f}ms")
         except SQLAlchemyError as e:
@@ -307,8 +319,7 @@ class fontManager:
     #     return selectFontFromList(targetFontName, targetWeight, targetItalic, result)
 
     def selectFontLocal(self, targetFontName, targetWeight, targetItalic):
-        result = []
-        familyNameResult = self.db_session.execute(
+        result = self.db_session.execute(
             select(
                 FontInfo.path,
                 FontInfo.size,
@@ -321,50 +332,69 @@ class fontManager:
                 FontInfo.bold,
                 FontInfo.italic,
             )
-            .join(FamilyName, FontInfo.uid == FamilyName.uid)
+            .join(FontName, FontInfo.uid == FontName.uid)
             .where(
-                FamilyName.name == targetFontName,
+                FontName.name == targetFontName,
             )
         ).mappings().all()
+        # result = []
+        # familyNameResult = self.db_session.execute(
+        #     select(
+        #         FontInfo.path,
+        #         FontInfo.size,
+        #         FontInfo.index,
+        #         FontInfo.familyName,
+        #         FontInfo.postscriptName,
+        #         FontInfo.postscriptCheck,
+        #         FontInfo.fullName,
+        #         FontInfo.weight,
+        #         FontInfo.bold,
+        #         FontInfo.italic,
+        #     )
+        #     .join(FamilyName, FontInfo.uid == FamilyName.uid)
+        #     .where(
+        #         FamilyName.name == targetFontName,
+        #     )
+        # ).mappings().all()
 
-        fullNameResult = self.db_session.execute(
-            select(
-                FontInfo.path,
-                FontInfo.size,
-                FontInfo.index,
-                FontInfo.familyName,
-                FontInfo.postscriptName,
-                FontInfo.postscriptCheck,
-                FontInfo.fullName,
-                FontInfo.weight,
-                FontInfo.bold,
-                FontInfo.italic,
-            )
-            .join(FullName, FontInfo.uid == FullName.uid)
-            .where(
-                FullName.name == targetFontName,
-            )
-        ).mappings().all()
+        # fullNameResult = self.db_session.execute(
+        #     select(
+        #         FontInfo.path,
+        #         FontInfo.size,
+        #         FontInfo.index,
+        #         FontInfo.familyName,
+        #         FontInfo.postscriptName,
+        #         FontInfo.postscriptCheck,
+        #         FontInfo.fullName,
+        #         FontInfo.weight,
+        #         FontInfo.bold,
+        #         FontInfo.italic,
+        #     )
+        #     .join(FullName, FontInfo.uid == FullName.uid)
+        #     .where(
+        #         FullName.name == targetFontName,
+        #     )
+        # ).mappings().all()
 
-        postscriptNameResult = self.db_session.execute(
-            select(
-                FontInfo.path,
-                FontInfo.size,
-                FontInfo.index,
-                FontInfo.familyName,
-                FontInfo.postscriptName,
-                FontInfo.postscriptCheck,
-                FontInfo.fullName,
-                FontInfo.weight,
-                FontInfo.bold,
-                FontInfo.italic,
-            )
-            .join(PostscriptName, FontInfo.uid == PostscriptName.uid)
-            .where(
-                PostscriptName.name == targetFontName,
-            )
-        ).mappings().all()
-        result.extend(familyNameResult + fullNameResult + postscriptNameResult)
+        # postscriptNameResult = self.db_session.execute(
+        #     select(
+        #         FontInfo.path,
+        #         FontInfo.size,
+        #         FontInfo.index,
+        #         FontInfo.familyName,
+        #         FontInfo.postscriptName,
+        #         FontInfo.postscriptCheck,
+        #         FontInfo.fullName,
+        #         FontInfo.weight,
+        #         FontInfo.bold,
+        #         FontInfo.italic,
+        #     )
+        #     .join(PostscriptName, FontInfo.uid == PostscriptName.uid)
+        #     .where(
+        #         PostscriptName.name == targetFontName,
+        #     )
+        # ).mappings().all()
+        # result.extend(familyNameResult + fullNameResult + postscriptNameResult)
         return selectFontFromList(targetFontName, targetWeight, targetItalic, result)
 
     def close(self):
