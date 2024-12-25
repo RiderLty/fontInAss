@@ -13,18 +13,15 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 assert LOG_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], f"LOG_LEVEL={LOG_LEVEL}, 可用值 DEBUG INFO WARNING ERROR CRITICAL"
 logger.setLevel(LOG_LEVEL)
 
-
 def custom_print(*args, **kwargs):
     logger.info("".join([str(x) for x in args]))
-
 
 original_print = builtins.print
 builtins.print = custom_print
 
-
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_FONT_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"fonts")
-
+DATA_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data")
 FONT_DIRS = [DEFAULT_FONT_PATH]
 
 if os.environ.get("FONT_DIRS"):
@@ -33,13 +30,11 @@ if os.environ.get("FONT_DIRS"):
             FONT_DIRS.append(dirPath.strip())
 
 ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
-# LOCAL_FONTS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
-LOCAL_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.ver.2.3.db")
 
-# ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
-# LOCAL_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data/localFonts.json")
+LOCAL_FONTS_DB_VERSION = "2.4"
+LOCAL_FONTS_DB_PATH = os.path.join(DATA_PATH, f"localFonts.ver.{LOCAL_FONTS_DB_VERSION}.db")
 
-os.makedirs(os.path.join(os.path.dirname(ROOT_PATH), r"data"), exist_ok=True)
+os.makedirs(DATA_PATH, exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
 cpu_count = int(os.cpu_count())
 POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
@@ -61,8 +56,8 @@ HDR = int(os.environ.get("HDR", "-1"))
 
 FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
 
-FT_STYLE_FLAG_ITALIC = 0x01
-FT_STYLE_FLAG_BOLD = 0x02
+# FT_STYLE_FLAG_ITALIC = 0x01
+# FT_STYLE_FLAG_BOLD = 0x02
 
 ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY", default=0))
 
