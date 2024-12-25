@@ -51,10 +51,11 @@ def transformColour(colour, srgb_brightness):
     colour.b = transformed[2]
 
 
+color_code_pattern = re.compile(r"\\[0-9]?c&H([0-9a-fA-F]{2,})&")
 def transformEvent(event, srgb_brightness):
     line = event.text
     matches = []
-    for match in re.finditer(r"\\[0-9]?c&H([0-9a-fA-F]{2,})&", line):
+    for match in color_code_pattern.finditer(line):
         start = match.start(1)
         end = match.end(1)
         hex_colour = match.group(1)

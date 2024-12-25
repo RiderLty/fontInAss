@@ -82,13 +82,18 @@ def bytesToHashName(bytes, hash_algorithm="sha256"):
     hash_func.update(bytes)
     return hash_func.hexdigest()
 
-
+srt_full_time_pattern = re.compile(r"@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@")
 def isSRT(text):
-    srt_pattern = r"@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@"
-    matches = re.findall(srt_pattern, "@".join(text.splitlines()))
+    matches = srt_full_time_pattern.findall("@".join(text.splitlines()))
     return len(matches) > 0
 
-
+srt_time_pattern = re.compile("-?\d\d:\d\d:\d\d")
+srt_time_capture_pattern = re.compile(r"\d(\d:\d{2}:\d{2}),(\d{2})\d")
+srt_time_arrow_pattern = re.compile(r"\s+-->\s+")
+html_start_tag_pattern=re.compile(r"<([ubi])>")
+html_end_tag_pattern=re.compile(r"</([ubi])>")
+srt_font_color_start_pattern = re.compile(r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>')
+srt_font_color_end_pattern = re.compile(r"</font>")
 def srtToAss(srtText):
     srtText = srtText.replace("\r", "")
     lines = [x.strip() for x in srtText.split("\n") if x.strip()]
@@ -98,14 +103,14 @@ def srtToAss(srtText):
 
     for ln in range(len(lines)):
         line = lines[ln]
-        if line.isdigit() and re.match("-?\d\d:\d\d:\d\d", lines[(ln + 1)]):
+        if line.isdigit() and srt_time_pattern.match(lines[(ln + 1)]):
             if tmpLines:
                 subLines += tmpLines.replace("\n", "\\n") + "\n"
             tmpLines = ""
             lineCount = 0
             continue
         else:
-            if re.match("-?\d\d:\d\d:\d\d", line):
+            if srt_time_pattern.match( line):
                 line = line.replace("-0", "0")
                 tmpLines += "Dialogue: 0," + line + ",Default,,0,0,0,,"
             else:
@@ -118,13 +123,13 @@ def srtToAss(srtText):
 
     subLines += tmpLines + "\n"
 
-    subLines = re.sub(r"\d(\d:\d{2}:\d{2}),(\d{2})\d", "\\1.\\2", subLines)
-    subLines = re.sub(r"\s+-->\s+", ",", subLines)
+    subLines = srt_time_capture_pattern.sub("\\1.\\2", subLines)
+    subLines = srt_time_arrow_pattern.sub(",", subLines)
     # replace style
-    subLines = re.sub(r"<([ubi])>", "{\\\\\g<1>1}", subLines)
-    subLines = re.sub(r"</([ubi])>", "{\\\\\g<1>0}", subLines)
-    subLines = re.sub(r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>', "{\\\\c&H\\3\\2\\1&}", subLines)
-    subLines = re.sub(r"</font>", "", subLines)
+    subLines = html_start_tag_pattern.sub("{\\\\\g<1>1}", subLines)
+    subLines = html_end_tag_pattern.sub( "{\\\\\g<1>0}", subLines)
+    subLines = srt_font_color_start_pattern.sub("{\\\\c&H\\3\\2\\1&}", subLines)
+    subLines = srt_font_color_end_pattern.sub(subLines)
 
     head_str = (
         """[Script Info]
