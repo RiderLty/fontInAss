@@ -2,16 +2,16 @@ import os
 import traceback
 from pathlib import Path
 from threading import Timer , Lock
-from watchdog import observers, events
-from watchdog.utils import dirsnapshot
+from watchdog import observers
+from watchdog.utils.dirsnapshot import DirectorySnapshot, DirectorySnapshotDiff
+from watchdog.events import FileSystemEventHandler
 from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
 
-
-class FileEventHandler(events.FileSystemEventHandler):
+class FileEventHandler(FileSystemEventHandler):
     def __init__(self, fontDir, callBack):
-        events.FileSystemEventHandler.__init__(self)
+        FileSystemEventHandler.__init__(self)
         self.fontDir = fontDir
-        self.snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
+        self.snapshot = DirectorySnapshot(self.fontDir)
         self.timer = None
         self.callBack = callBack
         self.lock = Lock()
@@ -29,45 +29,52 @@ class FileEventHandler(events.FileSystemEventHandler):
     def checkSnapshot(self): # 如果文件被修改，会先触发添加再触发删除 待解决
         with self.lock:
             try:
-                snapshot = dirsnapshot.DirectorySnapshot(self.fontDir)
-                diff = dirsnapshot.DirectorySnapshotDiff(self.snapshot, snapshot)
+                snapshot = DirectorySnapshot(self.fontDir)
+                diff = DirectorySnapshotDiff(self.snapshot, snapshot)
                 self.snapshot = snapshot
                 self.timer = None
                 if diff.files_moved:
                     list = self.filter_font_files(diff.files_moved, is_moved=True)
-                    self.callBack.update_fontinfo_with_filepath(list)
+                    if list:
+                        self.callBack.update_fontinfo_with_filepath(list)
                 if diff.files_created:
                     list = self.filter_font_files(diff.files_created)
-                    self.callBack.ins_fontinfo_and_fontdetail(list)
+                    if list:
+                        self.callBack.ins_fontinfo_and_fontdetail(list)
                 if diff.files_deleted:
                     list = self.filter_font_files(diff.files_deleted)
-                    self.callBack.del_fontinfo_with_filepath(list)
+                    if list:
+                        self.callBack.del_fontinfo_with_filepath(list)
                 if diff.files_modified:
                     list = self.filter_font_files(diff.files_modified)
-                    self.callBack.del_fontinfo_with_filepath(list)
-                    self.callBack.ins_fontinfo_and_fontdetail(list)
+                    if list:
+                        self.callBack.del_fontinfo_with_filepath(list)
+                        self.callBack.ins_fontinfo_and_fontdetail(list)
             except Exception as e:
                 print(e)
 
-    def filter_font_files(self, files, is_moved=False):
-        """
-        过滤文件列表，仅保留后缀属于 FONTS_TYPE 的文件，并将路径转换为 POSIX 格式。
-        :param files: 文件路径列表（单路径或双路径） [x,x,...] [(x,y),(x,y),...]
-        :param is_moved: 是否为移动文件操作（需要双路径处理），顺便构造数据结构
-        :return: 过滤后的文件路径列表或路径对列表
-        """
+    def filter_font_files(self, files_list, is_moved=False):
+        filtered_files = []
         if is_moved:
-            return [
-                {"file_path": str(Path(file[0]).as_posix()), "new_file_path": str(Path(file[1]).as_posix())}
-                for file in files
-                if Path(file[0]).suffix.lower()[1:] in FONTS_TYPE and Path(file[1]).suffix.lower()[1:] in FONTS_TYPE
-            ]
+            for old_file_path, new_file_path in files_list:
+                old_file_path = Path(old_file_path)
+                new_file_path = Path(new_file_path)
+                # 检查旧路径是否符合字体类型后缀
+                if old_file_path.suffix and old_file_path.suffix[1:].lower() in FONTS_TYPE:
+                    # 将符合条件的文件路径加入到列表中
+                    filtered_files.append({
+                        "file_path": old_file_path.as_posix(),  # 旧路径
+                        "new_file_path": new_file_path.as_posix()  # 新路径
+                    })
         else:
-            return [
-                str(Path(file_path).as_posix())
-                for file_path in files
-                if Path(file_path).suffix.lower()[1:] in FONTS_TYPE
-            ]
+            for file_path in files_list:
+                file_path = Path(file_path)
+                # 检查文件路径是否符合字体类型后缀
+                if file_path.suffix and file_path.suffix[1:].lower() in FONTS_TYPE:
+                    # 将符合条件的文件路径加入到列表中
+                    filtered_files.append(file_path.as_posix())
+        # 最后返回符合条件的文件列表
+        return filtered_files
 
 
 class dirmonitor(object):

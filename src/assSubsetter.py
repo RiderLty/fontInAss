@@ -4,21 +4,11 @@ import traceback
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
-
 import hdrify
 from utils import assInsertLine, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
 from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
-
-
-# from utils import analyseAss
 from analyseAss import analyseAss
-
-# from concurrent.futures import ProcessPoolExecutor
-
-# def initpass():
-#     pass
-
 
 class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
@@ -43,8 +33,10 @@ class assSubsetter:
             inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({tagToInteger("name")})
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
-            missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
-            del face
+            # missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
+            missGlyph = "".join(
+                [chr(x) for x in unicodeSet.difference(face.unicodes)
+                 if x not in PUNCTUATION_UNICODES])
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             if missGlyph == "":
                 return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
