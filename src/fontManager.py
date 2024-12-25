@@ -241,7 +241,7 @@ class fontManager:
         """
         创建在线列表，需要确保本地与在线文件格式一致
         """
-        toSelectFontsList = self.db_session.execute(
+        result = self.db_session.execute(
                 select(
                     FontInfo.path,
                     FontInfo.size,
@@ -257,7 +257,7 @@ class fontManager:
             ).mappings().all()
 
         nameMapIndexSet = {}
-        for index, fontInfo in enumerate(toSelectFontsList):
+        for index, fontInfo in enumerate(result):
             for names in [fontInfo.familyName, fontInfo.postscriptName, fontInfo.fullName]:
                 for name in names:
                     nameMapIndexSet.setdefault(name, set()).add(index)
@@ -266,8 +266,14 @@ class fontManager:
         for name, indexSet in nameMapIndexSet.items():
             nameMapDetail[name] = list(indexSet)
 
+        toSelectFontsList = []
+        for row in result:
+            rec = dict(row)
+            rec["path"] = rec["path"][30:]
+            toSelectFontsList.append(rec)
+            
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
-            json.dump([nameMapDetail, [dict(row) for row in toSelectFontsList]], f, ensure_ascii=True)
+            json.dump([nameMapDetail,toSelectFontsList], f, ensure_ascii=True)
         print("onlineFonts.json 已写入")
 
     def selectFontOnline(self, targetFontName, targetWeight, targetItalic):
