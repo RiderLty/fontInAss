@@ -241,51 +241,33 @@ class fontManager:
         """
         创建在线列表，需要确保本地与在线文件格式一致
         """
-        familyNameResult = self.db_session.execute((select(familyName.name, familyName.path, familyName.index))).all()
-        fullNameResult = self.db_session.execute((select(fullName.name, fullName.path, fullName.index))).all()
-        postscriptNameResult = self.db_session.execute((select(postscriptName.name, postscriptName.path, postscriptName.index))).all()
-        toSelectFonts = {}
-        toSelectFontsList = []
-        toSelectFontsListIndex = 0
-        for result in [familyNameResult, fullNameResult, postscriptNameResult]:
-            for name, path, index in result:
-                if (path, index) in toSelectFonts:
-                    continue
-                size, postscriptCheck, weight, bold, italic = self.queryFontInfo(path, index)
-                toSelectFontsList.append(
-                    {
-                        "path": path[30:],  # 截取掉前面的路径
-                        "size": size,
-                        "index": index,
-                        "family": [],
-                        "postscriptName": [],
-                        "postscriptCheck": postscriptCheck,
-                        "fullName": [],
-                        "weight": weight,
-                        "bold": bold,
-                        "italic": italic,
-                    }
+        toSelectFontsList = self.db_session.execute(
+                select(
+                    FontInfo.path,
+                    FontInfo.size,
+                    FontInfo.index,
+                    FontInfo.familyName,
+                    FontInfo.postscriptName,
+                    FontInfo.postscriptCheck,
+                    FontInfo.fullName,
+                    FontInfo.weight,
+                    FontInfo.bold,
+                    FontInfo.italic,
                 )
-                toSelectFonts[(path, index)] = toSelectFontsListIndex
-                toSelectFontsListIndex += 1
+            ).mappings().all()
 
-        for name, path, index in familyNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["family"].append(name)
-        for name, path, index in fullNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["postscriptName"].append(name)
-        for name, path, index in postscriptNameResult:
-            toSelectFontsList[toSelectFonts[(path, index)]]["fullName"].append(name)
+        nameMapIndexSet = {}
+        for index, fontInfo in enumerate(toSelectFontsList):
+            for names in [fontInfo.familyName, fontInfo.postscriptName, fontInfo.fullName]:
+                for name in names:
+                    nameMapIndexSet.setdefault(name, set()).add(index)
 
-        nameMapPathIndex = {}
-        for result in [familyNameResult, fullNameResult, postscriptNameResult]:
-            for name, path, index in result:
-                nameMapPathIndex.setdefault(name, set()).add((path, index))
         nameMapDetail = {}
-        for name, indexSet in nameMapPathIndex.items():
-            nameMapDetail[name] = [toSelectFonts[x] for x in indexSet]
+        for name, indexSet in nameMapIndexSet.items():
+            nameMapDetail[name] = list(indexSet)
 
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
-            json.dump([nameMapDetail, toSelectFontsList], f, ensure_ascii=True)
+            json.dump([nameMapDetail, [dict(row) for row in toSelectFontsList]], f, ensure_ascii=True)
         print("onlineFonts.json 已写入")
 
     def selectFontOnline(self, targetFontName, targetWeight, targetItalic):
