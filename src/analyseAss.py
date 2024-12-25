@@ -65,17 +65,9 @@ def analyseAss(ass_str: str):
             # print(styleItalic)
         elif state == 4:
             if line.startswith("Dialogue:"):
-                index = -1
-                for i in range(eventTextindex):
-                    index = line.find(",", index + 1)
-                    if i == eventStyleIndex - 1:
-                        styleStart = index
-                    elif i == eventStyleIndex:
-                        styleEnd = index
-                    elif i == eventTextindex - 1:
-                        textStart = index
-                styleName = line[styleStart + 1 : styleEnd].replace("*", "")
-                eventText = line[textStart + 1 :]
+                parts = line.split(",")
+                styleName = parts[eventStyleIndex].replace("*", "")
+                eventText = parts[eventTextindex]
                 logger.debug(f"")
                 logger.debug(f"原始文本 : {eventText}")
 
