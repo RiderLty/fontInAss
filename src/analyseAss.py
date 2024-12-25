@@ -1,6 +1,9 @@
 import re
 from utils import logger
 
+codePatern = re.compile(r"(?<!{)\{\\([^{}]*)\}(?!})")
+rfnPatern = re.compile(r"[^\\]*(\\r|\\fn(?=@?)|\\i\d+|\\b\d+)([^}|\\]*)")  # 匹配 \r 或者 \fn 并捕获之后的内容
+
 def analyseAss(ass_str: str):
     """分析ass文件 返回 字体：{unicodes}"""
     lines = ass_str.splitlines()
@@ -15,8 +18,6 @@ def analyseAss(ass_str: str):
     eventStyleIndex = -1
     eventTextindex = -1
     fontCharList = {}
-    codePatern = re.compile(r"(?<!{)\{\\([^{}]*)\}(?!})")
-    rfnPatern = re.compile(r"[^\\]*(\\r|\\fn(?=@?)|\\i\d+|\\b\d+)([^}|\\]*)")  # 匹配 \r 或者 \fn 并捕获之后的内容
     firstStyleName = None
     for line in lines:
         if line == "":
