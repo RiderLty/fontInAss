@@ -32,20 +32,20 @@ def enable_foreign_keys(dbapi_connection, connection_record):
 
 class FileInfo(Base):
     __tablename__ = "file_info"
-    id = Column(String, index=True, primary_key=True, nullable=False)  #字体文件关联ID
-    path = Column(String, index=True, nullable=False, unique=True)  # 唯一的文件路径
+    # id = Column(String, index=True, primary_key=True, nullable=False)  #字体文件关联ID
+    path = Column(String, index=True, primary_key=True, nullable=False)  # 唯一的文件路径
     size = Column(Integer, nullable=False)
 
 class FontInfo(Base):
     __tablename__ = "font_info"
     uid = Column(String, index=True, primary_key=True, nullable=False)  #字体信息关联 在获取信息时候使用uuid生成
-    id = Column(String, ForeignKey("file_info.id", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)  #字体文件关联ID 在获取信息时候使用uuid生成
-    path = Column(String, index=True, nullable=False)
+    # id = Column(String, ForeignKey("file_info.id", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)  #字体文件关联ID 在获取信息时候使用uuid生成
+    path = Column(String, ForeignKey("file_info.path", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
     size = Column(Integer, nullable=False)
     index = Column(Integer)
-    familyName = Column(JSON, index=True,)
-    fullName = Column(JSON, index=True,)
-    postscriptName = Column(JSON, index=True,)
+    familyName = Column(JSON)
+    fullName = Column(JSON)
+    postscriptName = Column(JSON)
     postscriptCheck = Column(Boolean)
     weight = Column(Integer)
     bold = Column(Boolean)

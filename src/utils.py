@@ -591,7 +591,7 @@ def getFontFileInfos(fontPath):
     family_name_list = []
     full_name_list = []
     postscript_name_list = []
-    id_obj = uuid.uuid4().hex
+    # id_obj = uuid.uuid4().hex
 
     blob = uharfbuzz.Blob.from_file_path(fontPath)
     fontSize = len(blob)
@@ -602,7 +602,7 @@ def getFontFileInfos(fontPath):
         names = face.list_names()
         uid_obj = uuid.uuid4().hex
         fontInfo = {
-            "id": id_obj,
+            # "id": id_obj,
             "uid": uid_obj,
             "path": fontPath,
             "size": fontSize,
@@ -684,7 +684,7 @@ def getFontFileInfos(fontPath):
     file_info_list.append({
         "path": fontPath,
         "size": fontSize,
-        "id": id_obj,
+        # "id": id_obj,
     })
     return file_info_list, font_info_list, family_name_list, full_name_list, postscript_name_list
 
