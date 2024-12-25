@@ -98,18 +98,17 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
                 currentWeight: int = lineDefaultWeight
                 currentItalic: bool = lineDefaultItalic
 
-                lastEnd: int = 0
+                # 普通样式
+                key = (currentFontName, currentWeight, currentItalic)
+                if key not in fontCharList:
+                    fontCharList[key] = set()
+                for character in codePatern.sub("", eventText):  # 获得没有特殊样式部分
+                    fontCharList[key].add(ord(character))
+
+                # 特殊样式
                 for code in codePatern.finditer(eventText):  # 匹配所有代码部分，
                     start, end = code.span()
                     # logger.debug(f"({start},{end})")
-                    if lastEnd < start:  # 在这里处理代码之间的内容
-                        text = eventText[lastEnd:start]
-                        key = (currentFontName, currentWeight, currentItalic)
-                        if key not in fontCharList:
-                            fontCharList[key] = set()
-                        for ch in text:
-                            fontCharList[key].add(ord(ch))
-                        logger.debug(f"{key} : [{text}]")
                     rfnMatch = rfnPatern.findall(eventText[start:end])
                     if len(rfnMatch) != 0:
                         tag, content = rfnMatch[-1]
@@ -153,14 +152,4 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
                                     currentWeight = 700
                                 else:
                                     currentWeight = int(boldValue)
-                    lastEnd = end
-
-                if lastEnd < len(eventText):
-                    text = eventText[lastEnd:]
-                    key = (currentFontName, currentWeight, currentItalic)
-                    if key not in fontCharList:
-                        fontCharList[key] = set()
-                    for ch in text:
-                        fontCharList[key].add(ord(ch))
-                    logger.debug(f"{key} : [{text}]")
     return fontCharList
