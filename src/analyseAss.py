@@ -2,23 +2,26 @@ import re
 from utils import logger
 
 codePatern = re.compile(r"(?<!{)\{\\([^{}]*)\}(?!})")
-rfnPatern = re.compile(r"[^\\]*(\\r|\\fn(?=@?)|\\i\d+|\\b\d+)([^}|\\]*)")  # 匹配 \r 或者 \fn 并捕获之后的内容
+rfnPatern = re.compile(
+    r"[^\\]*(\\r|\\fn(?=@?)|\\i\d+|\\b\d+)([^}|\\]*)"
+)  # 匹配 \r 或者 \fn 并捕获之后的内容
 
-def analyseAss(ass_str: str):
+
+def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
     """分析ass文件 返回 字体：{unicodes}"""
     lines = ass_str.splitlines()
-    state = 0
-    styleNameIndex = -1
-    fontNameIndex = -1
-    boldIndex = -1
-    italicIndex = -1
-    styleFontName = {}
-    styleWeight = {}
-    styleItalic = {}
-    eventStyleIndex = -1
-    eventTextindex = -1
-    fontCharList = {}
-    firstStyleName = None
+    state: int = 0
+    styleNameIndex: int = -1
+    fontNameIndex: int = -1
+    boldIndex: int = -1
+    italicIndex: int = -1
+    styleFontName: dict[str, str] = {}
+    styleWeight: dict[str, int] = {}
+    styleItalic: dict[str, bool] = {}
+    eventStyleIndex: int = -1
+    eventTextindex: int = -1
+    fontCharList: dict[tuple[str, int, bool], set[int]] = {}
+    firstStyleName: str = ""
     for line in lines:
         if line == "":
             pass
@@ -29,7 +32,9 @@ def analyseAss(ass_str: str):
             styleFormat = line[7:].replace(" ", "").split(",")
             styleNameIndex = styleFormat.index("Name")
             fontNameIndex = styleFormat.index("Fontname")
-            assert styleNameIndex != -1 and fontNameIndex != -1, ValueError("Format中未找到Name或Fontname : " + line)
+            assert styleNameIndex != -1 and fontNameIndex != -1, ValueError(
+                "Format中未找到Name或Fontname : " + line
+            )
             boldIndex = styleFormat.index("Bold")
             italicIndex = styleFormat.index("Italic")
             state = 2
@@ -41,15 +46,19 @@ def analyseAss(ass_str: str):
                 styleName = styleData[styleNameIndex].strip().replace("*", "")
                 fontName = styleData[fontNameIndex].strip().replace("@", "")
                 fontWeight = 400
-                if boldIndex != -1 and styleData[boldIndex].strip() == "1":  # 没有Bold则默认400，有则700 ，Text里代码也可以改变
+                if (
+                    boldIndex != -1 and styleData[boldIndex].strip() == "1"
+                ):  # 没有Bold则默认400，有则700 ，Text里代码也可以改变
                     fontWeight = 700
                 fontItalic = False
-                if italicIndex != -1 and styleData[italicIndex].strip() == "1":  # 斜体 只有是否
+                if (
+                    italicIndex != -1 and styleData[italicIndex].strip() == "1"
+                ):  # 斜体 只有是否
                     fontItalic = True
                 styleFontName[styleName] = fontName
                 styleWeight[styleName] = fontWeight
                 styleItalic[styleName] = fontItalic
-                if firstStyleName == None:
+                if firstStyleName == "":
                     firstStyleName = styleName
             else:
                 pass
@@ -58,30 +67,38 @@ def analyseAss(ass_str: str):
             eventFormat = line[7:].replace(" ", "").split(",")
             eventStyleIndex = eventFormat.index("Style")
             eventTextindex = eventFormat.index("Text")
-            assert eventTextindex == len(eventFormat) - 1, ValueError("Text不是最后一个 : " + line)
-            assert eventStyleIndex != -1 and eventTextindex != -1, ValueError("Format中未找到Style或Text : " + line)
+            assert eventTextindex == len(eventFormat) - 1, ValueError(
+                "Text不是最后一个 : " + line
+            )
+            assert eventStyleIndex != -1 and eventTextindex != -1, ValueError(
+                "Format中未找到Style或Text : " + line
+            )
             state = 4
             # print(styleFontName)
             # print(styleWeight)
             # print(styleItalic)
         elif state == 4:
             if line.startswith("Dialogue:"):
-                parts = line.replace("Dialogue:","").split(",")
+                parts = line.replace("Dialogue:", "").split(",")
                 styleName = parts[eventStyleIndex].replace("*", "")
                 eventText = ",".join(parts[eventTextindex:])
                 logger.debug(f"")
                 logger.debug(f"原始文本 : {eventText}")
 
-                if styleName not in styleFontName:  #当前行使用的style 不在定义的style中，使用第一个
+                if (
+                    styleName not in styleFontName
+                ):  # 当前行使用的style 不在定义的style中，使用第一个
                     styleName = firstStyleName
-                lineDefaultFontName = styleFontName[styleName]#记录初始字体 weight 斜体，如果使用{\r}则会切换回默认style
+                lineDefaultFontName = styleFontName[
+                    styleName
+                ]  # 记录初始字体 weight 斜体，如果使用{\r}则会切换回默认style
                 lineDefaultWeight = styleWeight[styleName]
                 lineDefaultItalic = styleItalic[styleName]
-                currentFontName = lineDefaultFontName
-                currentWeight =lineDefaultWeight
-                currentItalic = lineDefaultItalic
+                currentFontName: str = lineDefaultFontName
+                currentWeight: int = lineDefaultWeight
+                currentItalic: bool = lineDefaultItalic
 
-                lastEnd = 0
+                lastEnd: int = 0
                 for code in codePatern.finditer(eventText):  # 匹配所有代码部分，
                     start, end = code.span()
                     # logger.debug(f"({start},{end})")
@@ -99,7 +116,7 @@ def analyseAss(ass_str: str):
                         if tag == r"\r":
                             if content == "":  # {\r} 清除样式 回到默认行样式
                                 currentFontName = lineDefaultFontName
-                                currentWeight =lineDefaultWeight
+                                currentWeight = lineDefaultWeight
                                 currentItalic = lineDefaultItalic
                             elif content == "0":  # {\r0} 使用第一个style的样式
                                 if "Default" in styleFontName:
@@ -126,7 +143,9 @@ def analyseAss(ass_str: str):
                             elif tag == r"\i1":
                                 currentItalic = True
                             else:
-                                assert tag.startswith(r"\b") , ValueError("MatchError : " + eventText)
+                                assert tag.startswith(r"\b"), ValueError(
+                                    "MatchError : " + eventText
+                                )
                                 boldValue = tag[2:]
                                 if boldValue == "0":
                                     currentWeight = 400
@@ -135,6 +154,7 @@ def analyseAss(ass_str: str):
                                 else:
                                     currentWeight = int(boldValue)
                     lastEnd = end
+
                 if lastEnd < len(eventText):
                     text = eventText[lastEnd:]
                     key = (currentFontName, currentWeight, currentItalic)
