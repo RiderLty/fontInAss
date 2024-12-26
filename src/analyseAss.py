@@ -96,7 +96,7 @@ def analyseAss(ass_str: str):
                     # rfnMatch = rfnPatern.findall(eventText[start:end])
                     # if len(rfnMatch) != 0:
                     #     tag, content = rfnMatch[-1]
-                    print(rfnPatern.findall(eventText[start:end]))
+                    # print(rfnPatern.findall(eventText[start:end]))
                     for tag, content in rfnPatern.findall(eventText[start:end]):
                         if tag == r"\r":
                             if content == "":  # {\r} 清除样式 回到默认行样式
