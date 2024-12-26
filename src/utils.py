@@ -637,7 +637,7 @@ def getFontFileInfos(fontPath):
                         }
                     )
                 else:
-                    logger.debug(f"{fontPath} 的其中一个family_name因为编码错误导致获取失败")
+                    logger.warning(f"{fontPath} 的其中一个family_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.FULL_NAME:
                 full_name = face.get_name(name_id, language)
                 if full_name:
@@ -650,7 +650,7 @@ def getFontFileInfos(fontPath):
                         }
                     )
                 else:
-                    logger.debug(f"{fontPath} 的其中一个full_name因为编码错误导致获取失败")
+                    logger.warning(f"{fontPath} 的其中一个full_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.POSTSCRIPT_NAME:
                 postscript_name = face.get_name(name_id, language)
                 if postscript_name:
@@ -663,7 +663,7 @@ def getFontFileInfos(fontPath):
                         }
                     )
                 else:
-                    logger.debug(f"{fontPath} 的其中一个postscript_name因为编码错误导致获取失败")
+                    logger.warning(f"{fontPath} 的其中一个postscript_name因为编码错误导致获取失败")
 
         # 此处判断是否读取到字体信息，如果读取不到任何一个都不应该存入数据库
         if font_name_list:
@@ -692,7 +692,7 @@ def getFontFileInfos(fontPath):
             fontInfo["postscriptCheck"] = is_postscript_font(face.table_tags)
             font_info_list.append(fontInfo)
         else:
-            logger.debug(f"获取信息错误：{fontPath}")
+            logger.warning(f"获取信息错误：{fontPath}")
 
     # 这里获取信息错误的字体不应该添加到数据库，但是还是先存 即便没有字体信息，判断font_info_list
     file_info_list.append(
