@@ -10,6 +10,7 @@ import chardet
 import uharfbuzz
 from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
 
+
 def makeMiniSizeFontMap(data):
     """
     {
@@ -82,18 +83,24 @@ def bytesToHashName(bytes, hash_algorithm="sha256"):
     hash_func.update(bytes)
     return hash_func.hexdigest()
 
+
 srt_full_time_pattern = re.compile(r"@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@")
+
+
 def isSRT(text):
     matches = srt_full_time_pattern.findall("@".join(text.splitlines()))
     return len(matches) > 0
 
+
 srt_time_pattern = re.compile("-?\d\d:\d\d:\d\d")
 srt_time_capture_pattern = re.compile(r"\d(\d:\d{2}:\d{2}),(\d{2})\d")
 srt_time_arrow_pattern = re.compile(r"\s+-->\s+")
-html_start_tag_pattern=re.compile(r"<([ubi])>")
-html_end_tag_pattern=re.compile(r"</([ubi])>")
+html_start_tag_pattern = re.compile(r"<([ubi])>")
+html_end_tag_pattern = re.compile(r"</([ubi])>")
 srt_font_color_start_pattern = re.compile(r'<font\s+color="?#(\w{2})(\w{2})(\w{2})"?>')
 srt_font_color_end_pattern = re.compile(r"</font>")
+
+
 def srtToAss(srtText):
     srtText = srtText.replace("\r", "")
     lines = [x.strip() for x in srtText.split("\n") if x.strip()]
@@ -110,7 +117,7 @@ def srtToAss(srtText):
             lineCount = 0
             continue
         else:
-            if srt_time_pattern.match( line):
+            if srt_time_pattern.match(line):
                 line = line.replace("-0", "0")
                 tmpLines += "Dialogue: 0," + line + ",Default,,0,0,0,,"
             else:
@@ -127,7 +134,7 @@ def srtToAss(srtText):
     subLines = srt_time_arrow_pattern.sub(",", subLines)
     # replace style
     subLines = html_start_tag_pattern.sub("{\\\\\g<1>1}", subLines)
-    subLines = html_end_tag_pattern.sub( "{\\\\\g<1>0}", subLines)
+    subLines = html_end_tag_pattern.sub("{\\\\\g<1>0}", subLines)
     subLines = srt_font_color_start_pattern.sub("{\\\\c&H\\3\\2\\1&}", subLines)
     subLines = srt_font_color_end_pattern.sub(subLines)
 
@@ -590,14 +597,11 @@ def assInsertLine(ass_str, endTimeText, insertContent):
 #         infos.append(fontInfo)
 #     return infos
 
+
 def getFontFileInfos(fontPath):
     file_info_list = []
     font_info_list = []
-    family_name_list = []
-    full_name_list = []
-    postscript_name_list = []
-    # id_obj = uuid.uuid4().hex
-
+    font_name_list = []
     blob = uharfbuzz.Blob.from_file_path(fontPath)
     fontSize = len(blob)
     face = uharfbuzz.Face(blob)
@@ -607,7 +611,6 @@ def getFontFileInfos(fontPath):
         names = face.list_names()
         uid_obj = uuid.uuid4().hex
         fontInfo = {
-            # "id": id_obj,
             "uid": uid_obj,
             "path": fontPath,
             "size": fontSize,
@@ -627,10 +630,12 @@ def getFontFileInfos(fontPath):
                 if family_name:
                     family_name = family_name.strip().lower()
                     fontInfo["familyName"].append(family_name)
-                    family_name_list.append({
-                        "name": family_name,
-                        "uid": uid_obj,
-                    })
+                    font_name_list.append(
+                        {
+                            "name": family_name,
+                            "uid": uid_obj,
+                        }
+                    )
                 else:
                     logger.debug(f"{fontPath} 的其中一个family_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.FULL_NAME:
@@ -638,10 +643,12 @@ def getFontFileInfos(fontPath):
                 if full_name:
                     full_name = full_name.strip().lower()
                     fontInfo["fullName"].append(full_name)
-                    full_name_list.append({
-                        "name": full_name,
-                        "uid": uid_obj,
-                    })
+                    font_name_list.append(
+                        {
+                            "name": full_name,
+                            "uid": uid_obj,
+                        }
+                    )
                 else:
                     logger.debug(f"{fontPath} 的其中一个full_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.POSTSCRIPT_NAME:
@@ -649,15 +656,17 @@ def getFontFileInfos(fontPath):
                 if postscript_name:
                     postscript_name = postscript_name.strip().lower()
                     fontInfo["postscriptName"].append(postscript_name)
-                    postscript_name_list.append({
-                        "name": postscript_name,
-                        "uid": uid_obj,
-                    })
+                    font_name_list.append(
+                        {
+                            "name": postscript_name,
+                            "uid": uid_obj,
+                        }
+                    )
                 else:
                     logger.debug(f"{fontPath} 的其中一个postscript_name因为编码错误导致获取失败")
 
-        #此处判断是否读取到字体信息，如果读取不到任何一个都不应该存入数据库
-        if family_name_list or full_name_list or postscript_name_list:
+        # 此处判断是否读取到字体信息，如果读取不到任何一个都不应该存入数据库
+        if font_name_list:
             if "head" in face.table_tags:
                 table_blob = face.reference_table("head")
                 table_data_filter = parse_table(table_blob.data, "head", ["macStyle"])
@@ -685,24 +694,25 @@ def getFontFileInfos(fontPath):
         else:
             logger.debug(f"获取信息错误：{fontPath}")
 
-    #这里获取信息错误的字体不应该添加到数据库，但是还是先存 即便没有字体信息，判断font_info_list
-    file_info_list.append({
-        "path": fontPath,
-        "size": fontSize,
-        # "id": id_obj,
-    })
-    return file_info_list, font_info_list, family_name_list, full_name_list, postscript_name_list
-
+    # 这里获取信息错误的字体不应该添加到数据库，但是还是先存 即便没有字体信息，判断font_info_list
+    file_info_list.append(
+        {
+            "path": fontPath,
+            "size": fontSize,
+        }
+    )
+    return file_info_list, font_info_list, font_name_list
 
 
 def is_postscript_font(table_tag):
     # 检查是否包含 CFF 或 CFF2 表
-    if 'CFF ' in table_tag or 'CFF2' in table_tag:
+    if "CFF " in table_tag or "CFF2" in table_tag:
         return True
     # 如果包含 glyf 和 post 表，可能是混合字体
-    if 'glyf' in table_tag and 'post' in table_tag:
+    if "glyf" in table_tag and "post" in table_tag:
         return False  # 这表明字体不是纯 PostScript 字体，可能是 TrueType
     return False
+
 
 head_format = {
     # (offset, length, type)
@@ -766,13 +776,14 @@ os2_format = {
     "usBreakChar": (92, 2, "H"),  # uint16
     "usMaxContext": (94, 2, "H"),  # uint16
     "usLowerOpticalPointSize": (96, 2, "H"),  # uint16
-    "usUpperOpticalPointSize": (98, 2, "H")  # uint16
+    "usUpperOpticalPointSize": (98, 2, "H"),  # uint16
 }
 
 table_mapper = {
     "OS/2": os2_format,
     "head": head_format,
 }
+
 
 def parse_table(table_bytes, table_name: str, tag_filter=None):
     data = {}
@@ -781,21 +792,21 @@ def parse_table(table_bytes, table_name: str, tag_filter=None):
         raise ValueError(f"undefined table: {table_name}")
 
     byte_parsers = {
-        "H": lambda bytes_data: int.from_bytes(bytes_data, byteorder='big'),
-        "h": lambda bytes_data: int.from_bytes(bytes_data, byteorder='big', signed=True),
-        "I": lambda bytes_data: int.from_bytes(bytes_data, byteorder='big'),
-        "4s": lambda bytes_data: bytes_data.decode('utf-8').strip('\x00'),
+        "H": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big"),
+        "h": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big", signed=True),
+        "I": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big"),
+        "4s": lambda bytes_data: bytes_data.decode("utf-8").strip("\x00"),
         "10B": lambda bytes_data: tuple(bytes_data),
-        "f": lambda bytes_data: struct.unpack('>f', bytes_data)[0],
-        "Q": lambda bytes_data: struct.unpack('>q', bytes_data)[0],
+        "f": lambda bytes_data: struct.unpack(">f", bytes_data)[0],
+        "Q": lambda bytes_data: struct.unpack(">q", bytes_data)[0],
     }
     if tag_filter:
         tag_filter = set(tag_filter)
         table_format = {k: v for k, v in table_format.items() if k in tag_filter}
     for tag, (offset, length, fmt) in table_format.items():
-        byte_slice = table_bytes[offset:offset + length]
-        if fmt == 'f':
-            raw_value = int.from_bytes(byte_slice, byteorder='big')
+        byte_slice = table_bytes[offset : offset + length]
+        if fmt == "f":
+            raw_value = int.from_bytes(byte_slice, byteorder="big")
             value = raw_value / 65536.0
         else:
             value = byte_parsers.get(fmt, lambda bytes_data: struct.unpack(fmt, bytes_data))(byte_slice)
