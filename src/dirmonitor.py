@@ -26,7 +26,7 @@ class FileEventHandler(FileSystemEventHandler):
         self.timer = Timer(self.delay, self.checkSnapshot)
         self.timer.start()
 
-    def checkSnapshot(self): # 如果文件被修改，会先触发添加再触发删除 待解决
+    def checkSnapshot(self):
         with self.lock:
             try:
                 snapshot = DirectorySnapshot(self.fontDir)
@@ -37,14 +37,14 @@ class FileEventHandler(FileSystemEventHandler):
                     list = self.filter_font_files(diff.files_moved, is_moved=True)
                     if list:
                         self.callBack.update_fontinfo_with_filepath(list)
-                if diff.files_created:
-                    list = self.filter_font_files(diff.files_created)
-                    if list:
-                        self.callBack.ins_fontinfo_and_fontdetail(list)
                 if diff.files_deleted:
                     list = self.filter_font_files(diff.files_deleted)
                     if list:
                         self.callBack.del_fontinfo_with_filepath(list)
+                if diff.files_created:
+                    list = self.filter_font_files(diff.files_created)
+                    if list:
+                        self.callBack.ins_fontinfo_and_fontdetail(list)
                 if diff.files_modified:
                     list = self.filter_font_files(diff.files_modified)
                     if list:
