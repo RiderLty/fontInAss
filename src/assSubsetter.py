@@ -5,7 +5,7 @@ import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
 import hdrify
-from utils import assInsertLine, bytesToStr, isSRT, tagToInteger, bytesToHashName, srtToAss
+from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
 from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 from analyseAss import analyseAss
@@ -30,7 +30,8 @@ class assSubsetter:
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicodeSet)
             assert "name" in face.table_tags, ValueError("name 表未找到")
-            inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({tagToInteger("name")})
+            # utils.tag2integer("name") 计算得出 1851878757
+            inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({1851878757})
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             # missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])

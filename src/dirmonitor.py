@@ -1,94 +1,97 @@
+import contextlib
+import errno
 import os
 import traceback
 from pathlib import Path
-from threading import Timer , Lock
+from stat import S_ISDIR
+from threading import Timer, Lock
+from typing import Iterator
 from watchdog import observers
 from watchdog.utils.dirsnapshot import DirectorySnapshot, DirectorySnapshotDiff
 from watchdog.events import FileSystemEventHandler
 from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
 
+class _DirectorySnapshot(DirectorySnapshot):
+    def walk(self, root: str) -> Iterator[tuple[str, os.stat_result]]:
+        """重写 walk 方法，递归遍历目录树，仅返回符合条件的文件"""
+        try:
+            paths = [Path(root, entry.name).as_posix() for entry in self.listdir(root)]
+        except OSError as e:
+            if e.errno in (errno.ENOENT, errno.ENOTDIR, errno.EINVAL):
+                return
+            else:
+                raise
+        entries = []
+        for p in paths:
+            with contextlib.suppress(OSError):
+                entry = (p, self.stat(p))
+                entries.append(entry)
+                # 只处理指定类型的文件
+                if os.path.isfile(p) and p.lower().endswith(tuple(FONTS_TYPE)):
+                    yield entry
+        if self.recursive:
+            for path, st in entries:
+                with contextlib.suppress(PermissionError):
+                    if S_ISDIR(st.st_mode):
+                        yield from self.walk(path)
+
+class _DirectorySnapshotDiff(DirectorySnapshotDiff):
+    @property
+    def files_moved(self) -> list[dict[str, bytes | str]]:
+        """重写 files_moved 方法，直接构造moved所需要的字典"""
+        return [{"old": src, "new": new} for src, new in self._files_moved]
+
 class FileEventHandler(FileSystemEventHandler):
-    def __init__(self, fontDir, callBack):
+    def __init__(self, fontDir, callback):
         FileSystemEventHandler.__init__(self)
         self.fontDir = fontDir
-        self.snapshot = DirectorySnapshot(self.fontDir)
+        self.snapshot = _DirectorySnapshot(self.fontDir)
         self.timer = None
-        self.callBack = callBack
+        self.callback = callback
         self.lock = Lock()
-        if LOG_LEVEL == "DEBUG":
-            self.delay = 1
-        else:
-            self.delay = 10
+        self.delay = 1 if LOG_LEVEL == "DEBUG" else 5
 
     def on_any_event(self, event):
         if self.timer:
             self.timer.cancel()
-        self.timer = Timer(self.delay, self.checkSnapshot)
+        self.timer = Timer(self.delay, self.check_snapshot)
         self.timer.start()
 
-    def checkSnapshot(self):
+    def check_snapshot(self):
         with self.lock:
             try:
-                snapshot = DirectorySnapshot(self.fontDir)
-                diff = DirectorySnapshotDiff(self.snapshot, snapshot)
+                snapshot = _DirectorySnapshot(self.fontDir)
+                diff = _DirectorySnapshotDiff(self.snapshot, snapshot)
                 self.snapshot = snapshot
                 self.timer = None
-                if diff.files_moved:
-                    list = self.filter_font_files(diff.files_moved, is_moved=True)
-                    if list:
-                        self.callBack.update_fontinfo_with_filepath(list)
                 if diff.files_deleted:
-                    list = self.filter_font_files(diff.files_deleted)
-                    if list:
-                        self.callBack.del_fontinfo_with_filepath(list)
+                    # print(f"diff.files_deleted: {diff.files_deleted}")
+                    self.callback.del_fileinfo_with_filepath(diff.files_deleted)
                 if diff.files_created:
-                    list = self.filter_font_files(diff.files_created)
-                    if list:
-                        self.callBack.ins_fontinfo_and_fontdetail(list)
+                    # print(f"diff.files_created: {diff.files_created}")
+                    self.callback.ins_fileinfo_and_fontinfo(diff.files_created)
                 if diff.files_modified:
-                    list = self.filter_font_files(diff.files_modified)
-                    if list:
-                        self.callBack.del_fontinfo_with_filepath(list)
-                        self.callBack.ins_fontinfo_and_fontdetail(list)
+                    # print(f"diff.files_modified: {diff.files_modified}")
+                    self.callback.del_fileinfo_with_filepath(diff.files_modified)
+                    self.callback.ins_fileinfo_and_fontinfo(diff.files_modified)
+                if diff.files_moved:
+                    # print(f"diff.files_moved: {diff.files_moved}")
+                    self.callback.update_fileinfo_with_filepath(diff.files_moved)
             except Exception as e:
                 print(e)
 
-    def filter_font_files(self, files_list, is_moved=False):
-        filtered_files = []
-        if is_moved:
-            for old_file_path, new_file_path in files_list:
-                old_file_path = Path(old_file_path)
-                new_file_path = Path(new_file_path)
-                # 检查旧路径是否符合字体类型后缀
-                if old_file_path.suffix and old_file_path.suffix[1:].lower() in FONTS_TYPE:
-                    # 将符合条件的文件路径加入到列表中
-                    filtered_files.append({
-                        "file_path": old_file_path.as_posix(),  # 旧路径
-                        "new_file_path": new_file_path.as_posix()  # 新路径
-                    })
-        else:
-            for file_path in files_list:
-                file_path = Path(file_path)
-                # 检查文件路径是否符合字体类型后缀
-                if file_path.suffix and file_path.suffix[1:].lower() in FONTS_TYPE:
-                    # 将符合条件的文件路径加入到列表中
-                    filtered_files.append(file_path.as_posix())
-        # 最后返回符合条件的文件列表
-        return filtered_files
-
-
 class dirmonitor(object):
 
-    def __init__(self, callBack: callable):
+    def __init__(self, callback: callable):
         self.observer = observers.Observer()
-        self.callBack = callBack
+        self.callback = callback
 
     def start(self):
         try:
             for fontDir in FONT_DIRS:
                 fontpath = os.path.abspath(fontDir)
                 logger.info("监控中:" + fontpath)
-                eventHandler = FileEventHandler(fontpath, callBack=self.callBack)
+                eventHandler = FileEventHandler(fontpath, callback=self.callback)
                 self.observer.schedule(eventHandler, fontpath, recursive=True)
             self.observer.start()
         except Exception as e:

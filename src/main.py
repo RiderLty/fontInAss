@@ -186,7 +186,7 @@ if __name__ == "__main__":
     ssl._create_default_https_context = ssl._create_unverified_context
     fontManagerInstance = fontManager()
     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-    event_handler = dirmonitor(callBack=fontManagerInstance)  # 创建fonts字体文件夹监视实体
+    event_handler = dirmonitor(callback=fontManagerInstance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = assSubsetterInstance.process  # 绑定函数
     serverInstance = getServer(8011, MAIN_LOOP)

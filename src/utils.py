@@ -1,7 +1,6 @@
 import os
 import re
 import hashlib
-import struct
 import uuid
 from pathlib import Path
 import sys
@@ -9,7 +8,7 @@ import aiofiles
 import chardet
 import uharfbuzz
 from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
-
+from py2cy.c_utils import parse_table
 
 def makeMiniSizeFontMap(data):
     """
@@ -57,7 +56,7 @@ async def saveToDisk(path, fontBytes):
         logger.info(f"网络字体已保存\t\t[{path}]")
 
 
-def tagToInteger(tagString):
+def tag2integer(tag: str) -> int:
     """
     SubsetInputSets的TAG
     https://harfbuzz.github.io/harfbuzz-hb-subset.html
@@ -71,11 +70,8 @@ def tagToInteger(tagString):
     返回：
     对应的 hb_tag_t 整数值。
     """
-    if len(tagString) != 4:
-        raise ValueError("输入的字符串必须恰好包含 4 个字符。")
-
-    # 将字符串转换为对应的 hb_tag_t 整数值
-    return ((ord(tagString[0]) & 0xFF) << 24) | ((ord(tagString[1]) & 0xFF) << 16) | ((ord(tagString[2]) & 0xFF) << 8) | (ord(tagString[3]) & 0xFF)
+    assert len(tag) == 4, ValueError("The input string must be exactly 4 characters long.")
+    return int.from_bytes(tag.encode('latin-1'), byteorder='big')
 
 
 def bytesToHashName(bytes, hash_algorithm="sha256"):
@@ -222,53 +218,6 @@ def getFontScore(
                 return 0
             else:
                 return sys.maxsize
-
-
-# def getFontInfo(font, path, size, index):
-#     fontInfo = {
-#         "path": path,
-#         "size": size,
-#         "index": index,
-#         "family": set(),
-#         "postscriptName": set(),
-#         "postscriptCheck": False,
-#         "fullName": set(),
-#         "weight": 400,  # 默认值
-#         "bold": False,  # 默认值
-#         "italic": False,  # 默认值
-#     }
-#     for record in font["name"].names:
-#         if record.nameID == 1:
-#             fontInfo["family"].add(conv2unicode(str(record).strip()))
-#         elif record.nameID == 4:
-#             fontInfo["fullName"].add(conv2unicode(str(record).strip()))
-#         elif record.nameID == 6:
-#             fontInfo["postscriptName"].add(conv2unicode(str(record).strip()))
-#             # if fontInfo["postscriptName"] != "":
-#             #     assert fontInfo["postscriptName"] == str(record).strip(), f'{path} {index} postscriptName 不唯一 : {str(record).strip()} , {fontInfo["postscriptName"]} : AI {font["name"].getName(6, 3, 1, 0x409)}'
-#             # else:
-#             #     fontInfo["postscriptName"] = str(record).strip()
-#             # 按照 fullname与family的方式处理了
-
-#     fontInfo["postscriptCheck"] = ("CFF " in font) or ("CFF2" in font) or (("glyf" in font) and ("post" in font))
-#     if "OS/2" in font:
-#         os2_table = font["OS/2"]
-#         fontInfo["weight"] = int(os2_table.usWeightClass)
-#         fontInfo["bold"] = bool(os2_table.fsSelection & FT_STYLE_FLAG_BOLD)
-#         fontInfo["italic"] = bool(os2_table.fsSelection & FT_STYLE_FLAG_ITALIC)
-#         # fontInfo["family"] = list(fontInfo["family"])
-#         # fontInfo["postscriptName"] = list(fontInfo["postscriptName"])
-#         # fontInfo["fullName"] = list(fontInfo["fullName"])
-
-#     return fontInfo
-
-
-# def getFontFileInfos(fontPath):
-#     with open(fontPath, "rb") as f:
-#         sfntVersion = f.read(4)
-#     fontSize = os.path.getsize(fontPath)
-#     fonts = TTCollection(fontPath).fonts if sfntVersion == b"ttcf" else [TTFont(fontPath)]
-#     return [getFontInfo(font, fontPath, fontSize, index) for index, font in enumerate(fonts)]
 
 
 """
@@ -528,76 +477,6 @@ def assInsertLine(ass_str, endTimeText, insertContent):
 #         else:
 #             index += 1
 
-# def getFontFileInfos(fontPath):
-#     infos = []
-#
-#     blob = uharfbuzz.Blob.from_file_path(fontPath)
-#     fontSize = len(blob)
-#     face = uharfbuzz.Face(blob)
-#     font_count = face.count
-#     for index in range(font_count):
-#         fontInfo = {
-#             "path": fontPath,
-#             "size": fontSize,
-#             "index": index,
-#             "family": set(),
-#             "postscriptName": set(),
-#             "postscriptCheck": False,
-#             "fullName": set(),
-#             "weight": 400,  # 默认值
-#             "bold": False,  # 默认值
-#             "italic": False,  # 默认值
-#         }
-#         face = uharfbuzz.Face(blob, index)
-#         names = face.list_names()
-#         for name_id, language in names:
-#             if name_id == uharfbuzz.OTNameIdPredefined.FONT_FAMILY:
-#                 family_name = face.get_name(name_id, language)
-#                 # 某些字体因为编码问题导致某个family_name会返回None
-#                 if family_name:
-#                     fontInfo["family"].add(family_name.strip().lower())
-#                 else:
-#                     logger.debug(f"{fontPath} 的其中一个family_name因为编码错误导致获取失败")
-#             if name_id == uharfbuzz.OTNameIdPredefined.FULL_NAME:
-#                 full_name = face.get_name(name_id, language)
-#                 if full_name:
-#                     fontInfo["fullName"].add(full_name.strip().lower())
-#                 else:
-#                     logger.debug(f"{fontPath} 的其中一个full_name因为编码错误导致获取失败")
-#             if name_id == uharfbuzz.OTNameIdPredefined.POSTSCRIPT_NAME:
-#                 postscript_name = face.get_name(name_id, language)
-#                 if postscript_name:
-#                     fontInfo["postscriptName"].add(postscript_name.strip().lower())
-#                 else:
-#                     logger.debug(f"{fontPath} 的其中一个postscript_name因为编码错误导致获取失败")
-#
-#         if "head" in face.table_tags:
-#             table_blob = face.reference_table("head")
-#             table_data_filter = parse_table(table_blob.data, "head", ["macStyle"])
-#             macStyle = table_data_filter["macStyle"]
-#         else:
-#             macStyle = 0  # 如果没有head表格，也给macStyle默认值
-#         if "OS/2" in face.table_tags:
-#             table_blob = face.reference_table("OS/2")
-#             table_data_filter = parse_table(table_blob.data, "OS/2", ["usWeightClass", "fsSelection"])
-#             weight = table_data_filter["usWeightClass"]
-#             fsSelection = table_data_filter["fsSelection"]
-#             bold = bool(fsSelection & 0x20 or macStyle & 0x01)
-#             italic = bool(fsSelection & 0x01 or macStyle & 0x02)
-#             fontInfo["bold"] = bold
-#             fontInfo["italic"] = italic
-#             fontInfo["weight"] = weight
-#         else:
-#             # 如果没有 OS/2 表，仍然仅根据 macStyle 判断粗体和斜体
-#             bold = bool(macStyle & 0x01)
-#             italic = bool(macStyle & 0x02)
-#             fontInfo["bold"] = bold
-#             fontInfo["italic"] = italic
-#         fontInfo["postscriptCheck"] = is_postscript_font(face.table_tags)
-#         infos.append(fontInfo)
-#     return infos
-
-
 def getFontFileInfos(fontPath):
     file_info_list = []
     font_info_list = []
@@ -703,7 +582,6 @@ def getFontFileInfos(fontPath):
     )
     return file_info_list, font_info_list, font_name_list
 
-
 def is_postscript_font(table_tag):
     # 检查是否包含 CFF 或 CFF2 表
     if "CFF " in table_tag or "CFF2" in table_tag:
@@ -712,103 +590,3 @@ def is_postscript_font(table_tag):
     if "glyf" in table_tag and "post" in table_tag:
         return False  # 这表明字体不是纯 PostScript 字体，可能是 TrueType
     return False
-
-
-head_format = {
-    # (offset, length, type)
-    "majorVersion": (0, 2, "H"),  # uint16
-    "minorVersion": (2, 2, "H"),  # uint16
-    "fontRevision": (4, 4, "f"),  # Fixed (float)
-    "checksumAdjustment": (8, 4, "I"),  # uint32
-    "magicNumber": (12, 4, "I"),  # uint32
-    "flags": (16, 2, "H"),  # uint16
-    "unitsPerEm": (18, 2, "H"),  # uint16
-    "created": (20, 8, "Q"),  # LONGDATETIME (8 bytes, signed long long)
-    "modified": (28, 8, "Q"),  # LONGDATETIME (8 bytes, signed long long)
-    "xMin": (36, 2, "h"),  # int16
-    "yMin": (38, 2, "h"),  # int16
-    "xMax": (40, 2, "h"),  # int16
-    "yMax": (42, 2, "h"),  # int16
-    "macStyle": (44, 2, "H"),  # uint16
-    "lowestRecPPEM": (46, 2, "H"),  # uint16
-    "fontDirectionHint": (48, 2, "h"),  # int16
-    "indexToLocFormat": (50, 2, "h"),  # int16
-    "glyphDataFormat": (52, 2, "h"),  # int16
-}
-
-os2_format = {
-    # (offset, length, type) V5
-    "version": (0, 2, "H"),  # uint16
-    "xAvgCharWidth": (2, 2, "h"),  # int16
-    "usWeightClass": (4, 2, "H"),  # uint16
-    "usWidthClass": (6, 2, "H"),  # uint16
-    "fsType": (8, 2, "H"),  # uint16
-    "ySubscriptXSize": (10, 2, "h"),  # int16
-    "ySubscriptYSize": (12, 2, "h"),  # int16
-    "ySubscriptXOffset": (14, 2, "h"),  # int16
-    "ySubscriptYOffset": (16, 2, "h"),  # int16
-    "ySuperscriptXSize": (18, 2, "h"),  # int16
-    "ySuperscriptYSize": (20, 2, "h"),  # int16
-    "ySuperscriptXOffset": (22, 2, "h"),  # int16
-    "ySuperscriptYOffset": (24, 2, "h"),  # int16
-    "yStrikeoutSize": (26, 2, "h"),  # int16
-    "yStrikeoutPosition": (28, 2, "h"),  # int16
-    "sFamilyClass": (30, 2, "h"),  # int16
-    "panose": (32, 10, "10B"),  # PANOSE (10 bytes, binary data)
-    "ulUnicodeRange1": (42, 4, "I"),  # uint32
-    "ulUnicodeRange2": (46, 4, "I"),  # uint32
-    "ulUnicodeRange3": (50, 4, "I"),  # uint32
-    "ulUnicodeRange4": (54, 4, "I"),  # uint32
-    "achVendID": (58, 4, "4s"),  # String of 4 characters
-    "fsSelection": (62, 2, "H"),  # uint16
-    "usFirstCharIndex": (64, 2, "H"),  # uint16
-    "usLastCharIndex": (66, 2, "H"),  # uint16
-    "sTypoAscender": (68, 2, "h"),  # int16
-    "sTypoDescender": (70, 2, "h"),  # int16
-    "sTypoLineGap": (72, 2, "h"),  # int16
-    "usWinAscent": (74, 2, "H"),  # uint16
-    "usWinDescent": (76, 2, "H"),  # uint16
-    "ulCodePageRange1": (78, 4, "I"),  # uint32
-    "ulCodePageRange2": (82, 4, "I"),  # uint32
-    "sxHeight": (86, 2, "h"),  # int16
-    "sCapHeight": (88, 2, "h"),  # int16
-    "usDefaultChar": (90, 2, "H"),  # uint16
-    "usBreakChar": (92, 2, "H"),  # uint16
-    "usMaxContext": (94, 2, "H"),  # uint16
-    "usLowerOpticalPointSize": (96, 2, "H"),  # uint16
-    "usUpperOpticalPointSize": (98, 2, "H"),  # uint16
-}
-
-table_mapper = {
-    "OS/2": os2_format,
-    "head": head_format,
-}
-
-
-def parse_table(table_bytes, table_name: str, tag_filter=None):
-    data = {}
-    table_format = table_mapper.get(table_name)
-    if not table_format:
-        raise ValueError(f"undefined table: {table_name}")
-
-    byte_parsers = {
-        "H": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big"),
-        "h": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big", signed=True),
-        "I": lambda bytes_data: int.from_bytes(bytes_data, byteorder="big"),
-        "4s": lambda bytes_data: bytes_data.decode("utf-8").strip("\x00"),
-        "10B": lambda bytes_data: tuple(bytes_data),
-        "f": lambda bytes_data: struct.unpack(">f", bytes_data)[0],
-        "Q": lambda bytes_data: struct.unpack(">q", bytes_data)[0],
-    }
-    if tag_filter:
-        tag_filter = set(tag_filter)
-        table_format = {k: v for k, v in table_format.items() if k in tag_filter}
-    for tag, (offset, length, fmt) in table_format.items():
-        byte_slice = table_bytes[offset : offset + length]
-        if fmt == "f":
-            raw_value = int.from_bytes(byte_slice, byteorder="big")
-            value = raw_value / 65536.0
-        else:
-            value = byte_parsers.get(fmt, lambda bytes_data: struct.unpack(fmt, bytes_data))(byte_slice)
-        data[tag] = value
-    return data
