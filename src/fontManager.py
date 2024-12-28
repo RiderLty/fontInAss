@@ -37,7 +37,6 @@ def enable_foreign_keys(dbapi_connection, connection_record):
 
 class FileInfo(Base):
     __tablename__ = "file_info"
-    # id = Column(String, index=True, primary_key=True, nullable=False)  #字体文件关联ID
     path = Column(String, index=True, primary_key=True, nullable=False)  # 唯一的文件路径
     size = Column(Integer, nullable=False)
 
@@ -45,7 +44,6 @@ class FileInfo(Base):
 class FontInfo(Base):
     __tablename__ = "font_info"
     uid = Column(String, index=True, primary_key=True, nullable=False)  # 字体信息关联 在获取信息时候使用uuid生成
-    # id = Column(String, ForeignKey("file_info.id", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)  #字体文件关联ID 在获取信息时候使用uuid生成
     path = Column(String, ForeignKey("file_info.path", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
     size = Column(Integer, nullable=False)
     index = Column(Integer)
@@ -63,26 +61,6 @@ class FontName(Base):
     # id = Column(Integer, index=True, primary_key=True, autoincrement=True)
     name = Column(String, primary_key=True, index=True)
     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, index=True, nullable=False)
-
-
-# class FamilyName(Base):
-#     __tablename__ = "family_name"
-#     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
-#     name = Column(String, index=True)
-
-# class FullName(Base):
-#     __tablename__ = "full_name"
-#     id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
-#     name = Column(String, index=True)
-
-# class PostscriptName(Base):
-#     __tablename__ = "postscript_name"
-#     # id = Column(Integer, index=True, primary_key=True, autoincrement=True)
-#     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, index=True, nullable=False)
-#     name = Column(String,primary_key=True, index=True)
-
 
 # 数据库管理类
 class fontManager:
@@ -125,19 +103,19 @@ class fontManager:
 
             # 执行对应操作
             if del_files:
-                self.del_fontinfo_with_filepath(list(del_files))
+                self.del_fileinfo_with_filepath(list(del_files))
             if ins_files:
-                self.ins_fontinfo_and_fontdetail(list(ins_files))
+                self.ins_fileinfo_and_fontinfo(list(ins_files))
 
         except Exception as e:
             logger.error(f"检查数据库一致性时发生错误: {e}")
             raise
 
-    def update_fontinfo_with_filepath(self, data: List[Dict[str, str]]):
+    def update_fileinfo_with_filepath(self, data: List[Dict[str, str]]):
         # print("更新:",data)
         try:
             start = time.perf_counter_ns()
-            stmt = update(FileInfo).where(FileInfo.path == bindparam("file_path")).values(path=bindparam("new_file_path")).execution_options(synchronize_session=None)
+            stmt = update(FileInfo).where(FileInfo.path == bindparam("old")).values(path=bindparam("new")).execution_options(synchronize_session=None)
             self.db_session.connection().execute(stmt, data)
             self.db_session.commit()
             logger.info(f"更新了 {len(data)} 条记录，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
@@ -146,52 +124,7 @@ class fontManager:
             logger.error(f"更新数据时发生错误: {e}")
             raise e
 
-    # def ins_fontinfo_and_fontdetail(self, data: List[str]):
-    #     # print("插入:",data)
-    #     try:
-    #         start = time.perf_counter_ns()
-    #         results = {self.executor.submit(getFontFileInfos, item): item for item in data}
-    #         logger.debug(f"准备获取字体信息任务耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
-    #         file_info = []
-    #         font_info = []
-    #         family_name = []
-    #         full_name = []
-    #         postscript_name = []
-    #         with tqdm(total=len(results), desc="Load", unit=" font", bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} | {rate_fmt} | {remaining}\n", file=sys.stdout,miniters= len(results) // 100, dynamic_ncols=False, mininterval=3, maxinterval=10, position=0) as pbar:
-    #             for future in as_completed(results):
-    #                 font_info, font_details, file_path = future.result()
-    #                 font_info_list.extend(font_info)
-    #                 font_detail_list.extend(font_details)
-    #                 if file_path:
-    #                     error_font_list.append(file_path)
-    #                 pbar.update(1)
-    #         logger.debug(f"获取字体信息结果耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
-    #         with tqdm(
-    #             total=len(data),
-    #             desc="Load",
-    #             unit=" font",
-    #             bar_format="{l_bar}{bar} {n_fmt}/{total_fmt} | {rate_fmt} | {remaining}\n",
-    #             file=sys.stdout,
-    #             miniters=len(data) // 100,
-    #             dynamic_ncols=False,
-    #             mininterval=3,
-    #             maxinterval=10,
-    #             position=0,
-    #         ) as pbar:
-    #             for file_info_list, font_info_list, family_name_list, full_name_list, postscript_name_list in data:
-    #                 font_info.extend(getFontFileInfos(font_info_list))
-    #                 pbar.update(1)
-    #         logger.info(f"分析了 {len(data)} 个字体，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
-    #         insertStart = time.perf_counter_ns()
-    #         self.insertFontInfos(fontInfos)
-    #         self.db_session.commit()
-    #         logger.info(f"添加记录，耗时 {(time.perf_counter_ns() - insertStart) / 1_000_000:.2f}ms")
-    #     except SQLAlchemyError as e:
-    #         self.db_session.rollback()  # 回滚事务
-    #         logger.error(f"添加数据时发生错误: {e}")
-    #         raise e
-
-    def ins_fontinfo_and_fontdetail(self, data: List[str]):
+    def ins_fileinfo_and_fontinfo(self, data: List[str]):
         # print("插入:",data)
         try:
             start = time.perf_counter_ns()
@@ -231,7 +164,7 @@ class fontManager:
             logger.error(f"添加数据时发生错误: {e}")
             raise e
 
-    def del_fontinfo_with_filepath(self, data: List[str]):
+    def del_fileinfo_with_filepath(self, data: List[str]):
         # print("删除:",data)
         try:
             start = time.perf_counter_ns()
@@ -294,29 +227,6 @@ class fontManager:
             return path, index
         return None
 
-    # def selectFontLocalTest(self, targetFontName, targetWeight, targetItalic):
-    #     result = self.db_session.execute(
-    #         select(
-    #             FontInfo.path,
-    #             FontInfo.size,
-    #             FontInfo.index,
-    #             FontInfo.familyName,
-    #             FontInfo.postscriptName,
-    #             FontInfo.postscriptCheck,
-    #             FontInfo.fullName,
-    #             FontInfo.weight,
-    #             FontInfo.bold,
-    #             FontInfo.italic,
-    #         ).where(
-    #             or_(
-    #             FontInfo.familyName.contains(targetFontName),
-    #             FontInfo.fullName.contains(targetFontName),
-    #             FontInfo.postscriptName.contains(targetFontName),
-    #             )
-    #         )
-    #     ).mappings().all()
-    #     return selectFontFromList(targetFontName, targetWeight, targetItalic, result)
-
     def selectFontLocal(self, targetFontName, targetWeight, targetItalic):
         result = (
             self.db_session.execute(
@@ -340,64 +250,6 @@ class fontManager:
             .mappings()
             .all()
         )
-        # result = []
-        # familyNameResult = self.db_session.execute(
-        #     select(
-        #         FontInfo.path,
-        #         FontInfo.size,
-        #         FontInfo.index,
-        #         FontInfo.familyName,
-        #         FontInfo.postscriptName,
-        #         FontInfo.postscriptCheck,
-        #         FontInfo.fullName,
-        #         FontInfo.weight,
-        #         FontInfo.bold,
-        #         FontInfo.italic,
-        #     )
-        #     .join(FamilyName, FontInfo.uid == FamilyName.uid)
-        #     .where(
-        #         FamilyName.name == targetFontName,
-        #     )
-        # ).mappings().all()
-
-        # fullNameResult = self.db_session.execute(
-        #     select(
-        #         FontInfo.path,
-        #         FontInfo.size,
-        #         FontInfo.index,
-        #         FontInfo.familyName,
-        #         FontInfo.postscriptName,
-        #         FontInfo.postscriptCheck,
-        #         FontInfo.fullName,
-        #         FontInfo.weight,
-        #         FontInfo.bold,
-        #         FontInfo.italic,
-        #     )
-        #     .join(FullName, FontInfo.uid == FullName.uid)
-        #     .where(
-        #         FullName.name == targetFontName,
-        #     )
-        # ).mappings().all()
-
-        # postscriptNameResult = self.db_session.execute(
-        #     select(
-        #         FontInfo.path,
-        #         FontInfo.size,
-        #         FontInfo.index,
-        #         FontInfo.familyName,
-        #         FontInfo.postscriptName,
-        #         FontInfo.postscriptCheck,
-        #         FontInfo.fullName,
-        #         FontInfo.weight,
-        #         FontInfo.bold,
-        #         FontInfo.italic,
-        #     )
-        #     .join(PostscriptName, FontInfo.uid == PostscriptName.uid)
-        #     .where(
-        #         PostscriptName.name == targetFontName,
-        #     )
-        # ).mappings().all()
-        # result.extend(familyNameResult + fullNameResult + postscriptNameResult)
         return selectFontFromList(targetFontName, targetWeight, targetItalic, result)
 
     def close(self):
