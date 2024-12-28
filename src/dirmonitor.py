@@ -36,7 +36,6 @@ class _DirectorySnapshot(DirectorySnapshot):
                         yield from self.walk(path)
 
 class _DirectorySnapshotDiff(DirectorySnapshotDiff):
-    '''参考https://github.com/gorakhargosh/watchdog/pull/304'''
     def __init__(
             self,
             ref: DirectorySnapshot,
