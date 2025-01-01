@@ -1,4 +1,5 @@
 import re
+import time
 from utils import logger
 
 
@@ -88,31 +89,46 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
                 currentFontName = lineDefaultFontName
                 currentWeight = lineDefaultWeight
                 currentItalic = lineDefaultItalic
-
-                def string2fontCharList(string: str, key: tuple[str, int, bool]):
-                    """
-                    将字符串添加到字体字符集中
-
-                    :param string: 字符串
-                    :param key: 字体名，字重，斜体
-                    """
-                    if key not in fontCharList:
-                        fontCharList[key] = set()
-                    logger.debug(f"{key}: {string}")
-                    for char in string:
-                        fontCharList[key].add(ord(char))
-
-                buffer: str = ""  # 缓存区
-                for char in eventText:
-                    if char == "{":  # 遇到 {，先处理缓存区，后续再判断是否是特殊样式
-                        string2fontCharList(
-                            buffer, (currentFontName, currentWeight, currentItalic)
-                        )
-                        buffer = char
-                    elif char == "}" and buffer.startswith("{\\"):
-                        tags = buffer[2:].split("\\")  # 去掉 {\ 并且分割
-                        logger.debug(f"特殊样式代码结束，匹配标签：{tags}")
-                        for tag in tags:
+                currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
+                
+                testState = 0
+                codeStart = -1
+                codeEnd = -1
+                for index , char in enumerate(eventText):
+                    if testState == 0:#初始，判断转义，代码，文本
+                        if char == "\\":#转义
+                            testState = -1
+                        else:
+                            if char == "{":#代码
+                                testState = 1
+                            else:#
+                                currentCharSet.add(ord(char))
+                    elif testState == -1:#转义
+                        testState = 0
+                        if char == "{" or char == "}":
+                            currentCharSet.add(ord(char))
+                        elif char == "N" or char == "n" or char == "h":
+                            pass
+                        else:#普通的\号 非转义
+                            currentCharSet.add(ord(char))
+                            currentCharSet.add(92)
+                    elif testState == 1:#代码部分
+                        if char == "\\":
+                            testState = 2#一个代码段开始
+                            codeStart = index
+                    elif testState == 2:#代码段
+                        _end = codeEnd
+                        if char == "\\":#下一个代码段开始
+                            testState = 2
+                            codeEnd = index
+                        elif char == "}":#代码部分结束
+                            testState = 0
+                            codeEnd = index
+                        else:
+                            pass
+                        if _end != codeEnd:
+                            tag = eventText[codeStart+1:codeEnd]
+                            codeStart = index
                             if (tag.startswith("rndx") or tag.startswith("rndy") or tag.startswith("rndz") ) and tag[4:].isdigit():
                                 pass
                             elif tag.startswith("rnd") and tag[3:].isdigit():
@@ -145,13 +161,8 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
                                 currentItalic = False
                             elif tag == "i1":
                                 currentItalic = True
-                        buffer = ""  # 特殊样式结束，清空缓存区
-                    else:
-                        buffer += char
-                if buffer != "":
-                    string2fontCharList(
-                        buffer, (currentFontName, currentWeight, currentItalic)
-                    )
+                        if testState == 0:
+                            currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
     return fontCharList
 
 
@@ -172,13 +183,22 @@ PlayResY: 1080
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,方正悠黑_GBK 511M,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
-Style: style1,方正悠黑_GBK 511M,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
-Style: style2,方正悠黑_GBK 511M,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
+Style: Default,黑体,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
+Style: style1,楷体,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
+Style: style2,宋体,65,&H00FFFFFF,&H000000FF,&H00DD5E15,&H00000000,0,0,0,0,100,100,2,0,1,2,2,2,10,10,40,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 0,0:00:02.88,0:00:04.82,86 taici,,0,0,0,,我{\CODE_HERE}能吞下{\fn宋体\b1\i1}玻璃而{\pos(400,400)}不伤{\r}身{体}
+Dialogue: 0,0:00:00.88,0:59:59.82,style1,,0,0,0,,我{你甚至可以在这里写注释\CODE_HERE\前面可以是一段代码，但无需关注}能{这里是\rndx10}吞下{\fn宋体\b1\i1}玻璃而{\pos(400,400)}不{\r0}伤{\r}身{\rstyle2}体\{这是转义的\n括号\}
 """
     )
     print(fontCharList)
+    # from pathlib import Path
+    # subtitles: list[str] = []
+    # for path in (Path(__file__).parent.parent / "test").iterdir():
+    #     print(path)
+    #     subtitles.append(path.read_text(encoding="utf-8"))
+    # start = time.perf_counter_ns()
+    # for subtitle in subtitles:
+    #     analyseAss(subtitle)
+    # logger.warning(f"used {(time.perf_counter_ns() - start) / 1000000:.2f}ms")
