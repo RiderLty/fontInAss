@@ -82,9 +82,7 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
 
                 if styleName not in styleFontName:
                     styleName = firstStyleName  # 当前行使用的style 不在定义的style中，使用第一个
-                lineDefaultFontName = styleFontName[
-                    styleName
-                ]  # 记录初始字体 weight 斜体，如果使用{\r}则会切换回默认style
+                lineDefaultFontName = styleFontName[styleName]  # 记录初始字体 weight 斜体，如果使用{\r}则会切换回默认style
                 lineDefaultWeight = styleWeight[styleName]
                 lineDefaultItalic = styleItalic[styleName]
                 currentFontName = lineDefaultFontName
@@ -115,10 +113,25 @@ def analyseAss(ass_str: str) -> dict[tuple[str, int, bool], set[int]]:
                         tags = buffer[2:].split("\\")  # 去掉 {\ 并且分割
                         logger.debug(f"特殊样式代码结束，匹配标签：{tags}")
                         for tag in tags:
-                            if tag == "r":
-                                currentFontName = lineDefaultFontName
-                                currentWeight = lineDefaultWeight
-                                currentItalic = lineDefaultItalic
+                            if (tag.startswith("rndx") or tag.startswith("rndy") or tag.startswith("rndz") ) and tag[4:].isdigit():
+                                pass
+                            elif tag.startswith("rnd") and tag[3:].isdigit():
+                                pass
+                            elif tag.startswith("r"):
+                                rStyleName = tag[1:].replace("*","")
+                                if rStyleName == "":#清除样式
+                                    currentFontName = lineDefaultFontName
+                                    currentWeight = lineDefaultWeight
+                                    currentItalic = lineDefaultItalic
+                                else:
+                                    if rStyleName in styleFontName:#切换样式
+                                        currentFontName = styleFontName[rStyleName]
+                                        currentWeight = styleWeight[rStyleName]
+                                        currentItalic = styleItalic[rStyleName]
+                                    else:#无样式 或者0 切换默认样式
+                                        currentFontName = lineDefaultFontName
+                                        currentWeight = lineDefaultWeight
+                                        currentItalic = lineDefaultItalic
                             elif tag.startswith("fn"):  # 字体
                                 currentFontName = tag[2:].replace("@", "")
                             elif tag.startswith("b") and tag[1:].isdigit():  # 字重
