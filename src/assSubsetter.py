@@ -64,7 +64,7 @@ class assSubsetter:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
             logger.info(f"字幕缓存命中 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
-            return (srt, resultBytes)
+            return ('', srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
 
@@ -75,11 +75,11 @@ class assSubsetter:
                 assText = srtToAss(assText)
             else:
                 logger.info("未开启SRT转ASS")
-                return (True, assText.encode("UTF-8-sig"))
+                return ("未开启SRT转ASS", True, assText.encode("UTF-8-sig"))
 
         if "[Fonts]\n" in assText:
             logger.error("已有内嵌字体")
-            return (False, subtitleBytes)
+            return ("已有内嵌字体", False, subtitleBytes)
 
         targetHDR = HDR if userHDR == 0 else userHDR
         if targetHDR != -1:
@@ -115,4 +115,4 @@ class assSubsetter:
             logger.error("存在错误，未缓存")
             for err in errors:
                 logger.error(err)
-        return (srt, resultBytes)
+        return ("\n".join(errors), srt, resultBytes)

@@ -154,7 +154,7 @@ async def proxy_pass(request: Request, response: Response):
         return ""
     try:
         subtitleBytes = serverResponse.content
-        srt, bytes = await process(subtitleBytes, userHDR)
+        error, srt, bytes = await process(subtitleBytes, userHDR)
         logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
         # copyHeaders["Content-Length"] = str(len(bytes))
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
@@ -164,6 +164,23 @@ async def proxy_pass(request: Request, response: Response):
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=serverResponse.content)
+
+
+@app.post("/fontinass/process_bytes")
+async def process_bytes(request: Request):
+    subtitleBytes = await request.body()
+    try:
+        error, srt, bytes = await process(subtitleBytes, userHDR)
+        return Response(
+            content=bytes,
+            headers={
+                "error": error,
+                "srt": "true" if srt else "false",
+            },
+        )
+    except Exception as e:
+        print(f"ERROR : {str(e)}")
+        return Response(subtitleBytes)
 
 
 def getServer(port, serverLoop):

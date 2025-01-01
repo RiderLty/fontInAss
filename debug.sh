@@ -48,3 +48,6 @@ docker run \
   -v '/mnt/user/storage/Fonts/':'/fonts':'rw' \
   -v '/mnt/user/appdata/fontinass':'/data':'rw' \
   'riderlty/fontinass:noproxy'
+
+
+curl -X POST --data-binary @'/mnt/storage/Projects/fontInAss/test/[DMG] 冴えない 彼女の育てかた♭ [S02E02]「本気で本当な分岐点」 [BDRip][HEVC_FLAC][1080P_Ma10P](0C37FCAB).chs.ass' http://localhost:8011/fontinass/process_bytes > test.ass
