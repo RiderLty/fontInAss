@@ -23,7 +23,7 @@ class assSubsetter:
     # self.processPool.shutdown()
 
     @staticmethod
-    def fontSubsetter(fontBytes, index, fontName, unicodeSet):
+    def fontSubsetter(fontBytes, index, fontName, weight, italic, unicodeSet):
         try:
             start = time.perf_counter_ns()
             face = uharfbuzz.Face(fontBytes, index)
@@ -40,9 +40,9 @@ class assSubsetter:
                  if x not in PUNCTUATION_UNICODES])
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             if missGlyph == "":
-                return None, f"fontname:{fontName}_0.ttf\n{enc}\n"
+                return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             else:
-                return f"[{fontName}] 缺少字形:{missGlyph}", f"fontname:{fontName}_0.ttf\n{enc}\n"
+                return f"[{fontName}] 缺少字形:{missGlyph}", f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
         except Exception as e:
             logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return str(e), ""
@@ -56,7 +56,7 @@ class assSubsetter:
         except Exception as e:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
             return f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}", ""
-        return assSubsetter.fontSubsetter(fontBytes, index, fontName, unicodeSet)
+        return assSubsetter.fontSubsetter(fontBytes, index, fontName, weight, italic, unicodeSet)
 
     async def process(self, subtitleBytes, userHDR=0):
         bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
