@@ -1,5 +1,5 @@
 import struct
-from typing import Dict, Optional
+from typing import Dict, Optional, Set, Tuple
 
 def uuencode(const unsigned char[:] binaryData):
     """
@@ -154,3 +154,187 @@ def parse_table(bytes table_bytes, str table_name, tag_filter: Optional[list] = 
         value = byte_parsers.get(fmt, lambda bytes_data: struct.unpack(fmt, bytes_data))(byte_slice)
         data[tag] = value
     return data
+
+
+
+def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
+    cdef list[str] lines = ass_str.splitlines()
+    cdef int state = 0
+    cdef int styleNameIndex = -1
+    cdef int fontNameIndex = -1
+    cdef int boldIndex = -1
+    cdef int italicIndex = -1
+    cdef dict styleFontName = {}  # 默认字典
+    cdef dict styleWeight = {}
+    cdef dict styleItalic = {}
+    cdef int eventStyleIndex = -1
+    cdef int eventTextindex = -1
+    cdef dict fontCharList = dict()
+    cdef str firstStyleName = ''
+    cdef int testState = 0
+    cdef str tag = ''
+    # cdef str eventText = ''
+    for line in lines:
+        if line == "":
+            continue
+        elif state == 0 and line.startswith("[V4+ Styles]"):
+            state = 1
+        elif state == 1:
+            assert line.startswith("Format:"), ValueError("解析Style格式失败 : " + line)
+            styleFormat = line[7:].replace(" ", "").split(",")
+            for index,style in enumerate(styleFormat):
+                if style == "Name":
+                    styleNameIndex = index
+                if style == "Fontname":
+                    fontNameIndex = index
+                if style == "Bold":
+                    boldIndex = index
+                if style == "Italic":
+                    italicIndex = index
+            assert styleNameIndex != -1 and fontNameIndex != -1, ValueError(
+                "Format中未找到Name或Fontname : " + line
+            )
+            state = 2
+        elif state == 2:
+            if line.startswith("[Events]"):
+                state = 3
+            elif line.startswith("Style:"):
+                styleData = line[6:].strip().split(",")
+                styleName = styleData[styleNameIndex].strip().replace("*", "")
+                fontName = styleData[fontNameIndex].strip().replace("@", "")
+                fontWeight = 400
+                if boldIndex != -1 and styleData[boldIndex].strip() == "1":
+                    fontWeight = 700
+                fontItalic = False
+                if italicIndex != -1 and styleData[italicIndex].strip() == "1":
+                    fontItalic = True
+                
+                styleFontName[styleName] = fontName
+                styleWeight[styleName] = fontWeight
+                styleItalic[styleName] = fontItalic
+                if firstStyleName == '':
+                    firstStyleName = styleName
+        elif state == 3:
+            assert line.startswith("Format:"), ValueError("解析Event格式失败 : " + line)
+            eventFormat = line[7:].replace(" ", "").split(",")
+            for index,event in enumerate(eventFormat):
+                if event == "Style":
+                    eventStyleIndex = index
+                if event == "Text":
+                    eventTextindex = index
+            assert eventStyleIndex != -1 and eventTextindex != -1, ValueError("Format中未找到Style或Text : " + line)
+            assert eventTextindex == len(eventFormat) - 1, ValueError("Text不是最后一个 : " + line)
+            state = 4
+        elif state == 4:
+            if not line.startswith("Dialogue:"):
+                continue
+            commaCount = 0 
+            styleStart = -1
+            styleEnd = -1
+            textStart = -1
+            dialogue = line[9:]
+            # print("dialogue",dialogue)
+            # print("eventStyleIndex",eventStyleIndex)
+            # print("eventTextindex",eventTextindex)
+            for index,char in enumerate(dialogue):
+                if char == "," or index == 0 :
+                    commaCount += 1
+                    if commaCount == eventStyleIndex + 1:
+                        styleStart = index + 1
+                    if commaCount == eventStyleIndex + 2:
+                        styleEnd = index 
+                    if commaCount == eventTextindex + 1:
+                        textStart = index + 1
+                        break
+            # print("all:",dialogue)
+            # print("style:",dialogue[styleStart:styleEnd])
+            # print("text:",dialogue[textStart:])
+            styleName = dialogue[styleStart:styleEnd].replace("*" , "")
+            eventText = dialogue[textStart:]
+            # print(eventText)
+            if styleName not in styleFontName:
+                styleName = firstStyleName
+
+            lineDefaultFontName = styleFontName[styleName]  # 记录初始字体 weight 斜体，如果使用{\r}则会切换回默认style
+            lineDefaultWeight = styleWeight[styleName]
+            lineDefaultItalic = styleItalic[styleName]
+            currentFontName = lineDefaultFontName
+            currentWeight = lineDefaultWeight
+            currentItalic = lineDefaultItalic
+            currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
+            testState = 0
+            codeStart = -1
+            codeEnd = -1
+            
+            for index , char in enumerate(eventText):
+                if testState == 0:#初始，判断转义，代码，文本
+                    if char == "\\":#转义
+                        testState = -1
+                    else:
+                        if char == "{":#代码
+                            testState = 1
+                        else:#
+                            currentCharSet.add(ord(char))
+
+                elif testState == -1:#转义
+                    testState = 0
+                    if char == "{" or char == "}":
+                        currentCharSet.add(ord(char))
+                    elif char == "N" or char == "n" or char == "h":
+                        pass
+                    else:#普通的\号 非转义
+                        currentCharSet.add(ord(char))
+                        currentCharSet.add(92)
+                elif testState == 1:#代码部分
+                    if char == "\\":
+                        testState = 2#一个代码段开始
+                        codeStart = index
+                elif testState == 2:#代码段
+                    _end = codeEnd
+                    if char == "\\":#下一个代码段开始
+                        testState = 2
+                        codeEnd = index
+                    elif char == "}":#代码部分结束
+                        testState = 0
+                        codeEnd = index
+                    else:
+                        pass
+                    if _end != codeEnd:
+                        tag = eventText[codeStart+1:codeEnd]
+                        codeStart = index
+                        if (tag.startswith("rndx") or tag.startswith("rndy") or tag.startswith("rndz") ) and tag[4:].isdigit():
+                            pass
+                        elif tag.startswith("rnd") and tag[3:].isdigit():
+                            pass
+                        elif tag.startswith("r"):
+                            rStyleName = tag[1:].replace("*","")
+                            if rStyleName == "":#清除样式
+                                currentFontName = lineDefaultFontName
+                                currentWeight = lineDefaultWeight
+                                currentItalic = lineDefaultItalic
+                            else:
+                                if rStyleName in styleFontName:#切换样式
+                                    currentFontName = styleFontName[rStyleName]
+                                    currentWeight = styleWeight[rStyleName]
+                                    currentItalic = styleItalic[rStyleName]
+                                else:#无样式 或者0 切换默认样式
+                                    currentFontName = lineDefaultFontName
+                                    currentWeight = lineDefaultWeight
+                                    currentItalic = lineDefaultItalic
+                        elif tag.startswith("fn"):  # 字体
+                            currentFontName = tag[2:].replace("@", "")
+                        elif tag.startswith("b") and tag[1:].isdigit():  # 字重
+                            if tag == "b0":
+                                currentWeight = 400
+                            elif tag == "b1":
+                                currentWeight = 700
+                            else:
+                                currentWeight = int(tag[1:])
+                        elif tag == "i0":
+                            currentItalic = False
+                        elif tag == "i1":
+                            currentItalic = True
+                    if testState == 0:
+                        currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
+    # cdef str line
+    return fontCharList

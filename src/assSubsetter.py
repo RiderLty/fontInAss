@@ -8,7 +8,8 @@ import hdrify
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 from py2cy.c_utils import uuencode
 from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
-from analyseAss import analyseAss
+# from analyseAss import analyseAss
+from py2cy.c_utils import analyseAss
 
 class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
@@ -100,7 +101,7 @@ class assSubsetter:
             if err:
                 errors.append(err)
             embedFontsText += result
-        logger.debug(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+        logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         if ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60 and len(errors) != 0:
             assText = assInsertLine(

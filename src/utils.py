@@ -162,7 +162,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 def bytesToStr(bytes):
     result = chardet.detect(bytes)
-    logger.info(f"判断编码:{str(result)}")
+    logger.debug(f"判断编码:{str(result)}")
     return bytes.decode(result["encoding"])
 
 
