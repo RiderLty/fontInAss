@@ -17,7 +17,7 @@
 docker run -d --name=fontinass --restart=unless-stopped \
   -p 8012:8012 \
   -e EMBY_SERVER_URL=http://[ip]:[port] \
-  -v /etc/fontinassData:/data
+  -v /etc/fontinassData:/data \
   riderlty/fontinass:latest
 ```
 设置EMBY_SERVER_URL为你的Emby/Jellyfin服务器的地址
@@ -25,6 +25,18 @@ docker run -d --name=fontinass --restart=unless-stopped \
 在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
 
 enjoy ~
+
+如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
+
+```
+  -v /path/to/your/fonts1:/fonts/dir1 \
+  -v /path/to/your/fonts2:/fonts/dir2 \
+  -v /path/to/your/fonts3:/fonts/dir3 \
+```
+
+> [!NOTE]
+> 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
+
 
 ### 无nginx版本
 使用```riderlty/fontinass:nonginx```tag，不整合nginx，避免在使用302直链时套壳nginx
@@ -87,6 +99,26 @@ server {
 }
 ```
 
+## 关于客户端与播放器
+
+内嵌字体的ASS并非所有播放器都支持，以下为部分播放器（客户端）的支持情况
+| 名称  | 平台  | 支持ass内嵌字体  |
+| ---   | --- | --- | 
+| mpv   | windows/android |  ✅ |
+| potplayer | windows |  ✅ |
+| Emby for windows | windows |  ✅ |
+| MX Player | android | ✅ |
+| Exo Player | android | ❌ |
+| hills | android | ✅ |
+| yamby | android | ❌（Pro版本开启mpv播放器后支持） |
+| Emby for Android | android | ❌ |
+| Emby for Android TV | android | ❌ |  
+| infuse | ios | ✅ |
+| SenPlayer | ios | ✅ |
+| vidhub | ios | ✅ |
+| Emby for ios | ios | ✅ | 
+
+
 ## 其他配置说明
 
 容器内部端口`8011`为字体处理服务
@@ -94,18 +126,6 @@ server {
 `8012`为nginx反向代理端口，使用此端口访问代理后的服务器
 
 如有其他需求，可暴露`8011`端口用于字幕处理
-
-如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
-
-```
-  -v /path/to/your/fonts1:/fonts/dir1 \
-  -v /path/to/your/fonts2:/fonts/dir2 \
-  -v /path/to/your/fonts3:/fonts/dir3 \
-```
-
-> [!NOTE]
-> 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
-
 
 添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果（Jellyfin无法使用）
 ```
