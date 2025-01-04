@@ -20,7 +20,7 @@ else:
 
 setup(
     ext_modules=ext_modules,
-    script_args=["build_ext", "--inplace", "--build-lib", file_dir.as_posix()],
+    script_args=["build_ext",  "--build-lib",  file_dir.as_posix()],
 )
 
 # 命令行运行 python setup.py build_ext --inplace

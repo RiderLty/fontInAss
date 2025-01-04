@@ -59,8 +59,7 @@ pip install -r ./requirements.txt
 ```
 编译c部分
 ```
-cd src/py2cy
-python setup.py build_ext --inplace
+python src/py2cy/setup.py
 ```
 添加环境变量 EMBY_SERVER_URL ，例如：
 ```
