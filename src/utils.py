@@ -132,7 +132,7 @@ def srtToAss(srtText):
     subLines = html_start_tag_pattern.sub("{\\\\\g<1>1}", subLines)
     subLines = html_end_tag_pattern.sub("{\\\\\g<1>0}", subLines)
     subLines = srt_font_color_start_pattern.sub("{\\\\c&H\\3\\2\\1&}", subLines)
-    subLines = srt_font_color_end_pattern.sub(subLines)
+    subLines = srt_font_color_end_pattern.sub("", subLines)
 
     head_str = (
         """[Script Info]
