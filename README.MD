@@ -22,10 +22,6 @@ docker run -d --name=fontinass --restart=unless-stopped \
 ```
 设置EMBY_SERVER_URL为你的Emby/Jellyfin服务器的地址
 
-在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
-
-enjoy ~
-
 如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
 
 ```
@@ -37,6 +33,7 @@ enjoy ~
 > [!NOTE]
 > 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
 
+在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
 
 ### 无nginx版本
 使用```riderlty/fontinass:nonginx```tag，不整合nginx，避免在使用302直链时套壳nginx
@@ -107,6 +104,7 @@ server {
 | mpv   | windows/android |  ✅ |
 | potplayer | windows |  ✅ |
 | Emby for windows | windows |  ✅ |
+| tsukimi | windows/linux | ✅ | 
 | MX Player | android | ✅ |
 | Exo Player | android | ❌ |
 | hills | android | ✅ |
@@ -118,6 +116,7 @@ server {
 | vidhub | ios | ✅ |
 | Emby for ios | ios | ✅ | 
 
+欢迎补充
 
 ## 其他配置说明
 
