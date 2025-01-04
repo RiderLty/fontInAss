@@ -1,6 +1,10 @@
 name: build
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["buildBuilder"]
+    types:
+      - completed
 jobs:
   build:
     runs-on: ubuntu-latest

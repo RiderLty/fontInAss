@@ -1,15 +1,11 @@
 FROM python:3.10-slim-buster AS builder
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc build-essential
 COPY . /app
-RUN pip install Cython && \
-    cd /app/src/py2cy && \
-    python setup.py build_ext --inplace && \
-    pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
+RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential
+RUN pip install Cython 
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
+RUN python /app/src/py2cy/setup.py 
 
 FROM python:3.10-slim-buster
-
 COPY --from=builder /wheels /wheels
 COPY --from=builder /app/src/py2cy/* /src/py2cy/
-
 RUN pip install --no-cache /wheels/* && rm -rf /wheels && mkdir /data

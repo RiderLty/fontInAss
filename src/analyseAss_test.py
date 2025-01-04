@@ -54,7 +54,10 @@ from utils import getAllFiles, logger
 from analyseAss import analyseAss as analyseAss_PY
 from py2cy.c_utils import analyseAss as analyseAss_CY
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
-for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
+
+
+# for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
+for file in getAllFiles("/mnt/storage/Projects/fontInAss/test" , ["ass"]):
     print(file)
     with open(file,"rb") as f:
         subtitle = bytesToStr(f.read())

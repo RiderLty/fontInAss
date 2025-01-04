@@ -1,3 +1,4 @@
+# cython: language_level=3
 import struct
 from typing import Dict, Optional, Set, Tuple
 
@@ -268,14 +269,14 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
             
             for index , char in enumerate(eventText):
                 if testState == 0:#初始，判断转义，代码，文本
-                    if char == "\\":#转义
+                    if char == "{":
+                        testState = 1
+                    elif drawMod:
+                        pass
+                    elif char == "\\":
                         testState = -1
                     else:
-                        if char == "{":#代码
-                            testState = 1
-                        else:#
-                            currentCharSet.add(ord(char))
-
+                        currentCharSet.add(ord(char))
                 elif testState == -1:#转义
                     testState = 0
                     if char == "{" or char == "}":
@@ -284,7 +285,6 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                         pass
                     else:#普通的\号 非转义
                         currentCharSet.add(ord(char))
-                        currentCharSet.add(92)
                 elif testState == 1:#代码部分
                     if char == "\\":
                         testState = 2#一个代码段开始
@@ -302,10 +302,19 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                     if _end != codeEnd:
                         tag = eventText[codeStart+1:codeEnd]
                         codeStart = index
-                        if (tag.startswith("rndx") or tag.startswith("rndy") or tag.startswith("rndz") ) and tag[4:].isdigit():
-                            pass
-                        elif tag.startswith("rnd") and tag[3:].isdigit():
-                            pass
+                        if tag.startswith("rnd"):
+                            if tag[3:].isdigit():
+                                continue 
+                            direction = tag[3]
+                            if direction == "x" or direction == "y" or direction == "z":
+                                if tag[4:].isdigit():
+                                    continue
+                        if tag == "p1":
+                            drawMod = True
+                        elif tag == "p0":
+                            drawMod = False
+                        elif tag.startswith("fn"):  # 字体
+                            currentFontName = tag[2:].replace("@", "")
                         elif tag.startswith("r"):
                             rStyleName = tag[1:].replace("*","")
                             if rStyleName == "":#清除样式
@@ -321,8 +330,6 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                                     currentFontName = lineDefaultFontName
                                     currentWeight = lineDefaultWeight
                                     currentItalic = lineDefaultItalic
-                        elif tag.startswith("fn"):  # 字体
-                            currentFontName = tag[2:].replace("@", "")
                         elif tag.startswith("b") and tag[1:].isdigit():  # 字重
                             if tag == "b0":
                                 currentWeight = 400
@@ -336,5 +343,4 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                             currentItalic = True
                     if testState == 0:
                         currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
-    # cdef str line
     return fontCharList
