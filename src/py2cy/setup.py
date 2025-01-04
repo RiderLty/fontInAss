@@ -1,9 +1,12 @@
+import platform
+from pathlib import Path
+
 from setuptools import setup
 from Cython.Build import cythonize
-import platform
+
 
 # 根据平台设置扩展名
-ext_modules = cythonize("c_utils.pyx")
+ext_modules = cythonize((Path(__file__).parent / "c_utils.pyx").as_posix())
 
 if platform.system() == "Windows":
     # Windows 上生成 .pyd 文件
@@ -14,8 +17,6 @@ elif platform.system() == "Linux" or platform.system() == "Darwin":
 else:
     pass
 
-setup(
-    ext_modules=ext_modules
-)
+setup(ext_modules=ext_modules)
 
-#命令行运行 python setup.py build_ext --inplace
+# 命令行运行 python setup.py build_ext --inplace
