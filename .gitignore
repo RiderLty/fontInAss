@@ -17,5 +17,6 @@ data/*
 *.back
 result.json
 src/py2cy/c_utils.c
-src/py2cy/c_utils.cpython-311-x86_64-linux-gnu.so
+src/py2cy/*.so
+src/py2cy/*.pyd
 build/
