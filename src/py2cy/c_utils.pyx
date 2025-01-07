@@ -174,6 +174,7 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
     cdef str firstStyleName = ''
     cdef int testState = 0
     cdef str tag = ''
+    cdef bint drawMod = False
     # cdef str eventText = ''
     for line in lines:
         if line == "":
@@ -229,6 +230,7 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
         elif state == 4:
             if not line.startswith("Dialogue:"):
                 continue
+            drawMod = False
             commaCount = 0 
             styleStart = -1
             styleEnd = -1
