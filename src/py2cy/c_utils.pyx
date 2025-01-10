@@ -334,6 +334,10 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                             currentItalic = False
                         elif tag == "i1":
                             currentItalic = True
+                        elif tag == "b":
+                            currentWeight = lineDefaultWeight
+                        elif tag == "i":
+                            currentItalic = lineDefaultItalic
                     if testState == 0:
                         currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
     return fontCharList
