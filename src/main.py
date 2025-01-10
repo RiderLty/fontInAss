@@ -1,3 +1,4 @@
+import base64
 import warnings
 
 
@@ -174,7 +175,7 @@ async def process_bytes(request: Request):
         return Response(
             content=bytes,
             headers={
-                "error": error,
+                "error": base64.b64encode((error).encode("utf-8")).decode("ASCII"),
                 "srt": "true" if srt else "false",
             },
         )
