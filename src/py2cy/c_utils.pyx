@@ -304,7 +304,10 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                         elif tag == "p0":
                             drawMod = False
                         elif tag.startswith("fn"):  # 字体
-                            currentFontName = tag[2:].replace("@", "")
+                            if tag[2:] == "":
+                                currentFontName = lineDefaultFontName
+                            else:
+                                currentFontName = tag[2:].replace("@", "")
                         elif tag.startswith("r"):
                             rStyleName = tag[1:].replace("*","")
                             if rStyleName == "":#清除样式
