@@ -36,7 +36,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
 在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
 
 ### 无nginx版本
-使用```riderlty/fontinass:nonginx```tag，不整合nginx，避免在使用302直链时套壳nginx
+使用```riderlty/fontinass:noproxy```tag，不整合nginx，避免在使用302直链时套壳nginx
 
 有需求的用户可参考手动部署，映射8011端口并配置字幕接口的nginx反向代理```location ~* /videos/(.*)/Subtitles```
 
