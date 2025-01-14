@@ -1,54 +1,81 @@
 # cython: language_level=3
 import struct
 from typing import Dict, Optional, Set, Tuple
+from cpython.unicode cimport PyUnicode_DecodeASCII
+from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy
+
+cdef int CHUNK_SIZE = 80
+cdef int OFFSET = 33
+cdef unsigned char chr_map[64]
+for i in range(64):
+    chr_map[i] = OFFSET + i
 
 def uuencode(const unsigned char[:] binaryData):
     """
     编码工具 (Cython实现)
     https://en.wikipedia.org/wiki/Uuencoding
     """
-    #cdef int OFFSET = 33
-    cdef int CHUNK_SIZE = 20
-    cdef int data_len = len(binaryData)
+    cdef int data_len = binaryData.shape[0]
     cdef int remainder = data_len % 3
-    cdef list encoded = [None] * ((data_len + 2) // 3)  # 预分配 encoded 大小
-    cdef list encoded_lines = []
-    cdef int packed, i
-    cdef int six_bits[4]
-    #cdef list chr_map = [chr(OFFSET + i) for i in range(64)]  # 提前生成字符映射为字符串
-    cdef list chr_map = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_', '`']
-
-    # 遍历 3 字节一组的块
+    cdef int encoded_size = (data_len + 2) // 3 * 4
+    cdef unsigned char *encoded = <unsigned char *>malloc(encoded_size)
+    if not encoded:
+        raise MemoryError("Unable to allocate memory for encoded data")
+    cdef int encoded_lines_size = (encoded_size + CHUNK_SIZE - 1) // CHUNK_SIZE * (CHUNK_SIZE + 1)
+    cdef unsigned char *encoded_lines = <unsigned char *>malloc(encoded_lines_size)
+    if not encoded_lines:
+        free(encoded)
+        raise MemoryError("Unable to allocate memory for encoded lines")
+    cdef int packed, i, j
     cdef int index = 0
-    for i in range(0, data_len - remainder, 3):
-        packed = (binaryData[i] << 16) | (binaryData[i + 1] << 8) | binaryData[i + 2]
-        six_bits[0] = (packed >> 18) & 0x3F
-        six_bits[1] = (packed >> 12) & 0x3F
-        six_bits[2] = (packed >> 6) & 0x3F
-        six_bits[3] = packed & 0x3F
-        encoded[index] = "".join([chr_map[six_bits[j]] for j in range(4)])
-        index += 1
-    # 处理不足 3 字节的情况
-    if remainder == 1:
-        packed = binaryData[-1] << 16
-        #packed = binaryData[-1] * 0x100
-        six_bits[0] = (packed >> 18) & 0x3F
-        six_bits[1] = (packed >> 12) & 0x3F
-        encoded[index] = chr_map[six_bits[0]] + chr_map[six_bits[1]]
-    elif remainder == 2:
-        packed = (binaryData[-2] << 16) | (binaryData[-1] << 8)
-        #packed = ((binaryData[-2] << 8) | binaryData[-1]) * 0x10000
-        six_bits[0] = (packed >> 18) & 0x3F
-        six_bits[1] = (packed >> 12) & 0x3F
-        six_bits[2] = (packed >> 6) & 0x3F
-        encoded[index] = "".join([chr_map[six_bits[j]] for j in range(3)])
+    cdef int six_bit0, six_bit1, six_bit2, six_bit3
+    cdef int line_index = 0
+    cdef int line_length = 0
 
-    # 分行显示 80字符一行
-    cdef int num_chunks = (index + CHUNK_SIZE - 1) // CHUNK_SIZE  # 计算块数
-    for i in range(num_chunks):
-        encoded_lines.append("".join(encoded[i * CHUNK_SIZE:(i + 1) * CHUNK_SIZE]))
+    try:
+        # 遍历 3 字节一组的块
+        for i in range(0, data_len - remainder, 3):
+            packed = (binaryData[i] << 16) | (binaryData[i + 1] << 8) | binaryData[i + 2]
+            six_bit0 = (packed >> 18) & 0x3F
+            six_bit1 = (packed >> 12) & 0x3F
+            six_bit2 = (packed >> 6) & 0x3F
+            six_bit3 = packed & 0x3F
+            encoded[index] = chr_map[six_bit0]
+            encoded[index + 1] = chr_map[six_bit1]
+            encoded[index + 2] = chr_map[six_bit2]
+            encoded[index + 3] = chr_map[six_bit3]
+            index += 4
+        # 处理不足 3 字节的情况
+        if remainder == 1:
+            packed = binaryData[-1] << 16
+            six_bit0 = (packed >> 18) & 0x3F
+            six_bit1 = (packed >> 12) & 0x3F
+            encoded[index] = chr_map[six_bit0]
+            encoded[index + 1] = chr_map[six_bit1]
+            index += 2
+        elif remainder == 2:
+            packed = (binaryData[-2] << 16) | (binaryData[-1] << 8)
+            six_bit0 = (packed >> 18) & 0x3F
+            six_bit1 = (packed >> 12) & 0x3F
+            six_bit2 = (packed >> 6) & 0x3F
+            encoded[index] = chr_map[six_bit0]
+            encoded[index + 1] = chr_map[six_bit1]
+            encoded[index + 2] = chr_map[six_bit2]
+            index += 3
+        # 分行显示，每行 80 字符
+        for i in range(0, index, CHUNK_SIZE):
+            line_length = min(CHUNK_SIZE, index - i)
+            memcpy(encoded_lines + line_index, encoded + i, line_length)
+            line_index += line_length
+            if i + CHUNK_SIZE < index:
+                encoded_lines[line_index] = ord('\n')
+                line_index += 1
 
-    return "\n".join(encoded_lines)
+        return PyUnicode_DecodeASCII(<char *>encoded_lines, line_index, NULL)
+    finally:
+        free(encoded)
+        free(encoded_lines)
 
 # 定义表映射
 table_mapper = {
