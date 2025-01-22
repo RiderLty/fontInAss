@@ -80,10 +80,11 @@ for start, end in ranges:
     for code_point in range(start, end + 1):
         PUNCTUATION_UNICODES.add(code_point)
 
-EMBY_WEB_EMBED_FONT = os.environ.get("EMBY_WEB_EMBED_FONT", default=True) == "True"
-print(EMBY_WEB_EMBED_FONT)
+INSERT_JS = ""
+
+EMBY_WEB_EMBED_FONT = os.environ.get("EMBY_WEB_EMBED_FONT", default="True") == "True"
+
 if EMBY_WEB_EMBED_FONT:
-    with open("js/subtitles-octopus.js", 'r', encoding='utf-8') as file:
+    with open(os.path.join(os.path.dirname(ROOT_PATH),"src/js/subtitles-octopus.js") , 'r', encoding='utf-8') as file:
         content = file.read()
     INSERT_JS = jsmin(content)
-else: INSERT_JS = ""

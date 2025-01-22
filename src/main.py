@@ -14,7 +14,7 @@ import coloredlogs
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse
 from uvicorn import Config, Server
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, EMBY_WEB_EMBED_FONT, INSERT_JS
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS
 from dirmonitor import dirmonitor
 from fontManager import fontManager
 from assSubsetter import assSubsetter
@@ -38,14 +38,14 @@ def init_logger():
 
 
 # sub_app = Bottle()
-sub_app = FastAPI()
-js_app = FastAPI()
+# sub_app = FastAPI()
+app = FastAPI()
 
 process = None
 
 userHDR = 0
 
-@sub_app.post("/setHDR/{value}")
+@app.post("/setHDR/{value}")
 async def setHDR(value: int):
     """实时调整HDR，-1 禁用HDR，0 使用环境变量值，大于0 替代当前值"""
     global userHDR
@@ -54,7 +54,7 @@ async def setHDR(value: int):
     return value
 
 
-@sub_app.get("/setHDR",response_class=HTMLResponse)
+@app.get("/setHDR",response_class=HTMLResponse)
 async def setHDRIndex():
     return """
 <!DOCTYPE html>
@@ -143,8 +143,42 @@ async def setHDRIndex():
 </html>
 """
 
+@app.post("/fontinass/process_bytes")
+async def process_bytes(request: Request):
+    subtitleBytes = await request.body()
+    try:
+        error, srt, bytes = await process(subtitleBytes, userHDR)
+        return Response(
+            content=bytes,
+            headers={
+                "error": base64.b64encode((error).encode("utf-8")).decode("ASCII"),
+                "srt": "true" if srt else "false",
+            },
+        )
+    except Exception as e:
+        print(f"ERROR : {str(e)}")
+        return Response(subtitleBytes)
 
-@sub_app.get("/{path:path}")
+
+@app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
+async def subtitles_octopus_js(request: Request, response: Response):
+    try:
+        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+        embyRequestUrl = EMBY_SERVER_URL + sourcePath
+        logger.info(f"JSURL: {embyRequestUrl}")
+        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+    except Exception as e:
+        logger.error(f"获取原始JS出错:{str(e)}")
+        return ""
+    try:
+        jsContent = serverResponse.content.decode('utf-8')
+        jsContent = insert_str(jsContent, INSERT_JS, 'function(options){')
+        return Response(content=jsContent)
+    except Exception as e:
+        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        return Response(content=serverResponse.content)
+
+@app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
     try:
         sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
@@ -164,42 +198,6 @@ async def proxy_pass(request: Request, response: Response):
             logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
             return Response(content=subtitleBytes)
         return Response(content=bytes)
-    except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
-
-
-@sub_app.post("/fontinass/process_bytes")
-async def process_bytes(request: Request):
-    subtitleBytes = await request.body()
-    try:
-        error, srt, bytes = await process(subtitleBytes, userHDR)
-        return Response(
-            content=bytes,
-            headers={
-                "error": base64.b64encode((error).encode("utf-8")).decode("ASCII"),
-                "srt": "true" if srt else "false",
-            },
-        )
-    except Exception as e:
-        print(f"ERROR : {str(e)}")
-        return Response(subtitleBytes)
-
-
-@js_app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
-async def subtitles_octopus_js(request: Request, response: Response):
-    try:
-        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        embyRequestUrl = EMBY_SERVER_URL + sourcePath
-        logger.info(f"JSURL: {embyRequestUrl}")
-        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
-    except Exception as e:
-        logger.error(f"获取原始JS出错:{str(e)}")
-        return ""
-    try:
-        jsContent = serverResponse.content.decode('utf-8')
-        jsContent = insert_str(jsContent, INSERT_JS, 'function(options){')
-        return Response(content=jsContent)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=serverResponse.content)
@@ -228,19 +226,9 @@ if __name__ == "__main__":
     event_handler = dirmonitor(callback=fontManagerInstance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = assSubsetterInstance.process  # 绑定函数
-    sub_serverInstance = getServer(8011, MAIN_LOOP, sub_app)
-    if EMBY_WEB_EMBED_FONT:
-        js_serverInstance = getServer(8010, MAIN_LOOP, js_app)
-        init_logger()
-        MAIN_LOOP.run_until_complete(
-            asyncio.gather(
-                sub_serverInstance.serve(),
-                js_serverInstance.serve(),
-            )
-        )
-    else:
-        init_logger()
-        MAIN_LOOP.run_until_complete(sub_serverInstance.serve())
+    serverInstance = getServer(8011, MAIN_LOOP, app)
+    init_logger()
+    MAIN_LOOP.run_until_complete(serverInstance.serve())
     # # 关闭和清理资源
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
