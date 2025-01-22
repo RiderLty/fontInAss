@@ -590,3 +590,10 @@ def is_postscript_font(table_tag):
     if "glyf" in table_tag and "post" in table_tag:
         return False  # 这表明字体不是纯 PostScript 字体，可能是 TrueType
     return False
+
+def insert_str(original, str, marker):
+    index = original.find(marker)
+    if index != -1:
+        return original[:index + len(marker)] + str + original[index + len(marker):]
+    else:
+        return original

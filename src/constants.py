@@ -3,7 +3,7 @@ import asyncio
 import logging
 import builtins
 import coloredlogs
-
+from jsmin import jsmin
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
@@ -79,3 +79,11 @@ ranges = [
 for start, end in ranges:
     for code_point in range(start, end + 1):
         PUNCTUATION_UNICODES.add(code_point)
+
+EMBY_WEB_EMBED_FONT = os.environ.get("EMBY_WEB_EMBED_FONT", default=True) == "True"
+print(EMBY_WEB_EMBED_FONT)
+if EMBY_WEB_EMBED_FONT:
+    with open("js/subtitles-octopus.js", 'r', encoding='utf-8') as file:
+        content = file.read()
+    INSERT_JS = jsmin(content)
+else: INSERT_JS = ""
