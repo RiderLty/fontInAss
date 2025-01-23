@@ -90,7 +90,8 @@ server {
         
     location ~* /web/bower_components/(.*)/subtitles-octopus.js {
         #修改为你的fontinass服务器地址
-        proxy_pass http://127.0.0.1:8010;
+        #如不需要修改web端渲染，可删除此location
+        proxy_pass http://127.0.0.1:8011;
     }
 
     location / {
@@ -128,13 +129,12 @@ server {
 
 ## 其他配置说明
 
-容器内部端口`8011`为字体处理服务
+容器内部端口`8011`为字体与js处理服务
 
-容器内部端口`8010`为修改emby的JavaScript处理服务
 
 `8012`为nginx反向代理端口，使用此端口访问代理后的服务器
 
-如有其他需求，可暴露`8011`端口用于字幕处理
+如有其他需求，可暴露`8011`端口用于字幕处理与HDR设置等
 
 ## 配置
 
@@ -163,13 +163,12 @@ server {
   -e SRT_2_ASS_FORMAT='Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding'
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
-```
+
 支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
 
 也可通过```http://[ip]:8011/setHDR```临时调整(需开放8011端口)
 
 通过HDR来设置字幕亮度峰值, 例如1000nit，默认-1 不开启
-```
 
 # 原理说明
 
