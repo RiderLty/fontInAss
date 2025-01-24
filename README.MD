@@ -94,6 +94,14 @@ server {
         proxy_pass http://127.0.0.1:8011;
     }
 
+    location ~* /web/modules/htmlvideoplayer/plugin.js {
+        #修改为你的fontinass服务器地址
+        #仅当需要web渲染，且通过https访问时，才需启用此location，否则可删除
+        #见 https://github.com/RiderLty/fontInAss/issues/43
+        proxy_pass http://127.0.0.1:8011;
+    }
+
+
     location / {
         #修改为你的Emby/Jellyfin服务器地址
         proxy_pass $EMBY_SERVER_URL;
