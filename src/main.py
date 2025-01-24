@@ -20,6 +20,7 @@ from fontManager import fontManager
 from assSubsetter import assSubsetter
 from utils import insert_str
 
+
 def init_logger():
     LOGGER_NAMES = (
         "uvicorn",
@@ -45,6 +46,7 @@ process = None
 
 userHDR = 0
 
+
 @app.post("/setHDR/{value}")
 async def setHDR(value: int):
     """实时调整HDR，-1 禁用HDR，0 使用环境变量值，大于0 替代当前值"""
@@ -54,7 +56,7 @@ async def setHDR(value: int):
     return value
 
 
-@app.get("/setHDR",response_class=HTMLResponse)
+@app.get("/setHDR", response_class=HTMLResponse)
 async def setHDRIndex():
     return """
 <!DOCTYPE html>
@@ -143,6 +145,7 @@ async def setHDRIndex():
 </html>
 """
 
+
 @app.post("/fontinass/process_bytes")
 async def process_bytes(request: Request):
     subtitleBytes = await request.body()
@@ -158,6 +161,25 @@ async def process_bytes(request: Request):
     except Exception as e:
         print(f"ERROR : {str(e)}")
         return Response(subtitleBytes)
+
+
+@app.get("/web/modules/htmlvideoplayer/plugin.js")
+async def htmlvideoplayer_plugin_js(request: Request, response: Response):
+    try:
+        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+        embyRequestUrl = EMBY_SERVER_URL + sourcePath
+        logger.info(f"JSURL: {embyRequestUrl}")
+        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+    except Exception as e:
+        logger.error(f"获取原始JS出错:{str(e)}")
+        return ""
+    try:
+        jsContent = serverResponse.content.decode("utf-8")
+        jsContent = jsContent.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
+        return Response(content=jsContent)
+    except Exception as e:
+        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        return Response(content=serverResponse.content)
 
 
 @app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
@@ -178,6 +200,7 @@ async def subtitles_octopus_js(request: Request, response: Response):
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=serverResponse.content)
 
+
 @app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
     try:
@@ -185,7 +208,6 @@ async def proxy_pass(request: Request, response: Response):
         embyRequestUrl = EMBY_SERVER_URL + sourcePath
         logger.info(f"字幕URL: {embyRequestUrl}")
         serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
-        # copyHeaders = {key: str(value) for key, value in response.headers.items()}
     except Exception as e:
         logger.error(f"获取原始字幕出错:{str(e)}")
         return ""
@@ -193,14 +215,15 @@ async def proxy_pass(request: Request, response: Response):
         subtitleBytes = serverResponse.content
         error, srt, bytes = await process(subtitleBytes, userHDR)
         logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
-        # copyHeaders["Content-Length"] = str(len(bytes))
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
             logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
             return Response(content=subtitleBytes)
-        return Response(content=bytes)
+        copyHeaders = {key: str(value) for key, value in serverResponse.headers.items()}
+        copyHeaders["Content-Length"] = str(len(bytes))
+        return Response(content=bytes, headers=copyHeaders)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
+        return Response(content=serverResponse.content, headers={key: str(value) for key, value in serverResponse.headers.items()})
 
 
 def getServer(port, serverLoop, app):

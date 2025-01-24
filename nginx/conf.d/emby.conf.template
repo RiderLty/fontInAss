@@ -18,6 +18,10 @@ server {
         proxy_pass http://127.0.0.1:8011;
     }
 
+    location ~* /web/modules/htmlvideoplayer/plugin.js {
+        proxy_pass $EMBY_WEB_EMBED_FONT;
+    }
+
     location ~* /web/bower_components/(.*)/subtitles-octopus.js {
         proxy_pass $EMBY_WEB_EMBED_FONT;
     }
