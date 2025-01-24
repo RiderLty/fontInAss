@@ -57,7 +57,9 @@ function uudecode(enc) {
     return binaryData.slice(0, index);
 }
 
-if (options.subContent.length > 0){
+
+console.log("subtitles-octopus options : \n",options)
+if (options.subContent && options.subContent.length > 0){
     //console.time('Method 1');
     const enc = analyseAss(options.subContent);
     //console.timeEnd('Method 1');
