@@ -117,7 +117,7 @@ server {
 |     Exo Player      |        android        |                   ❌                    |
 |      Emby 小秘版       |        android        |        ✅<br/>（设置中启用使用mpv播放器后支持）        |
 |        hills        |        android        |                   ✅                    |
-|        yamby        |        android        |        ❌<br/>（Pro版本开启mpv播放器后支持）        |
+|        yamby        |        android        |        ✅<br/>（设置中启用使用mpv播放器后支持）        |
 |  Emby for Android   |        android        |                   ❌                    |
 | Emby for Android TV |        android        |                   ❌                    |
 |       infuse        |          ios          |                   ✅                    |
