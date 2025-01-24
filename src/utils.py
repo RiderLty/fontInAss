@@ -10,6 +10,7 @@ import uharfbuzz
 from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
 from py2cy.c_utils import parse_table
 
+
 def makeMiniSizeFontMap(data):
     """
     {
@@ -71,7 +72,7 @@ def tag2integer(tag: str) -> int:
     对应的 hb_tag_t 整数值。
     """
     assert len(tag) == 4, ValueError("The input string must be exactly 4 characters long.")
-    return int.from_bytes(tag.encode('latin-1'), byteorder='big')
+    return int.from_bytes(tag.encode("latin-1"), byteorder="big")
 
 
 def bytesToHashName(bytes, hash_algorithm="sha256"):
@@ -477,6 +478,7 @@ def assInsertLine(ass_str, endTimeText, insertContent):
 #         else:
 #             index += 1
 
+
 def getFontFileInfos(fontPath):
     file_info_list = []
     font_info_list = []
@@ -582,6 +584,7 @@ def getFontFileInfos(fontPath):
     )
     return file_info_list, font_info_list, font_name_list
 
+
 def is_postscript_font(table_tag):
     # 检查是否包含 CFF 或 CFF2 表
     if "CFF " in table_tag or "CFF2" in table_tag:
@@ -591,9 +594,31 @@ def is_postscript_font(table_tag):
         return False  # 这表明字体不是纯 PostScript 字体，可能是 TrueType
     return False
 
+
 def insert_str(original, str, marker):
     index = original.find(marker)
     if index != -1:
-        return original[:index + len(marker)] + str + original[index + len(marker):]
+        return original[: index + len(marker)] + str + original[index + len(marker) :]
     else:
         return original
+
+
+def subfonts_rename_restore(assText: str) -> str:
+    state = 0
+    name_info = []
+    for line in assText.splitlines():
+        if line.startswith("; Font Subset:"):
+            state = 1
+            name = line[15:23]
+            originName = line[26:].strip()
+            name_info.append((name, originName))
+        else:
+            if state == 1:
+                break
+    if len(name_info) == 0:
+        return assText
+    else:
+        newText = assText
+        for name, originName in name_info:
+            newText = newText.replace(name, originName)
+        return newText

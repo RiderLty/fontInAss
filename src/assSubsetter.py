@@ -5,7 +5,7 @@ import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
 import hdrify
-from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
+from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
 from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 # from analyseAss import analyseAss
@@ -68,6 +68,7 @@ class assSubsetter:
             return ('', srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
+        assText = subfonts_rename_restore(assText)
 
         srt = isSRT(assText)
         if srt:
