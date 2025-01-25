@@ -615,6 +615,8 @@ def subfonts_rename_restore(assText: str) -> str:
         else:
             if state == 1:
                 break
+            elif line.startswith("[V4+ Styles]"):
+                break
     if len(name_info) == 0:
         return assText
     else:
