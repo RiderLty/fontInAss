@@ -218,12 +218,12 @@ async def proxy_pass(request: Request, response: Response):
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
             logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
             return Response(content=subtitleBytes)
-        copyHeaders = {key: str(value) for key, value in serverResponse.headers.items()}
-        copyHeaders["Content-Length"] = str(len(bytes))
-        return Response(content=bytes, headers=copyHeaders)
+        #copyHeaders = {key: str(value) for key, value in serverResponse.headers.items()}
+        #copyHeaders["Content-Length"] = str(len(bytes))
+        return Response(content=bytes)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content, headers={key: str(value) for key, value in serverResponse.headers.items()})
+        return Response(content=serverResponse.content)
 
 
 def getServer(port, serverLoop, app):
