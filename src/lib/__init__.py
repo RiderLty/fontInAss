@@ -19,9 +19,9 @@ lib.analyseAss.restype = ctypes.POINTER(ctypes.c_ubyte)
 
 def analyseAss(assText: str):
     assBytes = assText.encode("UTF-8")  #耗时 考虑直接传递bytes
-    # start = time.perf_counter_ns()
+    start = time.perf_counter_ns()
     result = lib.analyseAss(assBytes)
-    # print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+    print(f"new 实际耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
     itemCount = struct.unpack("i", bytes(result[:4]))[0]
     index = 4
     anaResult = {}

@@ -5,8 +5,8 @@ from py2cy.c_utils import analyseAss as analyseAss_OLD
 from lib import analyseAss as analyseAss_NEW
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 
-for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
-# for file in getAllFiles("./test" , ["ass"]):
+# for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
+for file in getAllFiles("./test" , ["ass"]):
 # for file in ["./test.ass"]:
 # for file in ["./test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass"]:
     print()
