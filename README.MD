@@ -59,6 +59,7 @@ pip install -r ./requirements.txt
 ```
 编译c部分
 ```
+g++ -shared   -o ./src/lib/analyseAss.so   -fPIC ./src/lib/analyseAss.cpp
 python src/py2cy/setup.py
 ```
 添加环境变量 EMBY_SERVER_URL ，例如：

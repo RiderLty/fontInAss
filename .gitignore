@@ -20,3 +20,4 @@ src/py2cy/c_utils.c
 src/py2cy/*.so
 src/py2cy/*.pyd
 build/
+src/lib/analyseAss.so

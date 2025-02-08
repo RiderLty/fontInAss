@@ -220,10 +220,10 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                 styleName = styleData[styleNameIndex].strip().replace("*", "")
                 fontName = styleData[fontNameIndex].strip().replace("@", "")
                 fontWeight = 400
-                if boldIndex != -1 and styleData[boldIndex].strip() == "1":
+                if boldIndex != -1 and styleData[boldIndex].strip() != "0":
                     fontWeight = 700
                 fontItalic = False
-                if italicIndex != -1 and styleData[italicIndex].strip() == "1":
+                if italicIndex != -1 and styleData[italicIndex].strip() != "0":
                     fontItalic = True
                 
                 styleFontName[styleName] = fontName
@@ -367,4 +367,28 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                             currentItalic = lineDefaultItalic
                     if testState == 0:
                         currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
+    return fontCharList
+
+
+def analyseAss__(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
+    cdef list[str] lines = ass_str.splitlines()
+    cdef int state = 0
+    cdef int styleNameIndex = -1
+    cdef int fontNameIndex = -1
+    cdef int boldIndex = -1
+    cdef int italicIndex = -1
+    cdef dict styleFontName = {}  # 默认字典
+    cdef dict styleWeight = {}
+    cdef dict styleItalic = {}
+    cdef int eventStyleIndex = -1
+    cdef int eventTextindex = -1
+    cdef dict fontCharList = dict()
+    cdef str firstStyleName = ''
+    cdef int testState = 0
+    cdef str tag = ''
+    cdef bint drawMod = False
+    # cdef str eventText = ''
+    for line in lines:
+        pass
+            
     return fontCharList

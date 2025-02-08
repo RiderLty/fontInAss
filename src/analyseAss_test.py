@@ -1,75 +1,43 @@
 from pathlib import Path
 import time
 from utils import getAllFiles, logger
-
-# from viztracer import VizTracer  # type: ignore
-
-# from analyseAss import analyseAss
-
-# subtitles: list[str] = []
-# for path in (Path(__file__).parent.parent / "test").iterdir():
-#     print(path)
-#     subtitles.append(path.read_text(encoding="utf-8"))
-
-# with VizTracer() as tracer:
-#     for subtitle in subtitles:
-#         analyseAss(subtitle)
-
-
-
-
-
-
-
-
-# from analyseAss import analyseAss as analyseAss_PY
-# from py2cy.c_utils import analyseAss as analyseAss_CY
-
-# subtitles: list[str] = []
-# for path in (Path(__file__).parent.parent / "test").iterdir():
-#     print(path)
-#     subtitle = path.read_text(encoding="utf-8")
-    
-#     start = time.perf_counter_ns()
-#     for i in range(10):
-#         p = analyseAss_PY(subtitle)
-#     logger.warning(f"py used {(time.perf_counter_ns() - start) / 1000000_0:.2f}ms")
-
-#     start = time.perf_counter_ns()
-#     for i in range(10):
-#         c = analyseAss_CY(subtitle)
-#     logger.warning(f"cy used {(time.perf_counter_ns() - start) / 1000000_0:.2f}ms")
-    
-#     if p != c:
-#         print("NOT SAME")
-#         for key in p:
-#             if p[key] !=  c[key]:
-#                 print(key , p[key] - c[key] , c[key]  - p[key])
-
-
-
-
-
-
-from analyseAss import analyseAss as analyseAss_PY
-from py2cy.c_utils import analyseAss as analyseAss_CY
+from py2cy.c_utils import analyseAss as analyseAss_OLD
+from lib import analyseAss as analyseAss_NEW
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 
-
-# for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
-for file in getAllFiles("/mnt/storage/Projects/fontInAss/test" , ["ass"]):
+for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
+# for file in getAllFiles("./test" , ["ass"]):
+# for file in ["./test.ass"]:
+# for file in ["./test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E02][Ma10p_1080p][x265_flac_aac].chs.ass"]:
+    print()
+    print()
+    print("-"*64)
     print(file)
-    with open(file,"rb") as f:
+    with open(file, "rb") as f:
         subtitle = bytesToStr(f.read())
-    
+
     start = time.perf_counter_ns()
 
-    p = analyseAss_PY(subtitle)
+    old = analyseAss_OLD(subtitle)
 
     middle = time.perf_counter_ns()
 
-    c = analyseAss_CY(subtitle)
+    new = analyseAss_NEW(subtitle)
 
     end = time.perf_counter_ns()
 
-    logger.warning(f"{p == c} {(middle - start) / 1000000:.2f}ms vs {(end - middle ) / 1000000:.2f}ms")
+    logger.warning(f"{old == new} {(middle - start) / 1000000:.2f}ms vs {(end - middle ) / 1000000:.2f}ms")
+
+    for k in old.keys():
+        old[k] = [chr(x) for x in old[k]]
+    for k in new.keys():
+        new[k] = [chr(x) for x in new[k]]
+
+    print("keys(old - new) ", [x for x in old if x not in new])
+    print("keys(new - old) ", [x for x in new if x not in old])
+
+    if len([x for x in old if x not in new]) + len([x for x in new if x not in old]) == 0:
+        for key in old:
+            print(key, "(old - new):", str([x for x in old[key] if x not in new[key]]))
+            print(key, "(new - old):", str([x for x in new[key] if x not in old[key]]))
+    # print(new)

@@ -728,23 +728,38 @@
 #                 print(f"Style Flags: {style_flags}")
 
 
-import ctypes
-import json
-import os
+# import ctypes
+# import json
+# import os
+# import time
+# import freetype
+# import freetype.raw
+# from utils import  getAllFiles, getFontFileInfos
+# from constants import ONLINE_FONTS_DB_PATH
+# with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
+#     onlineMapIndex, onlineMapData = json.load(f)
+
+# "56330MB"
+
+# if __name__ == "__main__":
+#     font_path = "/mnt/storage/Projects/fontInAss/FZLTCH.ttf"
+#     start = time.perf_counter_ns()
+#     for file in getAllFiles("/mnt/storage/Fonts/超级字体整合包 XZ"):
+#         res = getFontFileInfos(file)
+#         # print(res)
+#     print(f"读取 {(time.perf_counter_ns() - start) / 1000000000:.2f}s")
+
+
+
 import time
-import freetype
-import freetype.raw
-from utils import  getAllFiles, getFontFileInfos
-from constants import ONLINE_FONTS_DB_PATH
-with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
-    onlineMapIndex, onlineMapData = json.load(f)
+from py2cy.c_utils import analyseAss as analyseAss_old
+from utils import  getAllFiles
 
-"56330MB"
-
-if __name__ == "__main__":
-    font_path = "/mnt/storage/Projects/fontInAss/FZLTCH.ttf"
+for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
+    print(file)
     start = time.perf_counter_ns()
-    for file in getAllFiles("/mnt/storage/Fonts/超级字体整合包 XZ"):
-        res = getFontFileInfos(file)
-        # print(res)
-    print(f"读取 {(time.perf_counter_ns() - start) / 1000000000:.2f}s")
+    analyseAss_old()
+    
+    
+    print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+    
