@@ -12,7 +12,7 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
-#define DEBUG_ON true
+#define DEBUG_ON false
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
 #else
@@ -390,7 +390,7 @@ extern "C"
                     }
                     // DEBUG("style : [%s] text:[%s]\n", styleName, text);
                     int styleLen = styleEnd - styleStart;
-                    char *styleName = (char *)malloc(styleLen);
+                    char *styleName = (char *)malloc(styleLen + 1);
                     if (styleName == NULL)
                     {
                         return NULL; // 内存分配失败
@@ -447,26 +447,17 @@ extern "C"
                             }
                             else if (ch == '\\')
                             {
-                                textState = -1;
+                                index++;
+                                char ch_next = text[index];
+                                if(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h' ){
+                                    
+                                }else{
+                                    addChar = true;
+                                }
                             }
                             else
                             {
                                 addChar = true;
-                            }
-                        }
-                        else if (textState == -1)
-                        {
-                            textState = 0;
-                            if (ch == '{' || ch == '}')
-                            {
-                                // currentCharSet.add(code);
-                            }
-                            else if (ch == 'n' || ch == 'N' || ch == 'h')
-                            {
-                            }
-                            else
-                            {
-                                // currentCharSet.add(code);
                             }
                         }
                         else if (textState == 1)
@@ -512,8 +503,9 @@ extern "C"
                                 }
                                 else
                                 {
-                                    memcpy(currentFontInfo.fontName, trimLeadingChars(code + 2, '@'), strlen(lineDefaultFontInfo.fontName) + 1);
-                                    DEBUG("fn切换%s\n", trimLeadingChars(code + 2, '@'))
+                                    char * fnName = trimLeadingChars(code + 2, '@');
+                                    memcpy(currentFontInfo.fontName, fnName, strlen(fnName) + 1);
+                                    DEBUG("fn切换%s\n", fnName)
                                 }
                             }
                             else if (startsWith(code, "r"))
@@ -674,4 +666,10 @@ extern "C"
         }
         return result;
     }
+}
+
+
+
+void free(char * ptr){
+    free(ptr);
 }

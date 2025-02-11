@@ -22,3 +22,4 @@ src/py2cy/*.pyd
 build/
 src/lib/analyseAss.so
 test/\[Haruhana] Shigatsu wa Kimi no Uso \[16].chs_jpn.ass
+test.result

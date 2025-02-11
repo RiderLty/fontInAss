@@ -367,28 +367,6 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                             currentItalic = lineDefaultItalic
                     if testState == 0:
                         currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
-    return fontCharList
-
-
-def analyseAss__(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
-    cdef list[str] lines = ass_str.splitlines()
-    cdef int state = 0
-    cdef int styleNameIndex = -1
-    cdef int fontNameIndex = -1
-    cdef int boldIndex = -1
-    cdef int italicIndex = -1
-    cdef dict styleFontName = {}  # 默认字典
-    cdef dict styleWeight = {}
-    cdef dict styleItalic = {}
-    cdef int eventStyleIndex = -1
-    cdef int eventTextindex = -1
-    cdef dict fontCharList = dict()
-    cdef str firstStyleName = ''
-    cdef int testState = 0
-    cdef str tag = ''
-    cdef bint drawMod = False
-    # cdef str eventText = ''
-    for line in lines:
-        pass
-            
+    for key in [ x for x in fontCharList if len(fontCharList[x]) == 0]:
+        del fontCharList[key]
     return fontCharList

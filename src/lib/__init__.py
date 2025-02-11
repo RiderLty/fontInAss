@@ -14,8 +14,8 @@ elif platform.system() in ["Linux", "Darwin"]:
     cdllPath = file_dir / "analyseAss.so"
 
 lib = ctypes.CDLL(cdllPath)
-lib.analyseAss.restype = ctypes.POINTER(ctypes.c_ubyte)
-
+# lib.analyseAss.restype = ctypes.POINTER(ctypes.c_ubyte)
+lib.analyseAss.restype = ctypes.POINTER(ctypes.c_uint8)
 
 def analyseAss(assText: str):
     assBytes = assText.encode("UTF-8")  #耗时 考虑直接传递bytes
@@ -46,7 +46,7 @@ def analyseAss(assText: str):
             value = struct.unpack("i", bytes(result[index : index + 4]))[0]
             index += 4
             valueSet.add(value)
-
+    lib.free(result)
     # print(anaResult)
     return anaResult
 
