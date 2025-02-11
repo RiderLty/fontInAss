@@ -12,7 +12,7 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
-#define DEBUG_ON false
+#define DEBUG_ON true
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
 #else
@@ -228,7 +228,7 @@ bool isDigitStr(char *str)
 
 extern "C"
 {
-    unsigned char *analyseAss(const char *assStr )
+    unsigned char *analyseAss(const char *assStr)
     {
         unordered_map<char *, fontKey, CharPtrHash, CharPtrEqual> styleFont;
         unordered_map<fontKey, set<int>, fontKeyHash> fontCharList;
@@ -239,7 +239,8 @@ extern "C"
         char *defaultStyleName = NULL;
         for (char *line = strtok_r((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_r(NULL, "\n", &lineSplitPtr))
         {
-            if (strlen(line) < 7) // 小于最小长度，不用处理
+            DEBUG("%s\n",line);
+            if (strlen(line) < 1) // 小于最小长度，不用处理
                 continue;
 
             if (state == 0 && startsWith(line, "[V4+ Styles]"))
@@ -399,7 +400,7 @@ extern "C"
                     char *text = dialogue + textStart;
                     styleName = trimLeadingChars(strip(styleName), '*');
                     struct fontKey lineDefaultFontInfo;
-                    if (styleFont.find(styleName) == styleFont.end()) 
+                    if (styleFont.find(styleName) == styleFont.end())
                     {
                         DEBUG("未知style 使用默认 %s \n", defaultStyleName);
                         lineDefaultFontInfo = styleFont[defaultStyleName];
@@ -473,7 +474,6 @@ extern "C"
                             codeStart = index;
                             while (true)
                             {
-                                index++;
                                 if (text[index] == '}')
                                 {
                                     text[index] = '\0';
@@ -486,6 +486,7 @@ extern "C"
                                     textState = 1;
                                     break;
                                 }
+                                index++;
                             }
                             char *code = text + codeStart;
                             // DEBUG("%s\n", code);
@@ -588,12 +589,7 @@ extern "C"
                         if (addChar)
                         {
                             int unicode = nextCode(text, &index);
-                            // 添加到set
-                            if (unicode == '\r')
-                            {
-                                continue;
-                            }
-                            else
+                            if (unicode != '\r')
                             {
                                 DEBUG("%s\t%d\t%d:[%s]\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic, intToUnicodeChar(unicode));
                                 currentCharSet->insert(unicode);
@@ -614,9 +610,12 @@ extern "C"
         {
             const fontKey &key = pair.first;
             const std::set<int> &value = pair.second;
-            resultSize += 4 + (strlen(key.fontName) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
-            resultSize += value.size() * 4;
-            itemCount++;
+            if (value.size() != 0)
+            {
+                resultSize += 4 + (strlen(key.fontName) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
+                resultSize += value.size() * 4;
+                itemCount++;
+            }
         }
 
         if (DEBUG_ON)
@@ -625,12 +624,15 @@ extern "C"
             {
                 const fontKey &key = pair.first;
                 const std::set<int> &value = pair.second;
-                DEBUG("{%s,%d,%d}:[", key.fontName, key.weight, key.italic);
-                for (const int &val : value)
+                if (value.size() != 0)
                 {
-                    DEBUG("%s", intToUnicodeChar(val));
+                    DEBUG("{%s,%d,%d}:[", key.fontName, key.weight, key.italic);
+                    for (const int &val : value)
+                    {
+                        DEBUG("%s", intToUnicodeChar(val));
+                    }
+                    DEBUG("]\n\n");
                 }
-                DEBUG("]\n\n");
             }
         }
         // const result = [];
@@ -644,7 +646,8 @@ extern "C"
         {
             const fontKey &key = pair.first;
             const std::set<int> &value = pair.second;
-
+            if (value.size() == 0)
+                continue;
             int nameLen = strlen(key.fontName);
             memcpy(ptr, &nameLen, sizeof(int));
             ptr += sizeof(int);
