@@ -12,7 +12,7 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
-#define DEBUG_ON false
+#define DEBUG_ON true
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
 #else
@@ -239,7 +239,7 @@ extern "C"
         char *defaultStyleName = NULL;
         for (char *line = strtok_r((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_r(NULL, "\n", &lineSplitPtr))
         {
-            DEBUG("%s\n",line);
+            DEBUG("%s\n", line);
             if (strlen(line) < 1) // 小于最小长度，不用处理
                 continue;
 
@@ -312,7 +312,7 @@ extern "C"
                         }
                         else if (index == italicIndex)
                         {
-                            italic = atoi(strip(token)); // 0 则false 其他都为true
+                            italic = atoi(strip(token)) == 0 ? 0 : 1; // 0 则false 其他都为true
                         }
                         token = strtok_r(NULL, ",", &tokenSplitPtr);
                         index++;
@@ -449,9 +449,11 @@ extern "C"
                             {
                                 index++;
                                 char ch_next = text[index];
-                                if(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h' ){
-                                    
-                                }else{
+                                if (ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h')
+                                {
+                                }
+                                else
+                                {
                                     addChar = true;
                                 }
                             }
@@ -503,7 +505,7 @@ extern "C"
                                 }
                                 else
                                 {
-                                    char * fnName = trimLeadingChars(code + 2, '@');
+                                    char *fnName = trimLeadingChars(code + 2, '@');
                                     memcpy(currentFontInfo.fontName, fnName, strlen(fnName) + 1);
                                     DEBUG("fn切换%s\n", fnName)
                                 }
@@ -552,20 +554,26 @@ extern "C"
                                     currentFontInfo.weight = lineDefaultFontInfo.weight;
                                 }
                             }
-                            else if (startsWith(code, "i"))
+                            else if (startsWith(code, "i")) //
                             {
                                 fontKeyChanged = true;
-                                if (code[1] == '0')
-                                {
-                                    currentFontInfo.italic = 0;
-                                }
-                                else if (code[1] == '1')
-                                {
-                                    currentFontInfo.italic = 1;
-                                }
-                                else if (code[1] == '\0')
+                                if (code[1] == '\0')
                                 {
                                     currentFontInfo.italic = lineDefaultFontInfo.italic;
+                                }
+                                else
+                                {
+                                    if (isDigitStr(code + 1))
+                                    {
+                                        if (code[1] == '0')
+                                        {
+                                            currentFontInfo.italic = 0;
+                                        }
+                                        else
+                                        {
+                                            currentFontInfo.italic = 1;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -574,6 +582,7 @@ extern "C"
 
                             if (fontCharList.find(currentFontInfo) == fontCharList.end())
                             {
+                                DEBUG("(%s,%d,%d)未找到，创建新的\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic);
                                 fontCharList[currentFontInfo] = set<int>();
                             }
                             currentCharSet = &fontCharList[currentFontInfo];
@@ -583,7 +592,7 @@ extern "C"
                             int unicode = nextCode(text, &index);
                             if (unicode != '\r')
                             {
-                                DEBUG("%s\t%d\t%d:[%s]\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic, intToUnicodeChar(unicode));
+                                DEBUG("%s\t%d\t%d:[%s(%d)]\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic, intToUnicodeChar(unicode), unicode);
                                 currentCharSet->insert(unicode);
                             }
                         }
@@ -668,8 +677,7 @@ extern "C"
     }
 }
 
-
-
-void free(char * ptr){
+void free(char *ptr)
+{
     free(ptr);
 }
