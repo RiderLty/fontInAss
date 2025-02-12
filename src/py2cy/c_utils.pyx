@@ -306,6 +306,10 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                     if char == "\\":
                         testState = 2#一个代码段开始
                         codeStart = index
+                    elif char == "}":
+                        testState = 0
+                    else:
+                        pass
                 elif testState == 2:#代码段
                     _end = codeEnd
                     if char == "\\":#下一个代码段开始
