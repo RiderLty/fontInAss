@@ -17,11 +17,15 @@ lib = ctypes.CDLL(cdllPath)
 # lib.analyseAss.restype = ctypes.POINTER(ctypes.c_ubyte)
 lib.analyseAss.restype = ctypes.POINTER(ctypes.c_uint8)
 
-def analyseAss(assText: str):
-    assBytes = assText.encode("UTF-8")  #耗时 考虑直接传递bytes
+
+def analyseAss(assText: str = None, __assBytes: bytes = None):
+    if __assBytes == None:
+        assBytes = assText.encode("UTF-8")  # 耗时 考虑直接传递bytes
+    else:
+        assBytes = __assBytes
     start = time.perf_counter_ns()
     result = lib.analyseAss(assBytes)
-    print(f"new 实际耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+    # print(f"new 实际耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
     itemCount = struct.unpack("i", bytes(result[:4]))[0]
     index = 4
     anaResult = {}
