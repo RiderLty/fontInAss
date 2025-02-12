@@ -12,7 +12,7 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
-#define DEBUG_ON true
+#define DEBUG_ON false
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
 #else
@@ -237,9 +237,10 @@ extern "C"
         int eventStyleIndex, eventTextIndex;
         char *lineSplitPtr = NULL;
         char *defaultStyleName = NULL;
+        char code[1024 * 1024];
         for (char *line = strtok_r((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_r(NULL, "\n", &lineSplitPtr))
         {
-            DEBUG("%s\n", line);
+            DEBUG("line:%s\n", line);
             if (strlen(line) < 1) // 小于最小长度，不用处理
                 continue;
 
@@ -435,26 +436,36 @@ extern "C"
                         {
                             fontKeyChanged = false;
                             if (ch == '{')
+                            // 这里简直太不规范了！字幕组怎么搞的都有可能
+                            // 直接{文字}的有，{=3}的有，{3\fnNAME}的也有
+                            // 这里仅依照MPV的测试结果解析
                             {
-                                while (text[index] != '\\')
+                                while (text[index] != '}' && text[index] != '\0' && text[index] != '\\' && index < textLen)
                                 {
                                     index++;
                                 }
-                                textState = 1;
+                                if(text[index] == '\\'){
+                                    textState = 1;
+                                }
                             }
                             else if (drawMod)
                             {
                             }
-                            else if (ch == '\\')
+                            else if (ch == '\\')// 转义字符
                             {
-                                index++;
-                                char ch_next = text[index];
-                                if (ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h')
+                                // index++;
+                                char ch_next = text[index + 1];// 检查下一个字符
+                                if (ch_next == '\0')
                                 {
+                                    break;
                                 }
                                 else
                                 {
-                                    addChar = true;
+                                    index++;//不为结束则跳转下一字符
+                                    if (!(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h'))
+                                    {
+                                        addChar = true;//不为特殊字符则添加
+                                    }
                                 }
                             }
                             else
@@ -469,20 +480,18 @@ extern "C"
                             {
                                 if (text[index] == '}')
                                 {
-                                    text[index] = '\0';
                                     textState = 0;
                                     break;
                                 }
                                 if (text[index] == '\\')
                                 {
-                                    text[index] = '\0';
                                     textState = 1;
                                     break;
                                 }
                                 index++;
                             }
-                            char *code = text + codeStart;
-                            // DEBUG("%s\n", code);
+                            memcpy(code, text + codeStart, index - codeStart);
+                            code[index - codeStart] = '\0';
                             if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
                             {
                                 // pass
@@ -495,6 +504,22 @@ extern "C"
                             {
                                 drawMod = false;
                             }
+
+                            // else if (startsWith(code, "p"))
+                            // {
+                            //     if (isDigitStr(code + 1))
+                            //     {
+                            //         int paint = atoi(code + 1);
+                            //         if (paint == 0)
+                            //         {
+                            //             drawMod = false;
+                            //         }
+                            //         else
+                            //         {
+                            //             drawMod = true;
+                            //         }
+                            //     }
+                            // }
                             else if (startsWith(code, "fn"))
                             {
                                 fontKeyChanged = true;
