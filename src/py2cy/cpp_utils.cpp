@@ -497,30 +497,30 @@ extern "C"
                             {
                                 // pass
                             }
-                            else if (strcmp(code, "p1") == 0)
-                            {
-                                drawMod = true;
-                            }
-                            else if (strcmp(code, "p0") == 0)
-                            {
-                                drawMod = false;
-                            }
-
-                            // else if (startsWith(code, "p"))
+                            // else if (strcmp(code, "p1") == 0)
                             // {
-                            //     if (isDigitStr(code + 1))
-                            //     {
-                            //         int paint = atoi(code + 1);
-                            //         if (paint == 0)
-                            //         {
-                            //             drawMod = false;
-                            //         }
-                            //         else
-                            //         {
-                            //             drawMod = true;
-                            //         }
-                            //     }
+                            //     drawMod = true;
                             // }
+                            // else if (strcmp(code, "p0") == 0)
+                            // {
+                            //     drawMod = false;
+                            // }
+
+                            else if (startsWith(code, "p"))
+                            {
+                                if (isDigitStr(code + 1))
+                                {
+                                    int paint = atoi(code + 1);
+                                    if (paint == 0)
+                                    {
+                                        drawMod = false;
+                                    }
+                                    else
+                                    {
+                                        drawMod = true;
+                                    }
+                                }
+                            }
                             else if (startsWith(code, "fn"))
                             {
                                 fontKeyChanged = true;
