@@ -26,7 +26,7 @@ jobs:
       - name: Calculate file hash
         id: calculate_hash
         run: |
-          HASH=$(cat requirements.txt src/py2cy/c_utils.pyx src/py2cy/setup.py | sha256sum  | awk '{ print $1 }')
+          HASH=$(cat requirements.txt src/py2cy/c_utils.pyx src/py2cy/setup.py src/py2cy/c_utils.cpp | sha256sum  | awk '{ print $1 }')
           echo "FILE_HASH=$HASH" >> $GITHUB_ENV
 
       - name: Build and push without nginx
