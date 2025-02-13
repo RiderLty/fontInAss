@@ -232,6 +232,7 @@ extern "C"
     {
         unordered_map<char *, fontKey, CharPtrHash, CharPtrEqual> styleFont;
         unordered_map<fontKey, set<int>, fontKeyHash> fontCharList;
+        unordered_map<char *, char *, CharPtrHash, CharPtrEqual> fontSubsetRename;
         int state = 0;
         int styleNameIndex, fontNameIndex, boldIndex, italicIndex;
         int eventStyleIndex, eventTextIndex;
@@ -244,9 +245,31 @@ extern "C"
             if (strlen(line) < 1) // 小于最小长度，不用处理
                 continue;
 
-            if (state == 0 && startsWith(line, "[V4+ Styles]"))
+            if (state == 0)
             {
-                state = 1;
+                if (startsWith(line, "[V4+ Styles]"))
+                {
+                    state = 1;
+                }
+                else if (startsWith(line, "; Font Subset:"))
+                {
+                    char *replacedName = (char *)malloc(9);
+                    char *originName = (char *)malloc(512);
+
+                    memcpy(replacedName, line + strlen("; Font Subset: "), 8);
+                    replacedName[8] = '\0';
+
+                    memcpy(originName, line + strlen("; Font Subset: 59W6OVGX - "), strlen(line + strlen("; Font Subset: 59W6OVGX - ")));
+
+                    for (int i = strlen(line + strlen("; Font Subset: 59W6OVGX - ")) - 1; i > 0 && isspace(originName[i]); i--)
+                    {
+                        originName[i] = '\0';
+                    }
+
+                    DEBUG("[%s] <= [%s]\n", replacedName, originName);
+
+                    fontSubsetRename[replacedName] = originName;
+                }
             }
             else if (state == 1)
             {
@@ -495,17 +518,7 @@ extern "C"
                             code[index - codeStart] = '\0';
                             if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
                             {
-                                // pass
                             }
-                            // else if (strcmp(code, "p1") == 0)
-                            // {
-                            //     drawMod = true;
-                            // }
-                            // else if (strcmp(code, "p0") == 0)
-                            // {
-                            //     drawMod = false;
-                            // }
-
                             else if (startsWith(code, "p"))
                             {
                                 if (isDigitStr(code + 1))
@@ -526,7 +539,6 @@ extern "C"
                                 fontKeyChanged = true;
                                 if (code[2] == '\0')
                                 {
-                                    // currentFontInfo.fontName = lineDefaultFontInfo.fontName;
                                     memcpy(currentFontInfo.fontName, &lineDefaultFontInfo.fontName, strlen(lineDefaultFontInfo.fontName) + 1);
                                 }
                                 else
@@ -639,10 +651,27 @@ extern "C"
             const std::set<int> &value = pair.second;
             if (value.size() != 0)
             {
-                resultSize += 4 + (strlen(key.fontName) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
-                resultSize += value.size() * 4;
-                itemCount++;
+
+                if (fontSubsetRename.find((char *)key.fontName) != fontSubsetRename.end())
+                {
+                    resultSize += 4 + (strlen(fontSubsetRename[(char *)key.fontName]) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
+                    resultSize += value.size() * 4;
+                    itemCount++;
+                }
+                else
+                {
+                    resultSize += 4 + (strlen(key.fontName) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
+                    resultSize += value.size() * 4;
+                    itemCount++;
+                }
             }
+        }
+        resultSize += 4; // 存储fontSubsetRename数量
+        int subRenameItemCount = 0;
+        for (const auto &pair : fontSubsetRename)
+        {
+            subRenameItemCount++;
+            resultSize += (strlen(pair.second) + 4 + 8); // key固定8字节
         }
 
         if (DEBUG_ON)
@@ -661,6 +690,11 @@ extern "C"
                     DEBUG("]\n\n");
                 }
             }
+
+            for (const auto &pair : fontSubsetRename)
+            {
+                DEBUG("fontSubsetRename [%s] <= [%s]\n", pair.first, pair.second);
+            }
         }
         // const result = [];
         DEBUG("resultSize = %d\n", resultSize);
@@ -675,12 +709,22 @@ extern "C"
             const std::set<int> &value = pair.second;
             if (value.size() == 0)
                 continue;
-            int nameLen = strlen(key.fontName);
+
+            char fname[512] = {'\0'};
+            if (fontSubsetRename.find((char *)key.fontName) != fontSubsetRename.end())
+            {
+                memcpy(fname, fontSubsetRename[(char *)key.fontName], 512);
+            }
+            else
+            {
+                memcpy(fname, key.fontName, 512);
+            }
+
+            int nameLen = strlen(fname);
             memcpy(ptr, &nameLen, sizeof(int));
             ptr += sizeof(int);
-
-            memcpy(ptr, key.fontName, strlen(key.fontName));
-            ptr += strlen(key.fontName);
+            memcpy(ptr,fname, strlen(fname));
+            ptr += strlen(fname);
 
             memcpy(ptr, &key.weight, sizeof(int));
             ptr += sizeof(int);
@@ -698,6 +742,20 @@ extern "C"
                 memcpy(ptr, &val, sizeof(int));
                 ptr += sizeof(int);
             }
+        }
+        memcpy(ptr, &subRenameItemCount, sizeof(int));
+        ptr += sizeof(int);
+        for (const auto &pair : fontSubsetRename)
+        {
+            memcpy(ptr, pair.first, 8);
+            ptr += 8;
+
+            int nameLen = strlen(pair.second);
+            memcpy(ptr, &nameLen, sizeof(int));
+            ptr += sizeof(int);
+
+            memcpy(ptr, pair.second, strlen(pair.second));
+            ptr += strlen(pair.second);
         }
         return result;
     }

@@ -752,14 +752,12 @@
 
 
 import time
-from py2cy.c_utils import analyseAss as analyseAss_old
+from py2cy.c_utils import analyseAss
 from utils import  getAllFiles
 
 for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
     print(file)
     start = time.perf_counter_ns()
-    analyseAss_old()
-    
-    
+    analyseAss(assBytes = open(file,'rb').read())
     print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
     

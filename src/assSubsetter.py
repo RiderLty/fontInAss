@@ -1,6 +1,7 @@
 import time
 import asyncio
 import traceback
+import chardet
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
@@ -8,8 +9,10 @@ import hdrify
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
 from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
+
 
 class assSubsetter:
     def __init__(self, fontManagerInstance: fontManager) -> None:
@@ -36,9 +39,7 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             # missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
-            missGlyph = "".join(
-                [chr(x) for x in unicodeSet.difference(face.unicodes)
-                 if x not in PUNCTUATION_UNICODES])
+            missGlyph = "".join([chr(x) for x in unicodeSet.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
             if missGlyph == "":
                 return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
@@ -65,11 +66,10 @@ class assSubsetter:
             (srt, resultBytes) = self.cache[bytesHash]
             self.cache[bytesHash] = (srt, resultBytes)
             logger.info(f"字幕缓存命中 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
-            return ('', srt, resultBytes)
+            return ("", srt, resultBytes)
 
         assText = bytesToStr(subtitleBytes)
-        assText = subfonts_rename_restore(assText)
-
+        # assText = subfonts_rename_restore(assText)
         srt = isSRT(assText)
         if srt:
             if SRT_2_ASS_FORMAT and SRT_2_ASS_FORMAT:
@@ -93,7 +93,14 @@ class assSubsetter:
 
         embedFontsText = "[Fonts]\n"
         start = time.perf_counter_ns()
-        fontCharList = analyseAss(assText)
+
+        if "utf-8" in chardet.detect(subtitleBytes)["encoding"].lower() and not srt:
+            fontCharList, subRename = analyseAss(assBytes=subtitleBytes)
+        else:
+            fontCharList, subRename = analyseAss(assText=assText)
+        for replacedName, originName in subRename.items():
+            assText = assText.replace(replacedName, originName)
+
         assFinish = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
         errors = []

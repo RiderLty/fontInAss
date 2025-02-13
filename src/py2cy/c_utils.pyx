@@ -4,6 +4,7 @@ from typing import Dict, Optional, Set, Tuple
 from cpython.unicode cimport PyUnicode_DecodeASCII
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
+import time
 
 cdef int CHUNK_SIZE = 80
 cdef int OFFSET = 33
@@ -382,7 +383,10 @@ cdef extern from "cpp_utils.cpp":
 
 def analyseAss(assText: str = None, assBytes: bytes = None):
     if assBytes == None:
+        start = time.perf_counter_ns()
         assChars = assText.encode("UTF-8")  # 耗时 考虑直接传递bytes
+        middle = time.perf_counter_ns()
+        print("encode time:", (middle - start) / 1000000 , "ms")
     else:
         assChars = assBytes
     cdef unsigned char* result = analyseAss_CPP(assChars)
@@ -410,5 +414,16 @@ def analyseAss(assText: str = None, assBytes: bytes = None):
             value = struct.unpack("i", result[index : index + 4])[0]
             index += 4
             valueSet.add(value)
-    ptrFree(result)
-    return anaResult
+    
+    subRenameItemCount = struct.unpack("i", result[index : index + 4])[0]
+    index += 4
+    subRename = {}
+    for i in range(subRenameItemCount):
+        replacedName = result[index : index + 8].decode("utf-8")
+        index += 8
+        originNameLen = struct.unpack("i",result[index : index + 4])[0]
+        index += 4
+        originName = result[index : index + originNameLen].decode("utf-8")
+        index += originNameLen
+        subRename[replacedName] = originName
+    return anaResult,subRename
