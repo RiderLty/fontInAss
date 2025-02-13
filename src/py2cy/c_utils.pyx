@@ -173,7 +173,7 @@ def parse_table(bytes table_bytes, str table_name, tag_filter: Optional[list] = 
 
 
 
-def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
+def analyseAss_OLD(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
     cdef list[str] lines = ass_str.splitlines()
     cdef int state = 0
     cdef int styleNameIndex = -1
@@ -374,3 +374,41 @@ def analyseAss(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
     for key in [ x for x in fontCharList if len(fontCharList[x]) == 0]:
         del fontCharList[key]
     return fontCharList
+
+cdef extern from "cpp_utils.cpp":
+    unsigned char *analyseAss(const char *assStr)
+    void ptrFree(unsigned char *ptr)
+    
+
+def analyseAssWarp(assText: str = None, assBytes: bytes = None):
+    if assBytes == None:
+        assChars = assText.encode("UTF-8")  # 耗时 考虑直接传递bytes
+    else:
+        assChars = assBytes
+    cdef unsigned char* result = analyseAss(assChars)
+    itemCount = struct.unpack("i", result[:4])[0]
+    index = 4
+    anaResult = {}
+    for i in range(itemCount):
+        nameLen = struct.unpack("i",result[index : index + 4])[0]
+        index += 4
+        fontNname = result[index : index + nameLen].decode("utf-8")
+        index += nameLen
+        weight = struct.unpack("i", result[index : index + 4])[0]
+        index += 4
+
+        italic = 0 != struct.unpack("i", result[index : index + 4])[0]
+        index += 4
+
+        resultLen = struct.unpack("i", result[index : index + 4])[0]
+        index += 4
+
+        valueSet = set()
+        anaResult[(fontNname, weight, italic)] = valueSet
+
+        for i in range(resultLen):
+            value = struct.unpack("i", result[index : index + 4])[0]
+            index += 4
+            valueSet.add(value)
+    ptrFree(result)
+    return anaResult

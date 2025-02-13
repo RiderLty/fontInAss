@@ -1,8 +1,8 @@
 from pathlib import Path
 import time
 from utils import getAllFiles, logger
-from py2cy.c_utils import analyseAss as analyseAss_OLD
-from lib import analyseAss as analyseAss_NEW
+from py2cy.c_utils import analyseAss_OLD
+from py2cy.c_utils import analyseAssWarp as analyseAss_NEW
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 import re
 
@@ -18,7 +18,7 @@ for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
         with open(file, "rb") as f:
             subtitleBytes = f.read()
             subtitle = bytesToStr(subtitleBytes)
-        
+    
         # for line in subtitle.split("\n"):
         #     if re.search(r'{[^\\]', line):
         #         print(f"{line}")
@@ -33,14 +33,9 @@ for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
         new = analyseAss_NEW(assText = subtitle)
 
         end = time.perf_counter_ns()
-
-
+        logger.warning(f"{old == new} {(middle - start) / 1000000:.2f}ms vs {(end - middle ) / 1000000:.2f}ms")
         if old == new :
             continue
-        
-       
-        logger.warning(f"{old == new} {(middle - start) / 1000000:.2f}ms vs {(end - middle ) / 1000000:.2f}ms")
-        
         for k in old.keys():
             old[k] = [chr(x) for x in old[k]]
         for k in new.keys():

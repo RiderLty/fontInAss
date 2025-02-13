@@ -444,27 +444,28 @@ extern "C"
                                 {
                                     index++;
                                 }
-                                if(text[index] == '\\'){
+                                if (text[index] == '\\')
+                                {
                                     textState = 1;
                                 }
                             }
                             else if (drawMod)
                             {
                             }
-                            else if (ch == '\\')// 转义字符
+                            else if (ch == '\\') // 转义字符
                             {
                                 // index++;
-                                char ch_next = text[index + 1];// 检查下一个字符
+                                char ch_next = text[index + 1]; // 检查下一个字符
                                 if (ch_next == '\0')
                                 {
                                     break;
                                 }
                                 else
                                 {
-                                    index++;//不为结束则跳转下一字符
+                                    index++; // 不为结束则跳转下一字符
                                     if (!(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h'))
                                     {
-                                        addChar = true;//不为特殊字符则添加
+                                        addChar = true; // 不为特殊字符则添加
                                     }
                                 }
                             }
@@ -700,9 +701,9 @@ extern "C"
         }
         return result;
     }
-}
 
-void free(char *ptr)
-{
-    free(ptr);
+    void ptrFree(unsigned char *ptr)
+    {
+        free(ptr);
+    }
 }

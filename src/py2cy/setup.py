@@ -9,6 +9,8 @@ extensions = [
     Extension(
         "c_utils",  # 模块名
         [(file_dir / "c_utils.pyx").as_posix()],  # 源文件路径
+        language="c++",  # 指定使用 C++
+        
     )
 ]
 
