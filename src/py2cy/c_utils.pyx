@@ -376,16 +376,16 @@ def analyseAss_OLD(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
     return fontCharList
 
 cdef extern from "cpp_utils.cpp":
-    unsigned char *analyseAss(const char *assStr)
+    unsigned char *analyseAss_CPP(const char *assStr)
     void ptrFree(unsigned char *ptr)
     
 
-def analyseAssWarp(assText: str = None, assBytes: bytes = None):
+def analyseAss(assText: str = None, assBytes: bytes = None):
     if assBytes == None:
         assChars = assText.encode("UTF-8")  # 耗时 考虑直接传递bytes
     else:
         assChars = assBytes
-    cdef unsigned char* result = analyseAss(assChars)
+    cdef unsigned char* result = analyseAss_CPP(assChars)
     itemCount = struct.unpack("i", result[:4])[0]
     index = 4
     anaResult = {}

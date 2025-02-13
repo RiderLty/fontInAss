@@ -3185,6 +3185,7 @@ static const char __pyx_k_testState[] = "testState";
 static const char __pyx_k_textStart[] = "textStart";
 static const char __pyx_k_IndexError[] = "IndexError";
 static const char __pyx_k_ValueError[] = "ValueError";
+static const char __pyx_k_analyseAss[] = "analyseAss";
 static const char __pyx_k_binaryData[] = "binaryData";
 static const char __pyx_k_byte_slice[] = "byte_slice";
 static const char __pyx_k_bytes_data[] = "bytes_data";
@@ -3249,7 +3250,6 @@ static const char __pyx_k_usDefaultChar[] = "usDefaultChar";
 static const char __pyx_k_usWeightClass[] = "usWeightClass";
 static const char __pyx_k_xAvgCharWidth[] = "xAvgCharWidth";
 static const char __pyx_k_AssertionError[] = "AssertionError";
-static const char __pyx_k_analyseAssWarp[] = "analyseAssWarp";
 static const char __pyx_k_analyseAss_OLD[] = "analyseAss_OLD";
 static const char __pyx_k_currentCharSet[] = "currentCharSet";
 static const char __pyx_k_eventTextindex[] = "eventTextindex";
@@ -3386,7 +3386,7 @@ static PyObject *__pyx_pf_7c_utils_uuencode(CYTHON_UNUSED PyObject *__pyx_self, 
 static PyObject *__pyx_lambda_funcdef_lambda7(PyObject *__pyx_self, PyObject *__pyx_v_bytes_data); /* proto */
 static PyObject *__pyx_pf_7c_utils_2parse_table(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_table_bytes, PyObject *__pyx_v_table_name, PyObject *__pyx_v_tag_filter); /* proto */
 static PyObject *__pyx_pf_7c_utils_4analyseAss_OLD(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ass_str); /* proto */
-static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_assText, PyObject *__pyx_v_assBytes); /* proto */
+static PyObject *__pyx_pf_7c_utils_6analyseAss(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_assText, PyObject *__pyx_v_assBytes); /* proto */
 static PyObject *__pyx_tp_new_7c_utils___pyx_scope_struct__parse_table(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_array(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_Enum(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -3525,7 +3525,7 @@ typedef struct {
   PyObject *__pyx_n_s_add;
   PyObject *__pyx_n_s_allocate_buffer;
   PyObject *__pyx_n_s_anaResult;
-  PyObject *__pyx_n_s_analyseAssWarp;
+  PyObject *__pyx_n_s_analyseAss;
   PyObject *__pyx_n_s_analyseAss_OLD;
   PyObject *__pyx_kp_u_and;
   PyObject *__pyx_n_s_assBytes;
@@ -4072,7 +4072,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_add);
   Py_CLEAR(clear_module_state->__pyx_n_s_allocate_buffer);
   Py_CLEAR(clear_module_state->__pyx_n_s_anaResult);
-  Py_CLEAR(clear_module_state->__pyx_n_s_analyseAssWarp);
+  Py_CLEAR(clear_module_state->__pyx_n_s_analyseAss);
   Py_CLEAR(clear_module_state->__pyx_n_s_analyseAss_OLD);
   Py_CLEAR(clear_module_state->__pyx_kp_u_and);
   Py_CLEAR(clear_module_state->__pyx_n_s_assBytes);
@@ -4597,7 +4597,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_add);
   Py_VISIT(traverse_module_state->__pyx_n_s_allocate_buffer);
   Py_VISIT(traverse_module_state->__pyx_n_s_anaResult);
-  Py_VISIT(traverse_module_state->__pyx_n_s_analyseAssWarp);
+  Py_VISIT(traverse_module_state->__pyx_n_s_analyseAss);
   Py_VISIT(traverse_module_state->__pyx_n_s_analyseAss_OLD);
   Py_VISIT(traverse_module_state->__pyx_kp_u_and);
   Py_VISIT(traverse_module_state->__pyx_n_s_assBytes);
@@ -5140,7 +5140,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_add __pyx_mstate_global->__pyx_n_s_add
 #define __pyx_n_s_allocate_buffer __pyx_mstate_global->__pyx_n_s_allocate_buffer
 #define __pyx_n_s_anaResult __pyx_mstate_global->__pyx_n_s_anaResult
-#define __pyx_n_s_analyseAssWarp __pyx_mstate_global->__pyx_n_s_analyseAssWarp
+#define __pyx_n_s_analyseAss __pyx_mstate_global->__pyx_n_s_analyseAss
 #define __pyx_n_s_analyseAss_OLD __pyx_mstate_global->__pyx_n_s_analyseAss_OLD
 #define __pyx_kp_u_and __pyx_mstate_global->__pyx_kp_u_and
 #define __pyx_n_s_assBytes __pyx_mstate_global->__pyx_n_s_assBytes
@@ -25710,21 +25710,21 @@ static PyObject *__pyx_pf_7c_utils_4analyseAss_OLD(CYTHON_UNUSED PyObject *__pyx
 /* "c_utils.pyx":383
  * 
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
+ * def analyseAss(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
  *     if assBytes == None:
  *         assChars = assText.encode("UTF-8")  #  bytes
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7c_utils_7analyseAssWarp(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_7c_utils_7analyseAss(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_7c_utils_7analyseAssWarp = {"analyseAssWarp", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7c_utils_7analyseAssWarp, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7c_utils_7analyseAssWarp(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_7c_utils_7analyseAss = {"analyseAss", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_7c_utils_7analyseAss, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7c_utils_7analyseAss(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -25743,7 +25743,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("analyseAssWarp (wrapper)", 0);
+  __Pyx_RefNannySetupContext("analyseAss (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_MACROS
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -25784,7 +25784,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "analyseAssWarp") < 0)) __PYX_ERR(0, 383, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "analyseAss") < 0)) __PYX_ERR(0, 383, __pyx_L3_error)
       }
     } else {
       switch (__pyx_nargs) {
@@ -25801,7 +25801,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("analyseAssWarp", 0, 0, 2, __pyx_nargs); __PYX_ERR(0, 383, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("analyseAss", 0, 0, 2, __pyx_nargs); __PYX_ERR(0, 383, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -25811,13 +25811,13 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
     }
   }
-  __Pyx_AddTraceback("c_utils.analyseAssWarp", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("c_utils.analyseAss", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_assText), (&PyUnicode_Type), 1, "assText", 1))) __PYX_ERR(0, 383, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_assBytes), (&PyBytes_Type), 1, "assBytes", 1))) __PYX_ERR(0, 383, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7c_utils_6analyseAssWarp(__pyx_self, __pyx_v_assText, __pyx_v_assBytes);
+  __pyx_r = __pyx_pf_7c_utils_6analyseAss(__pyx_self, __pyx_v_assText, __pyx_v_assBytes);
 
   /* function exit code */
   goto __pyx_L0;
@@ -25834,7 +25834,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_assText, PyObject *__pyx_v_assBytes) {
+static PyObject *__pyx_pf_7c_utils_6analyseAss(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_assText, PyObject *__pyx_v_assBytes) {
   PyObject *__pyx_v_assChars = NULL;
   unsigned char *__pyx_v_result;
   PyObject *__pyx_v_itemCount = NULL;
@@ -25870,11 +25870,11 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("analyseAssWarp", 1);
+  __Pyx_RefNannySetupContext("analyseAss", 1);
 
   /* "c_utils.pyx":384
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):
+ * def analyseAss(assText: str = None, assBytes: bytes = None):
  *     if assBytes == None:             # <<<<<<<<<<<<<<
  *         assChars = assText.encode("UTF-8")  #  bytes
  *     else:
@@ -25883,7 +25883,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   if (__pyx_t_1) {
 
     /* "c_utils.pyx":385
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):
+ * def analyseAss(assText: str = None, assBytes: bytes = None):
  *     if assBytes == None:
  *         assChars = assText.encode("UTF-8")  #  bytes             # <<<<<<<<<<<<<<
  *     else:
@@ -25900,7 +25900,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
 
     /* "c_utils.pyx":384
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):
+ * def analyseAss(assText: str = None, assBytes: bytes = None):
  *     if assBytes == None:             # <<<<<<<<<<<<<<
  *         assChars = assText.encode("UTF-8")  #  bytes
  *     else:
@@ -25912,7 +25912,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
  *         assChars = assText.encode("UTF-8")  #  bytes
  *     else:
  *         assChars = assBytes             # <<<<<<<<<<<<<<
- *     cdef unsigned char* result = analyseAss(assChars)
+ *     cdef unsigned char* result = analyseAss_CPP(assChars)
  *     itemCount = struct.unpack("i", result[:4])[0]
  */
   /*else*/ {
@@ -25924,16 +25924,16 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   /* "c_utils.pyx":388
  *     else:
  *         assChars = assBytes
- *     cdef unsigned char* result = analyseAss(assChars)             # <<<<<<<<<<<<<<
+ *     cdef unsigned char* result = analyseAss_CPP(assChars)             # <<<<<<<<<<<<<<
  *     itemCount = struct.unpack("i", result[:4])[0]
  *     index = 4
  */
   __pyx_t_3 = __Pyx_PyObject_AsString(__pyx_v_assChars); if (unlikely((!__pyx_t_3) && PyErr_Occurred())) __PYX_ERR(0, 388, __pyx_L1_error)
-  __pyx_v_result = analyseAss(__pyx_t_3);
+  __pyx_v_result = analyseAss_CPP(__pyx_t_3);
 
   /* "c_utils.pyx":389
  *         assChars = assBytes
- *     cdef unsigned char* result = analyseAss(assChars)
+ *     cdef unsigned char* result = analyseAss_CPP(assChars)
  *     itemCount = struct.unpack("i", result[:4])[0]             # <<<<<<<<<<<<<<
  *     index = 4
  *     anaResult = {}
@@ -25975,7 +25975,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   __pyx_t_5 = 0;
 
   /* "c_utils.pyx":390
- *     cdef unsigned char* result = analyseAss(assChars)
+ *     cdef unsigned char* result = analyseAss_CPP(assChars)
  *     itemCount = struct.unpack("i", result[:4])[0]
  *     index = 4             # <<<<<<<<<<<<<<
  *     anaResult = {}
@@ -26631,7 +26631,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   /* "c_utils.pyx":383
  * 
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
+ * def analyseAss(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
  *     if assBytes == None:
  *         assChars = assText.encode("UTF-8")  #  bytes
  */
@@ -26644,7 +26644,7 @@ static PyObject *__pyx_pf_7c_utils_6analyseAssWarp(CYTHON_UNUSED PyObject *__pyx
   __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_13);
   __Pyx_XDECREF(__pyx_t_16);
-  __Pyx_AddTraceback("c_utils.analyseAssWarp", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("c_utils.analyseAss", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_assChars);
@@ -27898,7 +27898,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_add, __pyx_k_add, sizeof(__pyx_k_add), 0, 0, 1, 1},
     {&__pyx_n_s_allocate_buffer, __pyx_k_allocate_buffer, sizeof(__pyx_k_allocate_buffer), 0, 0, 1, 1},
     {&__pyx_n_s_anaResult, __pyx_k_anaResult, sizeof(__pyx_k_anaResult), 0, 0, 1, 1},
-    {&__pyx_n_s_analyseAssWarp, __pyx_k_analyseAssWarp, sizeof(__pyx_k_analyseAssWarp), 0, 0, 1, 1},
+    {&__pyx_n_s_analyseAss, __pyx_k_analyseAss, sizeof(__pyx_k_analyseAss), 0, 0, 1, 1},
     {&__pyx_n_s_analyseAss_OLD, __pyx_k_analyseAss_OLD, sizeof(__pyx_k_analyseAss_OLD), 0, 0, 1, 1},
     {&__pyx_kp_u_and, __pyx_k_and, sizeof(__pyx_k_and), 0, 1, 0, 0},
     {&__pyx_n_s_assBytes, __pyx_k_assBytes, sizeof(__pyx_k_assBytes), 0, 0, 1, 1},
@@ -29066,14 +29066,14 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   /* "c_utils.pyx":383
  * 
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
+ * def analyseAss(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
  *     if assBytes == None:
  *         assChars = assText.encode("UTF-8")  #  bytes
  */
   __pyx_tuple__99 = PyTuple_Pack(15, __pyx_n_s_assText, __pyx_n_s_assBytes, __pyx_n_s_assChars, __pyx_n_s_result, __pyx_n_s_itemCount, __pyx_n_s_index, __pyx_n_s_anaResult, __pyx_n_s_i, __pyx_n_s_nameLen, __pyx_n_s_fontNname, __pyx_n_s_weight, __pyx_n_s_italic, __pyx_n_s_resultLen, __pyx_n_s_valueSet, __pyx_n_s_value); if (unlikely(!__pyx_tuple__99)) __PYX_ERR(0, 383, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__99);
   __Pyx_GIVEREF(__pyx_tuple__99);
-  __pyx_codeobj__100 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__99, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_py2cy_c_utils_pyx, __pyx_n_s_analyseAssWarp, 383, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__100)) __PYX_ERR(0, 383, __pyx_L1_error)
+  __pyx_codeobj__100 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__99, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_py2cy_c_utils_pyx, __pyx_n_s_analyseAss, 383, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__100)) __PYX_ERR(0, 383, __pyx_L1_error)
   __pyx_tuple__101 = PyTuple_Pack(2, Py_None, Py_None); if (unlikely(!__pyx_tuple__101)) __PYX_ERR(0, 383, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__101);
   __Pyx_GIVEREF(__pyx_tuple__101);
@@ -30985,7 +30985,7 @@ if (!__Pyx_RefNanny) {
   /* "c_utils.pyx":383
  * 
  * 
- * def analyseAssWarp(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
+ * def analyseAss(assText: str = None, assBytes: bytes = None):             # <<<<<<<<<<<<<<
  *     if assBytes == None:
  *         assChars = assText.encode("UTF-8")  #  bytes
  */
@@ -30993,12 +30993,12 @@ if (!__Pyx_RefNanny) {
   __Pyx_GOTREF(__pyx_t_5);
   if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_assText, __pyx_n_s_str) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_assBytes, __pyx_n_s_bytes) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
-  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_7c_utils_7analyseAssWarp, 0, __pyx_n_s_analyseAssWarp, NULL, __pyx_n_s_c_utils, __pyx_d, ((PyObject *)__pyx_codeobj__100)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 383, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_7c_utils_7analyseAss, 0, __pyx_n_s_analyseAss, NULL, __pyx_n_s_c_utils, __pyx_d, ((PyObject *)__pyx_codeobj__100)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 383, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_7, __pyx_tuple__101);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_7, __pyx_t_5);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_analyseAssWarp, __pyx_t_7) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_analyseAss, __pyx_t_7) < 0) __PYX_ERR(0, 383, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
   /* "c_utils.pyx":1

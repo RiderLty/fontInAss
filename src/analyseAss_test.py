@@ -2,7 +2,7 @@ from pathlib import Path
 import time
 from utils import getAllFiles, logger
 from py2cy.c_utils import analyseAss_OLD
-from py2cy.c_utils import analyseAssWarp as analyseAss_NEW
+from py2cy.c_utils import analyseAss as analyseAss_NEW
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 import re
 

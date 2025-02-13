@@ -228,7 +228,7 @@ bool isDigitStr(char *str)
 
 extern "C"
 {
-    unsigned char *analyseAss(const char *assStr)
+    unsigned char *analyseAss_CPP(const char *assStr)
     {
         unordered_map<char *, fontKey, CharPtrHash, CharPtrEqual> styleFont;
         unordered_map<fontKey, set<int>, fontKeyHash> fontCharList;
