@@ -7,8 +7,8 @@ from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss
 import re
 
 # for file in getAllFiles("/mnt/storage/Media/EmbyMedia/123pan/" , ["ass"]):
-# for file in getAllFiles("./test" , ["ass"]):
-for file in ["./test.ass"]:
+for file in getAllFiles("./test" , ["ass"]):
+# for file in ["./test.ass"]:
 # for file in ["/mnt/storage/Projects/fontInAss/test/[Haruhana] Shigatsu wa Kimi no Uso [01].chs_jpn.ass"]:
     try:
         print()

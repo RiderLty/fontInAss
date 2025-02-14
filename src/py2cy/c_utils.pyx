@@ -331,10 +331,12 @@ def analyseAss_OLD(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                             if direction == "x" or direction == "y" or direction == "z":
                                 if tag[4:].isdigit():
                                     continue
-                        if tag == "p1":
-                            drawMod = True
-                        elif tag == "p0":
-                            drawMod = False
+                        if tag[0] == "p":
+                            if len(tag) > 1 and tag[1:].isdigit():
+                                if tag[1:] == "0":
+                                    drawMod = False
+                                else:
+                                    drawMod = True
                         elif tag.startswith("fn"):  # 字体
                             if tag[2:] == "":
                                 currentFontName = lineDefaultFontName
@@ -355,21 +357,29 @@ def analyseAss_OLD(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                                     currentFontName = lineDefaultFontName
                                     currentWeight = lineDefaultWeight
                                     currentItalic = lineDefaultItalic
-                        elif tag.startswith("b") and tag[1:].isdigit():  # 字重
-                            if tag == "b0":
-                                currentWeight = 400
-                            elif tag == "b1":
-                                currentWeight = 700
+                        
+                        elif tag.startswith("b"):  # 字重
+                            if len(tag) == 1:
+                                currentWeight = lineDefaultWeight
                             else:
-                                currentWeight = int(tag[1:])
-                        elif tag == "i0":
-                            currentItalic = False
-                        elif tag == "i1":
-                            currentItalic = True
-                        elif tag == "b":
-                            currentWeight = lineDefaultWeight
-                        elif tag == "i":
-                            currentItalic = lineDefaultItalic
+                                if tag[1:].isdigit():
+                                    if tag == "b0":
+                                        currentWeight = 400
+                                    elif tag == "b1":
+                                        currentWeight = 700
+                                    else:
+                                        currentWeight = int(tag[1:])
+    
+                        if tag[0] == "i":
+                            if len(tag) == 1:
+                                currentItalic = lineDefaultItalic
+                            else:
+                                if tag[1:].isdigit():
+                                    if tag[1:] == "0":
+                                        currentItalic = False
+                                    else:
+                                        currentItalic = True
+
                     if testState == 0:
                         currentCharSet = fontCharList.setdefault((currentFontName,currentWeight,currentItalic) , set())
     for key in [ x for x in fontCharList if len(fontCharList[x]) == 0]:
@@ -426,4 +436,5 @@ def analyseAss(assText: str = None, assBytes: bytes = None):
         originName = result[index : index + originNameLen].decode("utf-8")
         index += originNameLen
         subRename[replacedName] = originName
+    ptrFree(result);
     return anaResult,subRename

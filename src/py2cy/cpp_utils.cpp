@@ -15,9 +15,30 @@ using namespace std;
 #define DEBUG_ON false
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
+#define DEBUG_SV(args...) \
+    do                    \
+    {                     \
+        cout << args;     \
+    } while (0)
 #else
 #define DEBUG(fmt, args...) // 不输出任何信息
+#define DEBUG_SV(args...)   // 不输出任何信息
 #endif
+
+void strip(string_view &str)
+{
+    // 去除开头的空白字符
+    while (isspace((unsigned char)str.front()))
+    {
+        str.remove_prefix(1);
+    }
+
+    // 去除结尾的空白字符
+    while (!str.empty() && isspace((unsigned char)str.back()))
+    {
+        str.remove_suffix(1);
+    }
+}
 
 char *strip(char *str)
 {
@@ -44,6 +65,15 @@ char *strip(char *str)
     return start;
 }
 
+void trimLeadingChars(string_view &str, char ch)
+{
+    // 去除开头的空白字符
+    while ((unsigned char)str.front() == ch)
+    {
+        str.remove_prefix(1);
+    }
+}
+
 char *trimLeadingChars(char *str, char ch)
 {
     if (str == NULL)
@@ -59,15 +89,26 @@ char *trimLeadingChars(char *str, char ch)
     return start;
 }
 
+void trimLC_strip(string_view &str, char ch)
+{
+    while ((unsigned char)str.front() == ch || isspace((unsigned char)str.front()))
+    {
+        str.remove_prefix(1);
+    }
+    while (!str.empty() && isspace((unsigned char)str.back()))
+    {
+        str.remove_suffix(1);
+    }
+}
+
 struct fontKey
 {
     int italic;
     int weight;
-    char fontName[512];
-    // 重载 == 运算符
+    string_view fontName;
     bool operator==(const fontKey &other) const
     {
-        return strcmp(fontName, other.fontName) == 0 && weight == other.weight && italic == other.italic;
+        return fontName.compare(other.fontName) == 0 && weight == other.weight && italic == other.italic;
     }
 };
 
@@ -75,7 +116,7 @@ struct fontKeyHash
 {
     size_t operator()(const fontKey &fontKey) const
     {
-        size_t h1 = hash<const char *>()(fontKey.fontName);
+        size_t h1 = hash<string_view>()(fontKey.fontName);
         size_t h2 = hash<int>()(fontKey.weight);
         size_t h3 = hash<int>()(fontKey.italic);
         return h1 ^ (h2 << 1) ^ (h3 << 2); // 混合哈希值
@@ -230,15 +271,20 @@ extern "C"
 {
     unsigned char *analyseAss_CPP(const char *assStr)
     {
-        unordered_map<char *, fontKey, CharPtrHash, CharPtrEqual> styleFont;
         unordered_map<fontKey, set<int>, fontKeyHash> fontCharList;
-        unordered_map<char *, char *, CharPtrHash, CharPtrEqual> fontSubsetRename;
+        unordered_map<string_view, fontKey> styleFont;
+        unordered_map<string_view, string_view> fontSubsetRename;
+
         int state = 0;
-        int styleNameIndex, fontNameIndex, boldIndex, italicIndex;
-        int eventStyleIndex, eventTextIndex;
+        int styleNameIndex = -1;
+        int fontNameIndex = -1;
+        int boldIndex = -1;
+        int italicIndex = -1;
+        int eventStyleIndex = -1;
+        int eventTextIndex = -1;
         char *lineSplitPtr = NULL;
-        char *defaultStyleName = NULL;
-        char code[1024 * 1024];
+        string_view defaultStyleName;
+        char *code = (char *)malloc(sizeof(char) * 1024 * 1024);
         for (char *line = strtok_r((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_r(NULL, "\n", &lineSplitPtr))
         {
             DEBUG("line:%s\n", line);
@@ -253,21 +299,12 @@ extern "C"
                 }
                 else if (startsWith(line, "; Font Subset:"))
                 {
-                    char *replacedName = (char *)malloc(9);
-                    char *originName = (char *)malloc(512);
-
-                    memcpy(replacedName, line + strlen("; Font Subset: "), 8);
-                    replacedName[8] = '\0';
-
-                    memcpy(originName, line + strlen("; Font Subset: 59W6OVGX - "), strlen(line + strlen("; Font Subset: 59W6OVGX - ")));
-
-                    for (int i = strlen(line + strlen("; Font Subset: 59W6OVGX - ")) - 1; i > 0 && isspace(originName[i]); i--)
+                    string_view replacedName(line + strlen("; Font Subset: "), 8);
+                    string_view originName(line + strlen("; Font Subset: 59W6OVGX - "), strlen(line) - strlen("; Font Subset: 59W6OVGX - "));
+                    while (!originName.empty() && isspace(originName.back()))
                     {
-                        originName[i] = '\0';
+                        originName.remove_suffix(1);
                     }
-
-                    DEBUG("[%s] <= [%s]\n", replacedName, originName);
-
                     fontSubsetRename[replacedName] = originName;
                 }
             }
@@ -313,23 +350,25 @@ extern "C"
                     int index = 0;
                     char *tokenSplitPtr = NULL;
                     char *token = strtok_r(style, ",", &tokenSplitPtr);
-                    char *styleName = NULL;
-                    char *fontName = NULL;
+                    string_view styleName;
+                    string_view fontName;
                     int weight = 400;
                     int italic = 0;
                     while (token != NULL)
                     {
                         if (index == styleNameIndex)
                         {
-                            styleName = trimLeadingChars(strip(token), '*');
+                            styleName = string_view(token);
+                            trimLC_strip(styleName, '*');
                         }
                         else if (index == fontNameIndex)
                         {
-                            fontName = trimLeadingChars(strip(token), '@');
+                            fontName = string_view(token);
+                            trimLC_strip(fontName, '@');
                         }
                         else if (index == boldIndex)
                         {
-                            if (atoi(strip(token)))
+                            if (atoi(strip(token)) != 0)
                             { // 非0 则是加粗
                                 weight = 700;
                             }
@@ -343,15 +382,14 @@ extern "C"
                     }
                     styleFont[styleName].italic = italic;
                     styleFont[styleName].weight = weight;
-                    memcpy(styleFont[styleName].fontName, fontName, strlen(fontName) + 1);
+                    styleFont[styleName].fontName = fontName;
 
-                    if (!defaultStyleName)
+                    if (defaultStyleName.empty())
                     {
-                        // memcpy(&defaultFontInfo, &styleFont[styleName], sizeof(struct fontKey));
                         defaultStyleName = styleName;
-                        // DEBUG("默认字体 %s\n",defaultFontInfo.fontName);
+                        DEBUG_SV("默认字体 " << defaultStyleName << endl);
                     }
-                    DEBUG("%s\t%d\t%d\n", styleFont[styleName].fontName, styleFont[styleName].weight, styleFont[styleName].italic);
+                    DEBUG_SV(styleName << " => " << italic << " " << weight << " " << fontName << endl);
                 }
             }
             else if (state == 3)
@@ -412,21 +450,14 @@ extern "C"
                             }
                         }
                     }
-                    // DEBUG("style : [%s] text:[%s]\n", styleName, text);
                     int styleLen = styleEnd - styleStart;
-                    char *styleName = (char *)malloc(styleLen + 1);
-                    if (styleName == NULL)
-                    {
-                        return NULL; // 内存分配失败
-                    }
-                    strncpy(styleName, dialogue + styleStart, styleLen);
-                    styleName[styleLen] = '\0';
+                    string_view styleName(dialogue + styleStart, styleLen);
+                    trimLC_strip(styleName, '*');
                     char *text = dialogue + textStart;
-                    styleName = trimLeadingChars(strip(styleName), '*');
                     struct fontKey lineDefaultFontInfo;
                     if (styleFont.find(styleName) == styleFont.end())
                     {
-                        DEBUG("未知style 使用默认 %s \n", defaultStyleName);
+                        DEBUG_SV("未知style 使用默认 " << defaultStyleName << endl);
                         lineDefaultFontInfo = styleFont[defaultStyleName];
                     }
                     else
@@ -434,22 +465,19 @@ extern "C"
                         lineDefaultFontInfo = styleFont[styleName];
                     }
                     struct fontKey currentFontInfo = lineDefaultFontInfo;
-                    // DEBUG("keyBuffer:%s\n", (((char *)&currentFontInfo) + 8));
                     if (fontCharList.find(currentFontInfo) == fontCharList.end())
                     {
-                        DEBUG("(%s,%d,%d)未找到，创建新的\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic);
+                        DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
                         fontCharList[currentFontInfo] = set<int>();
                     }
 
                     set<int> *currentCharSet = &fontCharList[currentFontInfo];
                     int textState = 0;
                     int codeStart = -1;
-                    int codeEnd = -1;
                     bool drawMod = false;
                     int index = 0;
                     int textLen = strlen(text);
                     DEBUG("=======================================================\ntext:%s\n", text);
-
                     while (index < textLen)
                     {
                         bool addChar = false;
@@ -459,8 +487,6 @@ extern "C"
                         {
                             fontKeyChanged = false;
                             if (ch == '{')
-                            // 这里简直太不规范了！字幕组怎么搞的都有可能
-                            // 直接{文字}的有，{=3}的有，{3\fnNAME}的也有
                             // 这里仅依照MPV的测试结果解析
                             {
                                 while (text[index] != '}' && text[index] != '\0' && text[index] != '\\' && index < textLen)
@@ -514,113 +540,80 @@ extern "C"
                                 }
                                 index++;
                             }
-                            memcpy(code, text + codeStart, index - codeStart);
+                            char *codeStartPtr = text + codeStart;
+                            int codeLen = index - codeStart;
+                            memcpy(code, codeStartPtr, codeLen);
                             code[index - codeStart] = '\0';
                             if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
                             {
                             }
                             else if (startsWith(code, "p"))
                             {
-                                if (isDigitStr(code + 1))
-                                {
-                                    int paint = atoi(code + 1);
-                                    if (paint == 0)
-                                    {
-                                        drawMod = false;
-                                    }
-                                    else
-                                    {
-                                        drawMod = true;
-                                    }
-                                }
+                                if (codeLen > 1 && isDigitStr(code + 1))
+                                    drawMod = atoi(code + 1) != 0;
                             }
                             else if (startsWith(code, "fn"))
                             {
                                 fontKeyChanged = true;
-                                if (code[2] == '\0')
-                                {
-                                    memcpy(currentFontInfo.fontName, &lineDefaultFontInfo.fontName, strlen(lineDefaultFontInfo.fontName) + 1);
-                                }
+                                if (codeLen == 2)
+                                    currentFontInfo.fontName = lineDefaultFontInfo.fontName;
                                 else
                                 {
-                                    char *fnName = trimLeadingChars(code + 2, '@');
-                                    memcpy(currentFontInfo.fontName, fnName, strlen(fnName) + 1);
-                                    DEBUG("fn切换%s\n", fnName)
+                                    currentFontInfo.fontName = string_view(codeStartPtr + 2, codeLen - 2); // 不能指向code，code会变，要指向原始
+                                    trimLC_strip(currentFontInfo.fontName, '@');
+                                    DEBUG_SV("fontName切换" << currentFontInfo.fontName << endl);
                                 }
                             }
                             else if (startsWith(code, "r"))
                             {
                                 fontKeyChanged = true;
-                                char *rStyleName = trimLeadingChars(code + 1, '*');
-                                if (rStyleName[0] == '\0') // 空的
+                                string_view rStyleName(codeStartPtr + 1, codeLen - 1);
+                                trimLC_strip(rStyleName, '*');
+                                if (rStyleName.empty()) // 空的
                                 {
                                     currentFontInfo = lineDefaultFontInfo;
                                 }
                                 else
                                 {
                                     if (styleFont.find(rStyleName) == styleFont.end())
-                                    {
                                         currentFontInfo = lineDefaultFontInfo;
-                                    }
                                     else
-                                    {
                                         currentFontInfo = styleFont[rStyleName];
-                                    }
                                 }
+                                DEBUG_SV("style切换" << rStyleName << endl);
                             }
                             else if (startsWith(code, "b"))
                             {
                                 fontKeyChanged = true;
-                                if (isDigitStr(code + 1))
+                                if (codeLen == 1)
+                                {
+                                    currentFontInfo.weight = lineDefaultFontInfo.weight;
+                                }
+                                else if (isDigitStr(code + 1))
                                 {
                                     int bold = atoi(code + 1);
                                     if (bold == 0)
-                                    {
                                         currentFontInfo.weight = 400;
-                                    }
                                     else if (bold == 1)
-                                    {
                                         currentFontInfo.weight = 700;
-                                    }
                                     else
-                                    {
                                         currentFontInfo.weight = bold;
-                                    }
-                                }
-                                else if (code[1] == '\0')
-                                {
-                                    currentFontInfo.weight = lineDefaultFontInfo.weight;
                                 }
                             }
                             else if (startsWith(code, "i")) //
                             {
                                 fontKeyChanged = true;
-                                if (code[1] == '\0')
-                                {
+                                if (codeLen == 1)
                                     currentFontInfo.italic = lineDefaultFontInfo.italic;
-                                }
-                                else
-                                {
-                                    if (isDigitStr(code + 1))
-                                    {
-                                        if (code[1] == '0')
-                                        {
-                                            currentFontInfo.italic = 0;
-                                        }
-                                        else
-                                        {
-                                            currentFontInfo.italic = 1;
-                                        }
-                                    }
-                                }
+                                else if (isDigitStr(code + 1))
+                                    currentFontInfo.italic = currentFontInfo.italic == 0 ? 0 : 1;
                             }
                         }
                         if (fontKeyChanged)
                         {
-
                             if (fontCharList.find(currentFontInfo) == fontCharList.end())
                             {
-                                DEBUG("(%s,%d,%d)未找到，创建新的\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic);
+                                DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
                                 fontCharList[currentFontInfo] = set<int>();
                             }
                             currentCharSet = &fontCharList[currentFontInfo];
@@ -630,7 +623,7 @@ extern "C"
                             int unicode = nextCode(text, &index);
                             if (unicode != '\r')
                             {
-                                DEBUG("%s\t%d\t%d:[%s(%d)]\n", currentFontInfo.fontName, currentFontInfo.weight, currentFontInfo.italic, intToUnicodeChar(unicode), unicode);
+                                DEBUG_SV(currentFontInfo.fontName << "\t" << currentFontInfo.weight << "\t" << currentFontInfo.italic << ":" << intToUnicodeChar(unicode) << "(" << unicode << ")" << endl);
                                 currentCharSet->insert(unicode);
                             }
                         }
@@ -643,6 +636,7 @@ extern "C"
                 }
             }
         }
+        free(code);
         int resultSize = 4; // 第一位存储item数量
         int itemCount = 0;
         for (const auto &pair : fontCharList)
@@ -652,15 +646,15 @@ extern "C"
             if (value.size() != 0)
             {
 
-                if (fontSubsetRename.find((char *)key.fontName) != fontSubsetRename.end())
+                if (fontSubsetRename.find(string_view(key.fontName)) != fontSubsetRename.end())
                 {
-                    resultSize += 4 + (strlen(fontSubsetRename[(char *)key.fontName]) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
+                    resultSize += (4 + fontSubsetRename[string_view(key.fontName)].size() + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
                     resultSize += value.size() * 4;
                     itemCount++;
                 }
                 else
                 {
-                    resultSize += 4 + (strlen(key.fontName) + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
+                    resultSize += (4 + key.fontName.size() + 4 + 4 + 4); // name长度 , fontName , weight , italic , valueLen ;
                     resultSize += value.size() * 4;
                     itemCount++;
                 }
@@ -671,7 +665,7 @@ extern "C"
         for (const auto &pair : fontSubsetRename)
         {
             subRenameItemCount++;
-            resultSize += (strlen(pair.second) + 4 + 8); // key固定8字节
+            resultSize += (pair.second.size() + 4 + 8); // key固定8字节
         }
 
         if (DEBUG_ON)
@@ -682,7 +676,7 @@ extern "C"
                 const std::set<int> &value = pair.second;
                 if (value.size() != 0)
                 {
-                    DEBUG("{%s,%d,%d}:[", key.fontName, key.weight, key.italic);
+                    DEBUG_SV("{" << key.fontName << "," << key.weight << "," << key.italic << "}:[");
                     for (const int &val : value)
                     {
                         DEBUG("%s", intToUnicodeChar(val));
@@ -693,7 +687,7 @@ extern "C"
 
             for (const auto &pair : fontSubsetRename)
             {
-                DEBUG("fontSubsetRename [%s] <= [%s]\n", pair.first, pair.second);
+                DEBUG_SV(pair.first << " <==> " << pair.second << endl);
             }
         }
         // const result = [];
@@ -710,21 +704,12 @@ extern "C"
             if (value.size() == 0)
                 continue;
 
-            char fname[512] = {'\0'};
-            if (fontSubsetRename.find((char *)key.fontName) != fontSubsetRename.end())
-            {
-                memcpy(fname, fontSubsetRename[(char *)key.fontName], 512);
-            }
-            else
-            {
-                memcpy(fname, key.fontName, 512);
-            }
-
-            int nameLen = strlen(fname);
+            string_view fnameRep = fontSubsetRename.find(key.fontName) != fontSubsetRename.end() ? fontSubsetRename[key.fontName] : key.fontName;
+            int nameLen = fnameRep.size();
             memcpy(ptr, &nameLen, sizeof(int));
             ptr += sizeof(int);
-            memcpy(ptr,fname, strlen(fname));
-            ptr += strlen(fname);
+            memcpy(ptr, fnameRep.data(), nameLen);
+            ptr += nameLen;
 
             memcpy(ptr, &key.weight, sizeof(int));
             ptr += sizeof(int);
@@ -732,7 +717,6 @@ extern "C"
             memcpy(ptr, &key.italic, sizeof(int));
             ptr += sizeof(int);
 
-            // resultSize += (strlen(key.fontName) + 1 + 4 + 4 + 4);// fontName , \0 , weight , italic , valueLen , values;
             int valueSize = value.size();
             memcpy(ptr, &valueSize, sizeof(int));
             ptr += sizeof(int);
@@ -747,15 +731,15 @@ extern "C"
         ptr += sizeof(int);
         for (const auto &pair : fontSubsetRename)
         {
-            memcpy(ptr, pair.first, 8);
+            memcpy(ptr, pair.first.data(), pair.first.size());
             ptr += 8;
 
-            int nameLen = strlen(pair.second);
+            int nameLen = pair.second.size();
             memcpy(ptr, &nameLen, sizeof(int));
             ptr += sizeof(int);
 
-            memcpy(ptr, pair.second, strlen(pair.second));
-            ptr += strlen(pair.second);
+            memcpy(ptr, pair.second.data(), pair.second.size());
+            ptr += pair.second.size();
         }
         return result;
     }
