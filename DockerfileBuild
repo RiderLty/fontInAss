@@ -1,11 +1,17 @@
+FROM gcc:12.2.0 as CythonBuilder
+COPY . /app
+RUN apt-get update && apt-get -y --no-install-recommends install python3.10 python3-dev  python3-pip && pip install Cython 
+RUN python3 /app/src/py2cy/setup.py 
+
 FROM python:3.10-slim-buster AS builder
 COPY . /app
-RUN apt-get update && apt-get install -y --no-install-recommends g++ build-essential
-RUN pip install Cython 
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
 RUN python /app/src/py2cy/setup.py 
 
 FROM python:3.10-slim-buster
 COPY --from=builder /wheels /wheels
-COPY --from=builder /app/src/py2cy/* /src/py2cy/
+COPY --from=CythonBuilder /app/src/py2cy/* /src/py2cy/
 RUN pip install --no-cache /wheels/* && rm -rf /wheels && mkdir /data
+
+
+
