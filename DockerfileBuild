@@ -1,6 +1,6 @@
 FROM python:3.10-slim-buster AS builder
 COPY . /app
-RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential
+RUN apt-get update && apt-get install -y --no-install-recommends g++ build-essential
 RUN pip install Cython 
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
 RUN python /app/src/py2cy/setup.py 
