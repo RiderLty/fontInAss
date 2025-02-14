@@ -6,7 +6,6 @@ RUN python3 /app/src/py2cy/setup.py
 FROM python:3.10-slim-buster AS builder
 COPY . /app
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
-RUN python /app/src/py2cy/setup.py 
 
 FROM python:3.10-slim-buster
 COPY --from=builder /wheels /wheels
