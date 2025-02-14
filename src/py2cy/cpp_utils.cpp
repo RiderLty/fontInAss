@@ -668,29 +668,6 @@ extern "C"
             resultSize += (pair.second.size() + 4 + 8); // key固定8字节
         }
 
-        if (DEBUG_ON)
-        {
-            for (const auto &pair : fontCharList)
-            {
-                const fontKey &key = pair.first;
-                const std::set<int> &value = pair.second;
-                if (value.size() != 0)
-                {
-                    DEBUG_SV("{" << key.fontName << "," << key.weight << "," << key.italic << "}:[");
-                    for (const int &val : value)
-                    {
-                        DEBUG("%s", intToUnicodeChar(val));
-                    }
-                    DEBUG("]\n\n");
-                }
-            }
-
-            for (const auto &pair : fontSubsetRename)
-            {
-                DEBUG_SV(pair.first << " <==> " << pair.second << endl);
-            }
-        }
-        // const result = [];
         DEBUG("resultSize = %d\n", resultSize);
         DEBUG("itemCount = %d\n", itemCount);
         unsigned char *result = (unsigned char *)malloc(sizeof(unsigned char) * resultSize);
@@ -703,7 +680,7 @@ extern "C"
             const std::set<int> &value = pair.second;
             if (value.size() == 0)
                 continue;
-
+            DEBUG_SV("{" << key.fontName << "," << key.weight << "," << key.italic << "}:[");
             string_view fnameRep = fontSubsetRename.find(key.fontName) != fontSubsetRename.end() ? fontSubsetRename[key.fontName] : key.fontName;
             int nameLen = fnameRep.size();
             memcpy(ptr, &nameLen, sizeof(int));
@@ -723,9 +700,11 @@ extern "C"
 
             for (const int &val : value)
             {
+                DEBUG("%s", intToUnicodeChar(val));
                 memcpy(ptr, &val, sizeof(int));
                 ptr += sizeof(int);
             }
+            DEBUG("]\n\n");
         }
         memcpy(ptr, &subRenameItemCount, sizeof(int));
         ptr += sizeof(int);
@@ -740,6 +719,8 @@ extern "C"
 
             memcpy(ptr, pair.second.data(), pair.second.size());
             ptr += pair.second.size();
+
+            DEBUG_SV("[" << pair.first << " <==> " << pair.second << "]" << endl);
         }
         return result;
     }
