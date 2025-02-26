@@ -12,6 +12,12 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
+#ifdef _WIN32
+    #define strtok_rs strtok_s
+#elif __linux__
+    #define strtok_rs strtok_r
+#endif
+
 #define DEBUG_ON false
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
@@ -21,8 +27,8 @@ using namespace std;
         cout << args;     \
     } while (0)
 #else
-#define DEBUG(fmt, args...) // 不输出任何信息
-#define DEBUG_SV(args...)   // 不输出任何信息
+#define DEBUG(...) // 不输出任何信息
+#define DEBUG_SV(...)   // 不输出任何信息
 #endif
 
 void strip(string_view &str)
@@ -285,7 +291,7 @@ extern "C"
         char *lineSplitPtr = NULL;
         string_view defaultStyleName;
         char *code = (char *)malloc(sizeof(char) * 1024 * 1024);
-        for (char *line = strtok_r((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_r(NULL, "\n", &lineSplitPtr))
+        for (char *line = strtok_rs((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_rs(NULL, "\n", &lineSplitPtr))
         {
             DEBUG("line:%s\n", line);
             if (strlen(line) < 1) // 小于最小长度，不用处理
@@ -316,7 +322,7 @@ extern "C"
                     char *format = line + strlen("Format:");
                     int index = 0;
                     char *tokenSplitPtr = NULL;
-                    char *token = strtok_r(format, ",", &tokenSplitPtr);
+                    char *token = strtok_rs(format, ",", &tokenSplitPtr);
                     while (token != NULL)
                     {
                         if (strstr(token, "Name"))
@@ -327,7 +333,7 @@ extern "C"
                             boldIndex = index;
                         else if (strstr(token, "Italic"))
                             italicIndex = index;
-                        token = strtok_r(NULL, ",", &tokenSplitPtr);
+                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     DEBUG(" styleNameIndex, fontNameIndex, boldIndex, italicIndex [%d,%d,%d,%d]\n", styleNameIndex, fontNameIndex, boldIndex, italicIndex);
@@ -349,7 +355,7 @@ extern "C"
                     char *style = line + strlen("Style:");
                     int index = 0;
                     char *tokenSplitPtr = NULL;
-                    char *token = strtok_r(style, ",", &tokenSplitPtr);
+                    char *token = strtok_rs(style, ",", &tokenSplitPtr);
                     string_view styleName;
                     string_view fontName;
                     int weight = 400;
@@ -377,7 +383,7 @@ extern "C"
                         {
                             italic = atoi(strip(token)) == 0 ? 0 : 1; // 0 则false 其他都为true
                         }
-                        token = strtok_r(NULL, ",", &tokenSplitPtr);
+                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     styleFont[styleName].italic = italic;
@@ -400,14 +406,14 @@ extern "C"
                     char *format = line + strlen("Format:");
                     int index = 0;
                     char *tokenSplitPtr = NULL;
-                    char *token = strtok_r(format, ",", &tokenSplitPtr);
+                    char *token = strtok_rs(format, ",", &tokenSplitPtr);
                     while (token != NULL)
                     {
                         if (strstr(token, "Style"))
                             eventStyleIndex = index;
                         else if (strstr(token, "Text"))
                             eventTextIndex = index;
-                        token = strtok_r(NULL, ",", &tokenSplitPtr);
+                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     DEBUG(" eventStyleIndex, eventTextIndex [%d,%d]\n", eventStyleIndex, eventTextIndex);
@@ -729,4 +735,9 @@ extern "C"
     {
         free(ptr);
     }
+}
+
+
+int main(){
+    return 0;
 }

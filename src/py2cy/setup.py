@@ -10,7 +10,6 @@ extensions = [
         "c_utils",  # 模块名
         [(file_dir / "c_utils.pyx").as_posix()],  # 源文件路径
         language="c++",  # 指定使用 C++
-        
     )
 ]
 
@@ -18,6 +17,7 @@ ext_modules = cythonize(extensions)
 
 if platform.system() == "Windows":
     # Windows 上生成 .pyd 文件
+    ext_modules[0].extra_compile_args = ["/std:c++17"]
     ext_modules[0].ext_suffix = ".pyd"
 elif platform.system() in ["Linux", "Darwin"]:
     # Linux 或 macOS 上生成 .so 文件
@@ -25,7 +25,7 @@ elif platform.system() in ["Linux", "Darwin"]:
 
 setup(
     ext_modules=ext_modules,
-    script_args=["build_ext",  "--build-lib",  file_dir.as_posix()],
+    script_args=["build_ext", "--build-lib", file_dir.as_posix()],
 )
 
 # 命令行运行 python src/py2cy/setup.py
