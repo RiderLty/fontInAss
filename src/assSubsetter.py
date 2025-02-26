@@ -40,15 +40,13 @@ class assSubsetter:
             enc = uuencode(face.blob.data)
             # missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
-            if ERROR_DISPLAY_IGNORE_GLYPH:
-                return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             missGlyph = "".join([chr(x) for x in unicodeSet.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             if missGlyph == "":
                 return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             else:
-                return f"[{fontName}] 缺少字形:{missGlyph}", f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
+                return f"缺少字形 \t\t[{fontName}]:{missGlyph}", f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
         except Exception as e:
-            logger.error(f"子集化出错 \t[{fontName}]: \n{traceback.format_exc()}")
+            logger.error(f"子集化出错 \t\t[{fontName}]: \n{traceback.format_exc()}")
             return str(e), ""
 
     async def loadSubsetEncode(self, fontName, weight, italic, unicodeSet):
@@ -115,7 +113,7 @@ class assSubsetter:
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         if len(errors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
             assText = assInsertLine(
-                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(errors)
+                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join([x for x in errors if not (ERROR_DISPLAY_IGNORE_GLYPH and x.startswith("缺少字形"))])
             )
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
