@@ -158,7 +158,7 @@ server {
 | HDR                 | 通过HDR来设置字幕亮度峰值，例如1000nit，默认-1 不开启                                     | -1   |
 | LOG_LEVEL           | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO |
 | ERROR_DISPLAY       | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0    |
-
+| ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，忽略字形缺失，默认关闭，设置值为True后仅当字体缺失时会提示错误 | False |
 > [!NOTE]
 > 当 EMBY_WEB_EMBED_FONT 设置为 True 时，Nginx 的反向代理会将 Emby 的字幕渲染文件 subtitles-octopus.js 转发给程序处理。程序将在该 JS 文件中新增两个方法：
 > </br>1.解析字幕文件获取字体信息

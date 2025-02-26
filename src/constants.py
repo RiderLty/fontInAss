@@ -61,6 +61,8 @@ FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
 
 ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY", default=0))
 
+ERROR_DISPLAY_IGNORE_GLYPH = os.environ.get("ERROR_DISPLAY_IGNORE_GLYPH", default="False") == "True"
+
 PUNCTUATION_UNICODES = set()
 ranges = [
     # 基本拉丁文标点符号 (ASCII)

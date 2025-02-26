@@ -8,7 +8,7 @@ from fontManager import fontManager
 import hdrify
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
-from constants import logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+from constants import ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
 
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
@@ -39,8 +39,10 @@ class assSubsetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             # missGlyph = "".join([chr(x) for x in unicodeSet if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
-            missGlyph = "".join([chr(x) for x in unicodeSet.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             logger.debug(f"子集化 {len(unicodeSet)} in {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{fontName}]")
+            if ERROR_DISPLAY_IGNORE_GLYPH:
+                return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
+            missGlyph = "".join([chr(x) for x in unicodeSet.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             if missGlyph == "":
                 return None, f"fontname:{fontName}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             else:
