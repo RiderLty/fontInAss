@@ -103,25 +103,31 @@ class assSubsetter:
 
         assFinish = time.perf_counter_ns()
         tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
-        errors = []
+        totalErrors = []
+        displayErrors = []
         for task in asyncio.as_completed(tasks):
             err, result = await task
             if err:
-                errors.append(err)
+                totalErrors.append(err)
+                if err.startswith("缺少字形"):
+                    if not ERROR_DISPLAY_IGNORE_GLYPH:
+                        displayErrors.append(err)
+                else:
+                    displayErrors.append(err)
             embedFontsText += result
         logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
         logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
-        if len(errors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
+        if len(displayErrors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
             assText = assInsertLine(
-                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join([x for x in errors if not (ERROR_DISPLAY_IGNORE_GLYPH and x.startswith("缺少字形"))])
+                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(displayErrors)
             )
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
         resultBytes = resultText.encode("UTF-8-sig")
-        if len(errors) == 0:
+        if len(totalErrors) == 0:
             self.cache[bytesHash] = (srt, resultBytes)
         else:
             logger.error("存在错误，未缓存")
-            for err in errors:
-                logger.error(err)
-        return ("\n".join(errors), srt, resultBytes)
+            for err in totalErrors:
+                logger.error(totalErrors)
+        return ("\n".join(totalErrors), srt, resultBytes)
