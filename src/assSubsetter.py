@@ -129,5 +129,5 @@ class assSubsetter:
         else:
             logger.error("存在错误，未缓存")
             for err in totalErrors:
-                logger.error(totalErrors)
+                logger.error(err)
         return ("\n".join(totalErrors), srt, resultBytes)
