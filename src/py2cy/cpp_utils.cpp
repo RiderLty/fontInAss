@@ -7,15 +7,16 @@
 #include <iostream>
 #include <set>
 #include <unordered_map>
+#include <string_view>
 
 using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 
 #ifdef _WIN32
-    #define strtok_rs strtok_s
+#define strtok_rs strtok_s
 #elif __linux__
-    #define strtok_rs strtok_r
+#define strtok_rs strtok_r
 #endif
 
 #define DEBUG_ON false
@@ -27,8 +28,8 @@ using namespace std;
         cout << args;     \
     } while (0)
 #else
-#define DEBUG(...) // 不输出任何信息
-#define DEBUG_SV(...)   // 不输出任何信息
+#define DEBUG(...)    // 不输出任何信息
+#define DEBUG_SV(...) // 不输出任何信息
 #endif
 
 void strip(string_view &str)
@@ -44,31 +45,6 @@ void strip(string_view &str)
     {
         str.remove_suffix(1);
     }
-}
-
-char *strip(char *str)
-{
-    if (str == NULL)
-    {
-        return NULL;
-    }
-
-    // 去除开头的空白字符
-    char *start = str;
-    while (isspace((unsigned char)*start))
-    {
-        start++;
-    }
-
-    // 去除结尾的空白字符
-    char *end = str + strlen(str) - 1;
-    while (end > start && isspace((unsigned char)*end))
-    {
-        end--;
-    }
-    *(end + 1) = '\0'; // 在去除空白字符后的位置添加字符串结束符
-
-    return start;
 }
 
 void trimLeadingChars(string_view &str, char ch)
@@ -273,6 +249,19 @@ bool isDigitStr(char *str)
     return true;
 }
 
+bool is_zero_and_space(char *str)
+{
+    // 是否由仅由0与空格构成
+    // 用于Format内，仅区分是否为0
+    int len = strlen(str);
+    for (int i = 0; i < len; i++)
+    {
+        if ((!isspace(str[i])) && (str[i] != '0'))
+            return false;
+    }
+    return true;
+}
+
 extern "C"
 {
     unsigned char *analyseAss_CPP(const char *assStr)
@@ -374,15 +363,11 @@ extern "C"
                         }
                         else if (index == boldIndex)
                         {
-                            if (atoi(strip(token)) != 0)
-                            { // 非0 则是加粗
+                            if (!is_zero_and_space(token))
                                 weight = 700;
-                            }
                         }
                         else if (index == italicIndex)
-                        {
-                            italic = atoi(strip(token)) == 0 ? 0 : 1; // 0 则false 其他都为true
-                        }
+                            italic = is_zero_and_space(token) ? 0 : 1; // 0 则false 其他都为true
                         token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
@@ -549,14 +534,19 @@ extern "C"
                             char *codeStartPtr = text + codeStart;
                             int codeLen = index - codeStart;
                             memcpy(code, codeStartPtr, codeLen);
-                            code[index - codeStart] = '\0';
+
+                            int tail = index - codeStart;
+                            while (tail > 1 && isspace(code[tail - 1]))
+                                tail--;
+                            code[tail] = '\0'; // 保证code部分不存在空格
+
                             if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
                             {
                             }
                             else if (startsWith(code, "p"))
                             {
                                 if (codeLen > 1 && isDigitStr(code + 1))
-                                    drawMod = atoi(code + 1) != 0;
+                                    drawMod = code[1] != '0';
                             }
                             else if (startsWith(code, "fn"))
                             {
@@ -576,9 +566,7 @@ extern "C"
                                 string_view rStyleName(codeStartPtr + 1, codeLen - 1);
                                 trimLC_strip(rStyleName, '*');
                                 if (rStyleName.empty()) // 空的
-                                {
                                     currentFontInfo = lineDefaultFontInfo;
-                                }
                                 else
                                 {
                                     if (styleFont.find(rStyleName) == styleFont.end())
@@ -590,13 +578,14 @@ extern "C"
                             }
                             else if (startsWith(code, "b"))
                             {
-                                fontKeyChanged = true;
                                 if (codeLen == 1)
                                 {
                                     currentFontInfo.weight = lineDefaultFontInfo.weight;
+                                    fontKeyChanged = true;
                                 }
                                 else if (isDigitStr(code + 1))
                                 {
+                                    fontKeyChanged = true;
                                     int bold = atoi(code + 1);
                                     if (bold == 0)
                                         currentFontInfo.weight = 400;
@@ -606,13 +595,18 @@ extern "C"
                                         currentFontInfo.weight = bold;
                                 }
                             }
-                            else if (startsWith(code, "i")) //
+                            else if (startsWith(code, "i"))
                             {
-                                fontKeyChanged = true;
                                 if (codeLen == 1)
+                                {
                                     currentFontInfo.italic = lineDefaultFontInfo.italic;
+                                    fontKeyChanged = true;
+                                }
                                 else if (isDigitStr(code + 1))
-                                    currentFontInfo.italic = currentFontInfo.italic == 0 ? 0 : 1;
+                                {
+                                    currentFontInfo.italic = code[1] == '0' ? 0 : 1;
+                                    fontKeyChanged = true;
+                                }
                             }
                         }
                         if (fontKeyChanged)
@@ -737,7 +731,7 @@ extern "C"
     }
 }
 
-
-int main(){
+int main()
+{
     return 0;
 }
