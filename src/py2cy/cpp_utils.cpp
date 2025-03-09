@@ -85,8 +85,8 @@ void trimLC_strip(string_view &str, char ch)
 
 struct fontKey
 {
-    int italic;
-    int weight;
+    int32_t italic;
+    int32_t weight;
     string_view fontName;
     bool operator==(const fontKey &other) const
     {
@@ -99,8 +99,8 @@ struct fontKeyHash
     size_t operator()(const fontKey &fontKey) const
     {
         size_t h1 = hash<string_view>()(fontKey.fontName);
-        size_t h2 = hash<int>()(fontKey.weight);
-        size_t h3 = hash<int>()(fontKey.italic);
+        size_t h2 = hash<int32_t>()(fontKey.weight);
+        size_t h3 = hash<int32_t>()(fontKey.italic);
         return h1 ^ (h2 << 1) ^ (h3 << 2); // 混合哈希值
     }
 };
@@ -127,11 +127,11 @@ struct CharPtrEqual
     }
 };
 
-int nextCode(const char *str, int *index)
+uint32_t nextCode(const char *str, int *index)
 // 获取当前code的unicode值，并移动index到下一个开始，返回-1表示结束
 {
     unsigned char *s = (unsigned char *)str + *index;
-    int unicode = 0;
+    uint32_t unicode = 0;
     if (*s == '\0')
     {
         return -1; // 结束，表示没有更多字符
@@ -183,7 +183,7 @@ int nextCode(const char *str, int *index)
     return -1;
 }
 
-char *intToUnicodeChar(int unicode)
+char *uint32ToUnicodeChar(uint32_t unicode)
 {
     // 分配足够的内存以存储一个字符和终止符
     char *result = (char *)malloc(sizeof(char) * 5); // 4个十六进制字符 + 1个终止符
@@ -253,8 +253,8 @@ bool is_zero_and_space(char *str)
 {
     // 是否由仅由0与空格构成
     // 用于Format内，仅区分是否为0
-    int len = strlen(str);
-    for (int i = 0; i < len; i++)
+    size_t len = strlen(str);
+    for (size_t i = 0; i < len; i++)
     {
         if ((!isspace(str[i])) && (str[i] != '0'))
             return false;
@@ -266,7 +266,7 @@ extern "C"
 {
     unsigned char *analyseAss_CPP(const char *assStr)
     {
-        unordered_map<fontKey, set<int>, fontKeyHash> fontCharList;
+        unordered_map<fontKey, set<uint32_t>, fontKeyHash> fontCharList;
         unordered_map<string_view, fontKey> styleFont;
         unordered_map<string_view, string_view> fontSubsetRename;
 
@@ -347,8 +347,8 @@ extern "C"
                     char *token = strtok_rs(style, ",", &tokenSplitPtr);
                     string_view styleName;
                     string_view fontName;
-                    int weight = 400;
-                    int italic = 0;
+                    int32_t weight = 400;
+                    int32_t italic = 0;
                     while (token != NULL)
                     {
                         if (index == styleNameIndex)
@@ -367,7 +367,10 @@ extern "C"
                                 weight = 700;
                         }
                         else if (index == italicIndex)
-                            italic = is_zero_and_space(token) ? 0 : 1; // 0 则false 其他都为true
+                        {
+                            if (!is_zero_and_space(token))
+                                italic = 1; // 0 则false 其他都为true
+                        }
                         token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
@@ -459,10 +462,10 @@ extern "C"
                     if (fontCharList.find(currentFontInfo) == fontCharList.end())
                     {
                         DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
-                        fontCharList[currentFontInfo] = set<int>();
+                        fontCharList[currentFontInfo] = set<uint32_t>();
                     }
 
-                    set<int> *currentCharSet = &fontCharList[currentFontInfo];
+                    set<uint32_t> *currentCharSet = &fontCharList[currentFontInfo];
                     int textState = 0;
                     int codeStart = -1;
                     bool drawMod = false;
@@ -586,7 +589,7 @@ extern "C"
                                 else if (isDigitStr(code + 1))
                                 {
                                     fontKeyChanged = true;
-                                    int bold = atoi(code + 1);
+                                    int32_t bold = static_cast<int32_t>(atoi(code + 1));
                                     if (bold == 0)
                                         currentFontInfo.weight = 400;
                                     else if (bold == 1)
@@ -614,16 +617,16 @@ extern "C"
                             if (fontCharList.find(currentFontInfo) == fontCharList.end())
                             {
                                 DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
-                                fontCharList[currentFontInfo] = set<int>();
+                                fontCharList[currentFontInfo] = set<uint32_t>();
                             }
                             currentCharSet = &fontCharList[currentFontInfo];
                         }
                         if (addChar)
                         {
-                            int unicode = nextCode(text, &index);
+                            uint32_t unicode = nextCode(text, &index);
                             if (unicode != '\r')
                             {
-                                DEBUG_SV(currentFontInfo.fontName << "\t" << currentFontInfo.weight << "\t" << currentFontInfo.italic << ":" << intToUnicodeChar(unicode) << "(" << unicode << ")" << endl);
+                                DEBUG_SV(currentFontInfo.fontName << "\t" << currentFontInfo.weight << "\t" << currentFontInfo.italic << ":" << uint32ToUnicodeChar(unicode) << "(" << unicode << ")" << endl);
                                 currentCharSet->insert(unicode);
                             }
                         }
@@ -637,12 +640,12 @@ extern "C"
             }
         }
         free(code);
-        int resultSize = 4; // 第一位存储item数量
-        int itemCount = 0;
+        uint32_t resultSize = 4; // 第一位存储item数量
+        uint32_t itemCount = 0;
         for (const auto &pair : fontCharList)
         {
             const fontKey &key = pair.first;
-            const std::set<int> &value = pair.second;
+            const std::set<uint32_t> &value = pair.second;
             if (value.size() != 0)
             {
 
@@ -661,7 +664,7 @@ extern "C"
             }
         }
         resultSize += 4; // 存储fontSubsetRename数量
-        int subRenameItemCount = 0;
+        uint32_t subRenameItemCount = 0;
         for (const auto &pair : fontSubsetRename)
         {
             subRenameItemCount++;
@@ -672,50 +675,50 @@ extern "C"
         DEBUG("itemCount = %d\n", itemCount);
         unsigned char *result = (unsigned char *)malloc(sizeof(unsigned char) * resultSize);
         unsigned char *ptr = result;
-        memcpy(ptr, &itemCount, sizeof(int));
-        ptr += sizeof(int);
+        memcpy(ptr, &itemCount, 4);
+        ptr += 4;
         for (const auto &pair : fontCharList)
         {
             const fontKey &key = pair.first;
-            const std::set<int> &value = pair.second;
+            const std::set<uint32_t> &value = pair.second;
             if (value.size() == 0)
                 continue;
             DEBUG_SV("{" << key.fontName << "," << key.weight << "," << key.italic << "}:[");
             string_view fnameRep = fontSubsetRename.find(key.fontName) != fontSubsetRename.end() ? fontSubsetRename[key.fontName] : key.fontName;
-            int nameLen = fnameRep.size();
-            memcpy(ptr, &nameLen, sizeof(int));
-            ptr += sizeof(int);
+            uint32_t nameLen = fnameRep.size();
+            memcpy(ptr, &nameLen, 4);
+            ptr += 4;
             memcpy(ptr, fnameRep.data(), nameLen);
             ptr += nameLen;
 
-            memcpy(ptr, &key.weight, sizeof(int));
-            ptr += sizeof(int);
+            memcpy(ptr, &key.weight, 4);
+            ptr += 4;
 
-            memcpy(ptr, &key.italic, sizeof(int));
-            ptr += sizeof(int);
+            memcpy(ptr, &key.italic, 4);
+            ptr += 4;
 
-            int valueSize = value.size();
-            memcpy(ptr, &valueSize, sizeof(int));
-            ptr += sizeof(int);
+            uint32_t valueSize = value.size();
+            memcpy(ptr, &valueSize, 4);
+            ptr += 4;
 
-            for (const int &val : value)
+            for (const uint32_t &val : value)
             {
-                DEBUG("%s", intToUnicodeChar(val));
-                memcpy(ptr, &val, sizeof(int));
-                ptr += sizeof(int);
+                DEBUG("%s", uint32ToUnicodeChar(val));
+                memcpy(ptr, &val, 4);
+                ptr += 4;
             }
             DEBUG("]\n\n");
         }
-        memcpy(ptr, &subRenameItemCount, sizeof(int));
-        ptr += sizeof(int);
+        memcpy(ptr, &subRenameItemCount, 4);
+        ptr += 4;
         for (const auto &pair : fontSubsetRename)
         {
             memcpy(ptr, pair.first.data(), pair.first.size());
             ptr += 8;
 
-            int nameLen = pair.second.size();
-            memcpy(ptr, &nameLen, sizeof(int));
-            ptr += sizeof(int);
+            uint32_t nameLen = pair.second.size();
+            memcpy(ptr, &nameLen, 4);
+            ptr += 4;
 
             memcpy(ptr, pair.second.data(), pair.second.size());
             ptr += pair.second.size();

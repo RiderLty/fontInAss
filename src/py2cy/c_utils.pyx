@@ -321,7 +321,7 @@ def analyseAss_OLD(str ass_str) -> Dict[Tuple[str, int, bool], Set[int]]:
                         codeEnd = index
                     else:
                         pass
-                    if _end != codeEnd:
+                    if _end != codeEnd and codeStart+1 != codeEnd:#//Dialogue: 0,0:01:36.12,0:01:36.29,jojo_OP_JP,,0,0,0,,{\blur2\\move(630,5,655,23)}スタープラチナ
                         tag = eventText[codeStart+1:codeEnd]
                         codeStart = index
                         if tag.startswith("rnd"):
@@ -400,38 +400,38 @@ def analyseAss(assText: str = None, assBytes: bytes = None):
     else:
         assChars = assBytes
     cdef unsigned char* result = analyseAss_CPP(assChars)
-    itemCount = struct.unpack("i", result[:4])[0]
+    itemCount = struct.unpack("I", result[:4])[0]
     index = 4
     anaResult = {}
     for i in range(itemCount):
-        nameLen = struct.unpack("i",result[index : index + 4])[0]
+        nameLen = struct.unpack("I",result[index : index + 4])[0]
         index += 4
         fontNname = result[index : index + nameLen].decode("utf-8")
         index += nameLen
-        weight = struct.unpack("i", result[index : index + 4])[0]
+        weight = struct.unpack("I", result[index : index + 4])[0]
         index += 4
 
-        italic = 0 != struct.unpack("i", result[index : index + 4])[0]
+        italic = 0 != struct.unpack("I", result[index : index + 4])[0]
         index += 4
 
-        resultLen = struct.unpack("i", result[index : index + 4])[0]
+        resultLen = struct.unpack("I", result[index : index + 4])[0]
         index += 4
 
         valueSet = set()
         anaResult[(fontNname, weight, italic)] = valueSet
 
         for i in range(resultLen):
-            value = struct.unpack("i", result[index : index + 4])[0]
+            value = struct.unpack("I", result[index : index + 4])[0]
             index += 4
             valueSet.add(value)
     
-    subRenameItemCount = struct.unpack("i", result[index : index + 4])[0]
+    subRenameItemCount = struct.unpack("I", result[index : index + 4])[0]
     index += 4
     subRename = {}
     for i in range(subRenameItemCount):
         replacedName = result[index : index + 8].decode("utf-8")
         index += 8
-        originNameLen = struct.unpack("i",result[index : index + 4])[0]
+        originNameLen = struct.unpack("I",result[index : index + 4])[0]
         index += 4
         originName = result[index : index + originNameLen].decode("utf-8")
         index += originNameLen
