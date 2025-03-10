@@ -1,10 +1,10 @@
+# FROM riderlty/fontinass-builder:latest as cache
 FROM python:3.10-bookworm AS builder
 COPY . /app
-RUN pip install cython
+RUN pip install cython 
 RUN python /app/src/py2cy/setup.py
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r /app/requirements.txt 
-
-FROM python:3.10-slim-bookworm
+# COPY --from=cache /wheels /wheels
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /app/requirements.txt 
+FROM scratch 
 COPY --from=builder /wheels /wheels
-COPY --from=builder /app/src/py2cy/* /src/py2cy/
-RUN pip install --no-cache /wheels/* && rm -rf /wheels && mkdir /data
+COPY --from=builder /app/src/py2cy/* /app/src/py2cy/

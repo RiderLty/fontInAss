@@ -1,9 +1,11 @@
-ARG BUILDER=riderlty/fontinass-builder:hashvalue
-FROM ${BUILDER} 
+FROM riderlty/fontinass-builder:latest as cache
+FROM python:3.10-slim-bookworm
 ARG NGINX=YES
 RUN if [ "${NGINX}" = "YES" ]; then apt-get update && apt-get -y --no-install-recommends install nginx; fi
-COPY onlineFonts.json run.sh /
+COPY onlineFonts.json run.sh requirements.txt /
 COPY nginx /etc/nginx
 COPY src /src/
-RUN chmod 777 /run.sh
+COPY --from=cache /wheels /wheels
+COPY --from=cache /app/src/py2cy/* /app/src/py2cy/
+RUN chmod 777 /run.sh && pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data
 CMD ["/bin/sh" , "-c" , "/run.sh"]
