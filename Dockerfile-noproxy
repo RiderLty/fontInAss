@@ -1,3 +1,4 @@
+ARG BUILDER=riderlty/fontinass-builder:hashval
 FROM ${BUILDER} AS cache
 FROM python:3.10-slim-bookworm
 COPY onlineFonts.json run.sh requirements.txt /
