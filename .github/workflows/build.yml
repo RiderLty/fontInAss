@@ -41,7 +41,7 @@ jobs:
             linux/arm64
           push: true
           tags: riderlty/fontinass:noproxy
-          no-cache: true
+          no-cache: false
 
 
       - name: Build and push default
@@ -56,6 +56,6 @@ jobs:
             linux/arm64
           push: true
           tags: riderlty/fontinass:latest
-          no-cache: true
+          no-cache: false
       
     
