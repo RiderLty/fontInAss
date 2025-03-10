@@ -7,4 +7,4 @@ COPY --from=cache /wheels /wheels
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /app/requirements.txt 
 FROM scratch 
 COPY --from=builder /wheels /wheels
-COPY --from=builder /app/src/py2cy/* /app/src/py2cy/
+COPY --from=builder /app/src/py2cy /app/src/py2cy

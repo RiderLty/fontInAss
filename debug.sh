@@ -3,13 +3,13 @@ docker rmi $(docker images -f "dangling=true" -q)
 cd /mnt/user/storage/Projects/fontInAss/
 docker stop test
 
-docker build . -f DockerfileBuild -t test-builder --rm
+docker build . -f Dockerfile-builder -t riderlty/fontinass-builder:latest
 
 docker run -it --rm test-builder /bin/bash
 
 # ========================================================
 
-docker build . -t test --build-arg NGINX=NO --build-arg BUILDER=test-builder
+docker build . -f Dockerfile-noproxy -t test 
 
 docker run --rm -p 9999:8012 -p 9998:8011 -e EMBY_SERVER_URL="http://192.168.3.3:7097" test
 
