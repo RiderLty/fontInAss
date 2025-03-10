@@ -10,7 +10,7 @@ import re
 for file in getAllFiles("./test" , ["ass"]):
 # for file in ["./test.ass"]:
 # for file in ["/mnt/storage/Projects/fontInAss/test/[Haruhana] Shigatsu wa Kimi no Uso [01].chs_jpn.ass"]:
-    try:
+    # try:
         print()
         print()
         print("-"*64)
@@ -39,7 +39,7 @@ for file in getAllFiles("./test" , ["ass"]):
         # new = analyseAss_NEW(assBytes = subtitleBytes)
 
         end = time.perf_counter_ns()
-        logger.warning(f"{old == new} {(middle - start) / 1000000:.2f}ms vs {(end - middle ) / 1000000:.2f}ms")
+        logger.warning(f"{old == new} (old){(middle - start) / 1000000:.2f}ms vs (new){(end - middle ) / 1000000:.2f}ms")
         
         print(new)
         print(_rename)
@@ -63,7 +63,7 @@ for file in getAllFiles("./test" , ["ass"]):
                 print(key, "(new - old):", str([x for x in new[key] if x not in old[key]]))
         print("old=========================\n",old)
         print("new=========================\n",new)
-    except Exception as e:
-        print(e)
+    # except Exception as e:
+    #     print(e)
     
     

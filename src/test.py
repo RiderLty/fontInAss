@@ -753,11 +753,14 @@
 
 import time
 from py2cy.c_utils import analyseAss
-from utils import  getAllFiles
+from utils import  getAllFiles,assInsertLine
 
 for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
-    print(file)
+    # print(file)
+    # analyseAss(assBytes = open(file,'rb').read())
+    # print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
     start = time.perf_counter_ns()
-    analyseAss(assBytes = open(file,'rb').read())
-    print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
-    
+    with open(file,'r',encoding="UTF-8") as f:
+        res = assInsertLine(f.read(),"0:00:59.00","hello world")
+    with open(file+"insert.ass",'w',encoding="UTF-8") as f:
+        f.write(res)    

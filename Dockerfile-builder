@@ -1,6 +1,5 @@
 ARG BUILDER=riderlty/fontinass-builder:latest
-FROM ${BUILDER} 
-FROM riderlty/fontinass-builder:latest as cache
+FROM ${BUILDER} as cache
 FROM python:3.10-bookworm AS builder
 COPY . /app
 RUN pip install cython 
