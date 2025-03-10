@@ -573,7 +573,6 @@ def getFontFileInfos(fontPath):
         for name_id, language in names:
             if name_id == uharfbuzz.OTNameIdPredefined.FONT_FAMILY:
                 family_name = face.get_name(name_id, language).encode('utf-8','ignore').decode("utf-8")
-                print("family_name",type(family_name),family_name)
                 # 某些字体因为编码问题导致某个family_name会返回None
                 if family_name:
                     family_name = family_name.strip().lower()
