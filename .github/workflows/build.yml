@@ -30,6 +30,7 @@ jobs:
           echo "FILE_HASH=$HASH" >> $GITHUB_ENV
 
       - name: Build and push noproxy
+        id: build_noproxy
         uses: docker/build-push-action@v4
         with:
           file: Dockerfile-noproxy
@@ -40,16 +41,16 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          load: true
           tags: riderlty/fontinass:noproxy
           no-cache: false
-
 
       - name: Build and push latest
         uses: docker/build-push-action@v4
         with:
           file: Dockerfile-default
           build-args: |
-            BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
+            BASE=riderlty/fontinass:noproxy
           context: .
           platforms: |
             linux/amd64
