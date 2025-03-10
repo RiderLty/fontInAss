@@ -572,7 +572,8 @@ def getFontFileInfos(fontPath):
         }
         for name_id, language in names:
             if name_id == uharfbuzz.OTNameIdPredefined.FONT_FAMILY:
-                family_name = face.get_name(name_id, language)
+                family_name = face.get_name(name_id, language).encode('utf-8','ignore').decode("utf-8")
+                print("family_name",type(family_name),family_name)
                 # 某些字体因为编码问题导致某个family_name会返回None
                 if family_name:
                     family_name = family_name.strip().lower()
@@ -586,7 +587,7 @@ def getFontFileInfos(fontPath):
                 else:
                     logger.warning(f"{fontPath} 的其中一个family_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.FULL_NAME:
-                full_name = face.get_name(name_id, language)
+                full_name = face.get_name(name_id, language).encode('utf-8','ignore').decode("utf-8")
                 if full_name:
                     full_name = full_name.strip().lower()
                     fontInfo["fullName"].append(full_name)
@@ -599,7 +600,7 @@ def getFontFileInfos(fontPath):
                 else:
                     logger.warning(f"{fontPath} 的其中一个full_name因为编码错误导致获取失败")
             if name_id == uharfbuzz.OTNameIdPredefined.POSTSCRIPT_NAME:
-                postscript_name = face.get_name(name_id, language)
+                postscript_name = face.get_name(name_id, language).encode('utf-8','ignore').decode("utf-8")
                 if postscript_name:
                     postscript_name = postscript_name.strip().lower()
                     fontInfo["postscriptName"].append(postscript_name)
