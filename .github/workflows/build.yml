@@ -38,6 +38,7 @@ jobs:
           context: .
           platforms: |
             linux/amd64
+            linux/arm64
           push: true
           tags: riderlty/fontinass:noproxy
           no-cache: true
@@ -52,6 +53,7 @@ jobs:
           context: .
           platforms: |
             linux/amd64
+            linux/arm64
           push: true
           tags: riderlty/fontinass:latest
           no-cache: true
