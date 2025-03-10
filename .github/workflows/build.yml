@@ -32,8 +32,8 @@ jobs:
       - name: Build and push without nginx
         uses: docker/build-push-action@v4
         with:
+          file: Dockerfile-noproxy
           build-args: |
-            NGINX=NO
             BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
           context: .
           platforms: |
@@ -47,8 +47,8 @@ jobs:
       - name: Build and push default
         uses: docker/build-push-action@v4
         with:
+          file: Dockerfile-default
           build-args: |
-            NGINX=YES
             BUILDER=riderlty/fontinass-builder:${{ env.FILE_HASH }}
           context: .
           platforms: |

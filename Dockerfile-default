@@ -1,0 +1,4 @@
+FROM riderlty/fontinass:noproxy
+RUN  apt-get update && apt-get -y --no-install-recommends install nginx
+COPY nginx /etc/nginx
+CMD ["/bin/sh" , "-c" , "/run.sh"]
