@@ -36,7 +36,7 @@ jobs:
       - name: Build and push default
         uses: docker/build-push-action@v4
         with:
-          file: DockerfileBuild
+          file: Dockerfile-builder
           context: .
           platforms: |
             linux/amd64
