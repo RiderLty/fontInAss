@@ -1,3 +1,4 @@
+from sys import getsizeof
 import time
 import asyncio
 import traceback
@@ -62,12 +63,12 @@ class assSubsetter:
 
     async def process(self, subtitleBytes, userHDR=0):
         bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
-        if bytesHash in self.cache:
-            (srt, resultBytes) = self.cache[bytesHash]
-            self.cache[bytesHash] = (srt, resultBytes)
-            logger.info(f"字幕缓存命中 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
-            return ("", srt, resultBytes)
-
+        # if bytesHash in self.cache:
+        #     (srt, resultBytes) = self.cache[bytesHash]
+        #     self.cache[bytesHash] = (srt, resultBytes)
+        #     logger.info(f"字幕缓存命中 占用: {len(resultBytes) / (1024 * 1024):.2f}MB")
+        #     return ("", srt, resultBytes)
+        
         assText = bytesToStr(subtitleBytes)
         # assText = subfonts_rename_restore(assText)
         srt = isSRT(assText)
@@ -91,41 +92,44 @@ class assSubsetter:
             except Exception as e:
                 logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
 
-        embedFontsText = "[Fonts]\n"
-        start = time.perf_counter_ns()
-
-        if "utf-8" in chardet.detect(subtitleBytes)["encoding"].lower() and not srt:
-            fontCharList, subRename = analyseAss(assBytes=subtitleBytes)
+        if bytesHash in self.cache:
+            embedFontsText = self.cache[bytesHash]
+            totalErrors = []
+            logger.info(f"字幕缓存命中 占用: {getsizeof(embedFontsText) / (1024 * 1024):.2f}MB")
         else:
-            fontCharList, subRename = analyseAss(assText=assText)
-        for replacedName, originName in subRename.items():
-            assText = assText.replace(replacedName, originName)
+            embedFontsText = "[Fonts]\n"
+            start = time.perf_counter_ns()
 
-        assFinish = time.perf_counter_ns()
-        tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
-        totalErrors = []
-        displayErrors = []
-        for task in asyncio.as_completed(tasks):
-            err, result = await task
-            if err:
-                totalErrors.append(err)
-                if err.startswith("缺少字形"):
-                    if not ERROR_DISPLAY_IGNORE_GLYPH:
+            if "utf-8" in chardet.detect(subtitleBytes)["encoding"].lower() and not srt:
+                fontCharList, subRename = analyseAss(assBytes=subtitleBytes)
+            else:
+                fontCharList, subRename = analyseAss(assText=assText)
+            for replacedName, originName in subRename.items():
+                assText = assText.replace(replacedName, originName)
+
+            assFinish = time.perf_counter_ns()
+            tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
+            totalErrors = []
+            displayErrors = []
+            for task in asyncio.as_completed(tasks):
+                err, result = await task
+                if err:
+                    totalErrors.append(err)
+                    if err.startswith("缺少字形"):
+                        if not ERROR_DISPLAY_IGNORE_GLYPH:
+                            displayErrors.append(err)
+                    else:
                         displayErrors.append(err)
-                else:
-                    displayErrors.append(err)
-            embedFontsText += result
-        logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
-        logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
-        if len(displayErrors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
-            assText = assInsertLine(
-                assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(displayErrors)
-            )
+                embedFontsText += result
+            logger.info(f"ass分析 {(assFinish - start) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+            logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
+            if len(displayErrors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
+                assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(displayErrors))
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
         resultBytes = resultText.encode("UTF-8-sig")
         if len(totalErrors) == 0:
-            self.cache[bytesHash] = (srt, resultBytes)
+            self.cache[bytesHash] = embedFontsText
         else:
             logger.error("存在错误，未缓存")
             for err in totalErrors:
