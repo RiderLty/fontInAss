@@ -1,6 +1,11 @@
 server {
     listen 8012; #新的Emby访问端口
     
+    gzip $NGINX_GZIP;
+    gzip_http_version 1.0;
+    gzip_comp_level $NGINX_GZIP_COMP_LEVEL;
+    gzip_types text/x-ssa;
+
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
         proxy_http_version 1.1;

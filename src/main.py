@@ -211,6 +211,7 @@ async def proxy_pass(request: Request, response: Response):
     except Exception as e:
         logger.error(f"获取原始字幕出错:{str(e)}")
         return ""
+    headers = {}
     try:
         subtitleBytes = serverResponse.content
         error, srt, bytes = await process(subtitleBytes, userHDR)
@@ -218,12 +219,16 @@ async def proxy_pass(request: Request, response: Response):
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
             logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
             return Response(content=subtitleBytes)
-        #copyHeaders = {key: str(value) for key, value in serverResponse.headers.items()}
-        #copyHeaders["Content-Length"] = str(len(bytes))
-        return Response(content=bytes)
+        headers["content-type"] = "text/x-ssa"
+        headers["error"] = base64.b64encode((error).encode("utf-8")).decode("ASCII")
+        headers["srt"] = "true" if srt else "false"
+        if "content-disposition" in serverResponse.headers:
+            headers["content-disposition"] = serverResponse.headers["content-disposition"]
+        
+        return Response(content=bytes  , headers=headers)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
+        return Response(content=serverResponse.content  )
 
 
 def getServer(port, serverLoop, app):

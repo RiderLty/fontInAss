@@ -69,7 +69,10 @@ EMBY_SERVER_URL = "http://192.168.3.3:7096"
 ```
 server {
     listen 8012; #新的Emby访问端口
-    
+    gzip on;
+    gzip_http_version 1.0;
+    gzip_comp_level 1;
+    gzip_types text/x-ssa;
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
         proxy_http_version 1.1;
@@ -155,6 +158,7 @@ server {
 | SUB_CACHE_TTL       | 字幕缓存在内存的过期时间，单位（分钟），<br/>SUB_CACHE_TTL <= 0 禁用过期                      | 60   |
 | FONT_CACHE_SIZE     | 字体缓存上限，单位（条）                                                          | 30   |
 | FONT_CACHE_TTL      | 字体缓存在内存的过期时间，单位（分钟），<br/>FONT_CACHE_TTL <= 0 禁用过期                     | 30   |
+| NGINX_GZIP_COMP_LEVEL | nginx的gzip压缩等级,可用值1~9，设置为其他值则禁用gzip（noproxy无作用） | 1 |
 | HDR                 | 通过HDR来设置字幕亮度峰值，例如1000nit，默认-1 不开启                                     | -1   |
 | LOG_LEVEL           | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO |
 | ERROR_DISPLAY       | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0    |
