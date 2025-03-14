@@ -35,34 +35,34 @@ for file in getAllFiles("./test" , ["ass"]):
         middle = time.perf_counter_ns()
 
         # new = analyseAss_NEW(__assBytes = subtitleBytes)
-        new , _rename = analyseAss_NEW(assText = subtitle)
-        # new = analyseAss_NEW(assBytes = subtitleBytes)
+        # new , _rename = analyseAss_NEW(assText = subtitle)
+        new,_rename = analyseAss_NEW(assBytes = subtitleBytes)
 
         end = time.perf_counter_ns()
         logger.warning(f"{old == new} (old){(middle - start) / 1000000:.2f}ms vs (new){(end - middle ) / 1000000:.2f}ms")
         
-        print(new)
-        print(_rename)
+        # print(new)
+        # print(_rename)
         
-        if old == new :
-            continue
+        # if old == new :
+        #     continue
         
         
         
-        for k in old.keys():
-            old[k] = [chr(x) for x in old[k]]
-        for k in new.keys():
-            new[k] = [chr(x) for x in new[k]]
+        # for k in old.keys():
+        #     old[k] = [chr(x) for x in old[k]]
+        # for k in new.keys():
+        #     new[k] = [chr(x) for x in new[k]]
 
-        print("keys(old - new) ", [x for x in old if x not in new])
-        print("keys(new - old) ", [x for x in new if x not in old])
+        # print("keys(old - new) ", [x for x in old if x not in new])
+        # print("keys(new - old) ", [x for x in new if x not in old])
 
-        if len([x for x in old if x not in new]) + len([x for x in new if x not in old]) == 0:
-            for key in old:
-                print(key, "(old - new):", str([x for x in old[key] if x not in new[key]]))
-                print(key, "(new - old):", str([x for x in new[key] if x not in old[key]]))
-        print("old=========================\n",old)
-        print("new=========================\n",new)
+        # if len([x for x in old if x not in new]) + len([x for x in new if x not in old]) == 0:
+        #     for key in old:
+        #         print(key, "(old - new):", str([x for x in old[key] if x not in new[key]]))
+        #         print(key, "(new - old):", str([x for x in new[key] if x not in old[key]]))
+        # print("old=========================\n",old)
+        # print("new=========================\n",new)
     # except Exception as e:
     #     print(e)
     

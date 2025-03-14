@@ -81,12 +81,12 @@ def bytesToHashName(bytes, hash_algorithm="sha256"):
     return hash_func.hexdigest()
 
 
-srt_full_time_pattern = re.compile(r"@\d+@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@")
+srt_full_time_pattern = re.compile(r"@\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}@")
 
 
 def isSRT(text):
     matches = srt_full_time_pattern.findall("@".join(text.splitlines()))
-    return len(matches) > 0
+    return len(matches) > 3
 
 
 srt_time_pattern = re.compile("-?\d\d:\d\d:\d\d")
