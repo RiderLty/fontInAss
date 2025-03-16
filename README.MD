@@ -86,9 +86,13 @@ server {
         proxy_set_header X-Forwarded-Host $http_host;
     }
 
-    location ~* /videos/(.*)/Subtitles {
+    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt) {#仅匹配ass与srt字幕文件
         #修改为你的fontinass服务器地址
         proxy_pass http://127.0.0.1:8011;
+    }
+
+    location ~* /videos/(.*)/Subtitles/(.*)/Stream.vtt  {#适配emby网页播放SRT字幕，302直链时避免冲突
+        proxy_pass $EMBY_SERVER_URL;
     }
         
     location ~* /web/bower_components/(.*)/subtitles-octopus.js {
