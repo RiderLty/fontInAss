@@ -11,7 +11,7 @@ import asyncio
 import requests
 import traceback
 import coloredlogs
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from uvicorn import Config, Server
 from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS
@@ -193,8 +193,8 @@ async def subtitles_octopus_js(request: Request, response: Response):
         logger.error(f"获取原始JS出错:{str(e)}")
         return ""
     try:
-        jsContent = serverResponse.content.decode('utf-8')
-        jsContent = insert_str(jsContent, INSERT_JS, 'function(options){')
+        jsContent = serverResponse.content.decode("utf-8")
+        jsContent = insert_str(jsContent, INSERT_JS, "function(options){")
         return Response(content=jsContent)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
@@ -217,18 +217,19 @@ async def proxy_pass(request: Request, response: Response):
         error, srt, bytes = await process(subtitleBytes, userHDR)
         logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
-            logger.error("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
-            return Response(content=subtitleBytes)
+            raise BaseException("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
         headers["content-type"] = "text/x-ssa"
         headers["error"] = base64.b64encode((error).encode("utf-8")).decode("ASCII")
         headers["srt"] = "true" if srt else "false"
         if "content-disposition" in serverResponse.headers:
             headers["content-disposition"] = serverResponse.headers["content-disposition"]
-        
-        return Response(content=bytes  , headers=headers)
+        return Response(content=bytes, headers=headers)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content  )
+        reHeader = {key: value for (key, value) in serverResponse.headers.items()}
+        reHeader["Content-Length"] = str(len(serverResponse.content))
+        print("reHeader",reHeader)
+        return Response(content=serverResponse.content , headers=reHeader)
 
 
 def getServer(port, serverLoop, app):
