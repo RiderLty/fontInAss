@@ -60,19 +60,5 @@ function uudecode(enc) {
 
 console.log("subtitles-octopus options : \n",options)
 if (options.subContent && options.subContent.length > 0){
-    //console.time('Method 1');
-    const enc = analyseAss(options.subContent);
-    //console.timeEnd('Method 1');
-    if (enc.length > 0){
-        //console.time('Method 2');
-        for (let i = 0; i < enc.length; i++) {
-            fontBytes = uudecode(enc[i]);
-            //console.log("解码后长度：" + fontBytes.length);
-            const blob = new Blob([fontBytes], {type: "font/ttf"});
-            const url = URL.createObjectURL(blob);
-            //console.log("地址：" + url);
-            options.fonts.push(url);
-        }
-        //console.timeEnd('Method 2');
-    }
+    options.fonts = analyseAss(options.subContent).map( encodedFont => URL.createObjectURL(new Blob([uudecode(encodedFont)], {type: "font/ttf"})))
 }
