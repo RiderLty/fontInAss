@@ -31,7 +31,7 @@ if os.environ.get("FONT_DIRS"):
 
 ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
 
-LOCAL_FONTS_DB_VERSION = "2.4"
+LOCAL_FONTS_DB_VERSION = "2.6"
 LOCAL_FONTS_DB_PATH = os.path.join(DATA_PATH, f"localFonts.ver.{LOCAL_FONTS_DB_VERSION}.db")
 
 os.makedirs(DATA_PATH, exist_ok=True)

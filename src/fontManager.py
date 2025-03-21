@@ -1,3 +1,4 @@
+import base64
 import json
 import sys
 import aiohttp
@@ -6,7 +7,7 @@ import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
 from utils import getAllFiles, getFontFileInfos, saveToDisk, selectFontFromList
-from sqlalchemy import Column, Integer, String, Boolean, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
+from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -34,17 +35,31 @@ def enable_foreign_keys(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
+class PathBase64(TypeDecorator):
+    impl = String
+    def process_bind_param(self, value, dialect):
+        if value:
+            bytes = os.fsencode(value) if isinstance(value, str) else value
+            return base64.b64encode(bytes).decode("utf-8")
+        return None
+
+    def process_result_value(self, value, dialect):
+        if value:
+            bytes = base64.b64decode(value.encode("utf-8"))
+            return os.fsdecode(bytes)
+        return None
+
 
 class FileInfo(Base):
     __tablename__ = "file_info"
-    path = Column(String, index=True, primary_key=True, nullable=False)  # 唯一的文件路径
+    path = Column(PathBase64(), index=True, primary_key=True, nullable=False)  # 唯一的文件路径
     size = Column(Integer, nullable=False)
 
 
 class FontInfo(Base):
     __tablename__ = "font_info"
     uid = Column(String, index=True, primary_key=True, nullable=False)  # 字体信息关联 在获取信息时候使用uuid生成
-    path = Column(String, ForeignKey("file_info.path", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
+    path = Column(PathBase64(), ForeignKey("file_info.path", ondelete="CASCADE", onupdate="CASCADE"), index=True, nullable=False)
     size = Column(Integer, nullable=False)
     index = Column(Integer)
     familyName = Column(JSON)
