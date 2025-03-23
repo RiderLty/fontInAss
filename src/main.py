@@ -228,7 +228,7 @@ async def proxy_pass(request: Request, response: Response):
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         reHeader = {key: value for (key, value) in serverResponse.headers.items()}
         reHeader["Content-Length"] = str(len(serverResponse.content))
-        print("reHeader",reHeader)
+        # print("reHeader",reHeader)
         return Response(content=serverResponse.content , headers=reHeader)
 
 
