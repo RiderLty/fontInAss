@@ -8,10 +8,14 @@
 #include <set>
 #include <unordered_map>
 #include <string_view>
+#include <algorithm>
+#include <thread>
+#include <future>
 
 using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
+#define startsWith_SV(str, prefix) ((str).compare(0, strlen(prefix), prefix) == 0)
 
 #ifdef _WIN32
 #define strtok_rs strtok_s
@@ -249,6 +253,20 @@ bool isDigitStr(char *str)
     return true;
 }
 
+bool isDigitStr_SV(std::string_view sv) {
+    if (sv.empty()) return false;  // 空字符串直接返回false
+
+    // 处理负数情况
+    if (sv.front() == '-') {
+        // 负号后至少需要1个数字字符
+        return sv.size() > 1 && all_of(sv.begin() + 1, sv.end(), 
+            [](char c) { return c >= '0' && c <= '9'; });
+    }
+    // 非负数情况：所有字符均为数字
+    return all_of(sv.begin(), sv.end(), 
+        [](char c) { return c >= '0' && c <= '9'; });
+}
+
 bool is_zero_and_space(char *str)
 {
     // 是否由仅由0与空格构成
@@ -260,6 +278,11 @@ bool is_zero_and_space(char *str)
             return false;
     }
     return true;
+}
+
+bool is_rnd_code(string_view &code)
+{
+    return false;
 }
 
 extern "C"
@@ -279,7 +302,7 @@ extern "C"
         int eventTextIndex = -1;
         char *lineSplitPtr = NULL;
         string_view defaultStyleName;
-        char *code = (char *)malloc(sizeof(char) * 1024 * 1024);
+        // char *code = (char *)malloc(sizeof(char) * 1024 * 1024);
         for (char *line = strtok_rs((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_rs(NULL, "\n", &lineSplitPtr))
         {
             DEBUG("line:%s\n", line);
@@ -536,22 +559,22 @@ extern "C"
                             }
                             char *codeStartPtr = text + codeStart;
                             int codeLen = index - codeStart;
-                            memcpy(code, codeStartPtr, codeLen);
-
-                            int tail = index - codeStart;
-                            while (tail > 1 && isspace(code[tail - 1]))
-                                tail--;
-                            code[tail] = '\0'; // 保证code部分不存在空格
-
-                            if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
+                            string_view code(codeStartPtr, codeLen);
+                            // 去除code尾部的空格
+                            while (code.size() > 1 && isspace((unsigned char)code.back()))
+                            {
+                                code.remove_suffix(1);
+                            }
+                            // if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
+                            if (is_rnd_code(code))
                             {
                             }
-                            else if (startsWith(code, "p"))
+                            else if (startsWith_SV(code, "p"))
                             {
-                                if (codeLen > 1 && isDigitStr(code + 1))
+                                if (codeLen > 1 && isDigitStr_SV(code.substr(1)))
                                     drawMod = code[1] != '0';
                             }
-                            else if (startsWith(code, "fn"))
+                            else if (startsWith_SV(code, "fn"))
                             {
                                 fontKeyChanged = true;
                                 if (codeLen == 2)
@@ -563,7 +586,7 @@ extern "C"
                                     DEBUG_SV("fontName切换" << currentFontInfo.fontName << endl);
                                 }
                             }
-                            else if (startsWith(code, "r"))
+                            else if (startsWith_SV(code, "r"))
                             {
                                 fontKeyChanged = true;
                                 string_view rStyleName(codeStartPtr + 1, codeLen - 1);
@@ -579,17 +602,17 @@ extern "C"
                                 }
                                 DEBUG_SV("style切换" << rStyleName << endl);
                             }
-                            else if (startsWith(code, "b"))
+                            else if (startsWith_SV(code, "b"))
                             {
                                 if (codeLen == 1)
                                 {
                                     currentFontInfo.weight = lineDefaultFontInfo.weight;
                                     fontKeyChanged = true;
                                 }
-                                else if (isDigitStr(code + 1))
+                                else if (isDigitStr_SV(code.substr(1)))
                                 {
                                     fontKeyChanged = true;
-                                    int32_t bold = static_cast<int32_t>(atoi(code + 1));
+                                    int32_t bold = static_cast<int32_t>(atoi(code.data() + 1));
                                     if (bold == 0)
                                         currentFontInfo.weight = 400;
                                     else if (bold == 1)
@@ -598,14 +621,14 @@ extern "C"
                                         currentFontInfo.weight = bold;
                                 }
                             }
-                            else if (startsWith(code, "i"))
+                            else if (startsWith_SV(code, "i"))
                             {
                                 if (codeLen == 1)
                                 {
                                     currentFontInfo.italic = lineDefaultFontInfo.italic;
                                     fontKeyChanged = true;
                                 }
-                                else if (isDigitStr(code + 1))
+                                else if (isDigitStr_SV(code.substr(1)))
                                 {
                                     currentFontInfo.italic = code[1] == '0' ? 0 : 1;
                                     fontKeyChanged = true;
@@ -639,7 +662,7 @@ extern "C"
                 }
             }
         }
-        free(code);
+        // free(code);
         uint32_t resultSize = 4; // 第一位存储item数量
         uint32_t itemCount = 0;
         for (const auto &pair : fontCharList)
