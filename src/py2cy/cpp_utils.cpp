@@ -9,8 +9,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <algorithm>
-#include <thread>
-#include <future>
+
 
 using namespace std;
 
@@ -302,7 +301,238 @@ extern "C"
         int eventTextIndex = -1;
         char *lineSplitPtr = NULL;
         string_view defaultStyleName;
-        // char *code = (char *)malloc(sizeof(char) * 1024 * 1024);
+        
+        auto analyssLine = [&](char *line)
+        {
+            char *dialogue = line + strlen("Dialogue:");
+            int commaCount = 0;
+            int styleStart = 0;
+            int styleEnd = 0;
+            int textStart = 0;
+            int dialogueLen = strlen(dialogue);
+            // DEBUG("\n%s\n", dialogue);
+            for (int index = 0; index < dialogueLen; index++)
+            {
+                // DEBUG("%s\n", dialogue + index);
+                if ((char)dialogue[index] == ',' || index == 0)
+                {
+                    commaCount += 1;
+                    if (commaCount == eventStyleIndex + 1)
+                    {
+                        styleStart = index + 1;
+                    }
+                    if (commaCount == eventStyleIndex + 2)
+                    {
+                        styleEnd = index;
+                    }
+                    if (commaCount == eventTextIndex + 1)
+                    {
+                        textStart = index + 1;
+                        break;
+                    }
+                }
+            }
+            int styleLen = styleEnd - styleStart;
+            string_view styleName(dialogue + styleStart, styleLen);
+            trimLC_strip(styleName, '*');
+            char *text = dialogue + textStart;
+            struct fontKey lineDefaultFontInfo;
+            if (styleFont.find(styleName) == styleFont.end())
+            {
+                DEBUG_SV("未知style 使用默认 " << defaultStyleName << endl);
+                lineDefaultFontInfo = styleFont[defaultStyleName];
+            }
+            else
+            {
+                lineDefaultFontInfo = styleFont[styleName];
+            }
+            struct fontKey currentFontInfo = lineDefaultFontInfo;
+
+            if (fontCharList.find(currentFontInfo) == fontCharList.end())
+            {
+                if (fontCharList.find(currentFontInfo) == fontCharList.end())
+                {
+                    DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
+                    fontCharList[currentFontInfo] = set<uint32_t>();
+                }
+            }
+
+            set<uint32_t> *currentCharSet = &fontCharList[currentFontInfo];
+            int textState = 0;
+            int codeStart = -1;
+            bool drawMod = false;
+            int index = 0;
+            int textLen = strlen(text);
+            DEBUG("=======================================================\ntext:%s\n", text);
+            while (index < textLen)
+            {
+                bool addChar = false;
+                char ch = text[index];
+                bool fontKeyChanged = false;
+                if (textState == 0)
+                {
+                    fontKeyChanged = false;
+                    if (ch == '{')
+                    // 这里仅依照MPV的测试结果解析
+                    {
+                        while (text[index] != '}' && text[index] != '\0' && text[index] != '\\' && index < textLen)
+                        {
+                            index++;
+                        }
+                        if (text[index] == '\\')
+                        {
+                            textState = 1;
+                        }
+                    }
+                    else if (drawMod)
+                    {
+                    }
+                    else if (ch == '\\') // 转义字符
+                    {
+                        // index++;
+                        char ch_next = text[index + 1]; // 检查下一个字符
+                        if (ch_next == '\0')
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            index++; // 不为结束则跳转下一字符
+                            if (!(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h'))
+                            {
+                                addChar = true; // 不为特殊字符则添加
+                            }
+                        }
+                    }
+                    else
+                    {
+                        addChar = true;
+                    }
+                }
+                else if (textState == 1)
+                {
+                    codeStart = index;
+                    while (true)
+                    {
+                        if (text[index] == '}')
+                        {
+                            textState = 0;
+                            break;
+                        }
+                        if (text[index] == '\\')
+                        {
+                            textState = 1;
+                            break;
+                        }
+                        index++;
+                    }
+                    char *codeStartPtr = text + codeStart;
+                    int codeLen = index - codeStart;
+                    string_view code(codeStartPtr, codeLen);
+                    // 去除code尾部的空格
+                    while (code.size() > 1 && isspace((unsigned char)code.back()))
+                    {
+                        code.remove_suffix(1);
+                    }
+                    // if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
+                    if (is_rnd_code(code))
+                    {
+                    }
+                    else if (startsWith_SV(code, "p"))
+                    {
+                        if (codeLen > 1 && isDigitStr_SV(code.substr(1)))
+                            drawMod = code[1] != '0';
+                    }
+                    else if (startsWith_SV(code, "fn"))
+                    {
+                        fontKeyChanged = true;
+                        if (codeLen == 2)
+                            currentFontInfo.fontName = lineDefaultFontInfo.fontName;
+                        else
+                        {
+                            currentFontInfo.fontName = string_view(codeStartPtr + 2, codeLen - 2); // 不能指向code，code会变，要指向原始
+                            trimLC_strip(currentFontInfo.fontName, '@');
+                            DEBUG_SV("fontName切换" << currentFontInfo.fontName << endl);
+                        }
+                    }
+                    else if (startsWith_SV(code, "r"))
+                    {
+                        fontKeyChanged = true;
+                        string_view rStyleName(codeStartPtr + 1, codeLen - 1);
+                        trimLC_strip(rStyleName, '*');
+                        if (rStyleName.empty()) // 空的
+                            currentFontInfo = lineDefaultFontInfo;
+                        else
+                        {
+                            if (styleFont.find(rStyleName) == styleFont.end())
+                                currentFontInfo = lineDefaultFontInfo;
+                            else
+                                currentFontInfo = styleFont[rStyleName];
+                        }
+                        DEBUG_SV("style切换" << rStyleName << endl);
+                    }
+                    else if (startsWith_SV(code, "b"))
+                    {
+                        if (codeLen == 1)
+                        {
+                            currentFontInfo.weight = lineDefaultFontInfo.weight;
+                            fontKeyChanged = true;
+                        }
+                        else if (isDigitStr_SV(code.substr(1)))
+                        {
+                            fontKeyChanged = true;
+                            int32_t bold = static_cast<int32_t>(atoi(code.data() + 1));
+                            if (bold == 0)
+                                currentFontInfo.weight = 400;
+                            else if (bold == 1)
+                                currentFontInfo.weight = 700;
+                            else
+                                currentFontInfo.weight = bold;
+                        }
+                    }
+                    else if (startsWith_SV(code, "i"))
+                    {
+                        if (codeLen == 1)
+                        {
+                            currentFontInfo.italic = lineDefaultFontInfo.italic;
+                            fontKeyChanged = true;
+                        }
+                        else if (isDigitStr_SV(code.substr(1)))
+                        {
+                            currentFontInfo.italic = code[1] == '0' ? 0 : 1;
+                            fontKeyChanged = true;
+                        }
+                    }
+                }
+                if (fontKeyChanged)
+                {
+                    if (fontCharList.find(currentFontInfo) == fontCharList.end())
+                    {
+                        if (fontCharList.find(currentFontInfo) == fontCharList.end())
+                        {
+                            DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
+                            fontCharList[currentFontInfo] = set<uint32_t>();
+                        }
+                    }
+                    currentCharSet = &fontCharList[currentFontInfo];
+                }
+                if (addChar)
+                {
+                    uint32_t unicode = nextCode(text, &index);
+                    if (unicode != '\r')
+                    {
+                        DEBUG_SV(currentFontInfo.fontName << "\t" << currentFontInfo.weight << "\t" << currentFontInfo.italic << ":" << uint32ToUnicodeChar(unicode) << "(" << unicode << ")" << endl);
+                        currentCharSet->insert(unicode);
+                    }
+                }
+                else
+                {
+                    index++;
+                }
+            }
+            DEBUG("\n\n");
+        };
+
         for (char *line = strtok_rs((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_rs(NULL, "\n", &lineSplitPtr))
         {
             DEBUG("line:%s\n", line);
@@ -439,226 +669,7 @@ extern "C"
             {
                 if (startsWith(line, "Dialogue:"))
                 {
-                    char *dialogue = line + strlen("Dialogue:");
-                    int commaCount = 0;
-                    int styleStart = 0;
-                    int styleEnd = 0;
-                    int textStart = 0;
-                    int dialogueLen = strlen(dialogue);
-                    // DEBUG("\n%s\n", dialogue);
-                    for (int index = 0; index < dialogueLen; index++)
-                    {
-                        // DEBUG("%s\n", dialogue + index);
-                        if ((char)dialogue[index] == ',' || index == 0)
-                        {
-                            commaCount += 1;
-                            if (commaCount == eventStyleIndex + 1)
-                            {
-                                styleStart = index + 1;
-                            }
-                            if (commaCount == eventStyleIndex + 2)
-                            {
-                                styleEnd = index;
-                            }
-                            if (commaCount == eventTextIndex + 1)
-                            {
-                                textStart = index + 1;
-                                break;
-                            }
-                        }
-                    }
-                    int styleLen = styleEnd - styleStart;
-                    string_view styleName(dialogue + styleStart, styleLen);
-                    trimLC_strip(styleName, '*');
-                    char *text = dialogue + textStart;
-                    struct fontKey lineDefaultFontInfo;
-                    if (styleFont.find(styleName) == styleFont.end())
-                    {
-                        DEBUG_SV("未知style 使用默认 " << defaultStyleName << endl);
-                        lineDefaultFontInfo = styleFont[defaultStyleName];
-                    }
-                    else
-                    {
-                        lineDefaultFontInfo = styleFont[styleName];
-                    }
-                    struct fontKey currentFontInfo = lineDefaultFontInfo;
-                    if (fontCharList.find(currentFontInfo) == fontCharList.end())
-                    {
-                        DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
-                        fontCharList[currentFontInfo] = set<uint32_t>();
-                    }
-
-                    set<uint32_t> *currentCharSet = &fontCharList[currentFontInfo];
-                    int textState = 0;
-                    int codeStart = -1;
-                    bool drawMod = false;
-                    int index = 0;
-                    int textLen = strlen(text);
-                    DEBUG("=======================================================\ntext:%s\n", text);
-                    while (index < textLen)
-                    {
-                        bool addChar = false;
-                        char ch = text[index];
-                        bool fontKeyChanged = false;
-                        if (textState == 0)
-                        {
-                            fontKeyChanged = false;
-                            if (ch == '{')
-                            // 这里仅依照MPV的测试结果解析
-                            {
-                                while (text[index] != '}' && text[index] != '\0' && text[index] != '\\' && index < textLen)
-                                {
-                                    index++;
-                                }
-                                if (text[index] == '\\')
-                                {
-                                    textState = 1;
-                                }
-                            }
-                            else if (drawMod)
-                            {
-                            }
-                            else if (ch == '\\') // 转义字符
-                            {
-                                // index++;
-                                char ch_next = text[index + 1]; // 检查下一个字符
-                                if (ch_next == '\0')
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    index++; // 不为结束则跳转下一字符
-                                    if (!(ch_next == '{' || ch_next == '}' || ch_next == 'n' || ch_next == 'N' || ch_next == 'h'))
-                                    {
-                                        addChar = true; // 不为特殊字符则添加
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                addChar = true;
-                            }
-                        }
-                        else if (textState == 1)
-                        {
-                            codeStart = index;
-                            while (true)
-                            {
-                                if (text[index] == '}')
-                                {
-                                    textState = 0;
-                                    break;
-                                }
-                                if (text[index] == '\\')
-                                {
-                                    textState = 1;
-                                    break;
-                                }
-                                index++;
-                            }
-                            char *codeStartPtr = text + codeStart;
-                            int codeLen = index - codeStart;
-                            string_view code(codeStartPtr, codeLen);
-                            // 去除code尾部的空格
-                            while (code.size() > 1 && isspace((unsigned char)code.back()))
-                            {
-                                code.remove_suffix(1);
-                            }
-                            // if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
-                            if (is_rnd_code(code))
-                            {
-                            }
-                            else if (startsWith_SV(code, "p"))
-                            {
-                                if (codeLen > 1 && isDigitStr_SV(code.substr(1)))
-                                    drawMod = code[1] != '0';
-                            }
-                            else if (startsWith_SV(code, "fn"))
-                            {
-                                fontKeyChanged = true;
-                                if (codeLen == 2)
-                                    currentFontInfo.fontName = lineDefaultFontInfo.fontName;
-                                else
-                                {
-                                    currentFontInfo.fontName = string_view(codeStartPtr + 2, codeLen - 2); // 不能指向code，code会变，要指向原始
-                                    trimLC_strip(currentFontInfo.fontName, '@');
-                                    DEBUG_SV("fontName切换" << currentFontInfo.fontName << endl);
-                                }
-                            }
-                            else if (startsWith_SV(code, "r"))
-                            {
-                                fontKeyChanged = true;
-                                string_view rStyleName(codeStartPtr + 1, codeLen - 1);
-                                trimLC_strip(rStyleName, '*');
-                                if (rStyleName.empty()) // 空的
-                                    currentFontInfo = lineDefaultFontInfo;
-                                else
-                                {
-                                    if (styleFont.find(rStyleName) == styleFont.end())
-                                        currentFontInfo = lineDefaultFontInfo;
-                                    else
-                                        currentFontInfo = styleFont[rStyleName];
-                                }
-                                DEBUG_SV("style切换" << rStyleName << endl);
-                            }
-                            else if (startsWith_SV(code, "b"))
-                            {
-                                if (codeLen == 1)
-                                {
-                                    currentFontInfo.weight = lineDefaultFontInfo.weight;
-                                    fontKeyChanged = true;
-                                }
-                                else if (isDigitStr_SV(code.substr(1)))
-                                {
-                                    fontKeyChanged = true;
-                                    int32_t bold = static_cast<int32_t>(atoi(code.data() + 1));
-                                    if (bold == 0)
-                                        currentFontInfo.weight = 400;
-                                    else if (bold == 1)
-                                        currentFontInfo.weight = 700;
-                                    else
-                                        currentFontInfo.weight = bold;
-                                }
-                            }
-                            else if (startsWith_SV(code, "i"))
-                            {
-                                if (codeLen == 1)
-                                {
-                                    currentFontInfo.italic = lineDefaultFontInfo.italic;
-                                    fontKeyChanged = true;
-                                }
-                                else if (isDigitStr_SV(code.substr(1)))
-                                {
-                                    currentFontInfo.italic = code[1] == '0' ? 0 : 1;
-                                    fontKeyChanged = true;
-                                }
-                            }
-                        }
-                        if (fontKeyChanged)
-                        {
-                            if (fontCharList.find(currentFontInfo) == fontCharList.end())
-                            {
-                                DEBUG_SV(currentFontInfo.italic << " " << currentFontInfo.weight << " " << currentFontInfo.fontName << "未找到，创建新的" << endl);
-                                fontCharList[currentFontInfo] = set<uint32_t>();
-                            }
-                            currentCharSet = &fontCharList[currentFontInfo];
-                        }
-                        if (addChar)
-                        {
-                            uint32_t unicode = nextCode(text, &index);
-                            if (unicode != '\r')
-                            {
-                                DEBUG_SV(currentFontInfo.fontName << "\t" << currentFontInfo.weight << "\t" << currentFontInfo.italic << ":" << uint32ToUnicodeChar(unicode) << "(" << unicode << ")" << endl);
-                                currentCharSet->insert(unicode);
-                            }
-                        }
-                        else
-                        {
-                            index++;
-                        }
-                    }
-                    DEBUG("\n\n");
+                    analyssLine(line);
                 }
             }
         }
