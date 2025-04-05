@@ -33,7 +33,6 @@ jobs:
           file: Dockerfile-builder
           context: .
           platforms: |
-            linux/amd64
             linux/arm64
           push: true
           tags: |
