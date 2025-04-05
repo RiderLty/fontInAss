@@ -16,19 +16,18 @@ jobs:
           file: Dockerfile-builder
           context: .
           push: false
-          provenance: false
           tags: |
-            build-img-arm64
+            img/arm64:latest
       
       - name: save img to artifacts 
         run: |
-          docker save build-img-arm64 -o build-img-arm64.tar  
+          docker save img/arm64:latest -o img-arm64.tar  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-img-arm64  # Artifact 名称
-          path: build-img-arm64.tar
+          name: img-arm64  # Artifact 名称
+          path: img-arm64.tar
 
 
   build-amd64:
@@ -45,19 +44,18 @@ jobs:
           file: Dockerfile-builder
           context: .
           push: false
-          provenance: false
           tags: |
-            build-img-amd64
+            img/amd64:latest
 
       - name: save img to artifacts 
         run: |
-          docker save build-img-amd64 -o build-img-amd64.tar  
+          docker save img/amd64:latest -o img-amd64.tar  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-img-amd64  # Artifact 名称
-          path: build-img-amd64.tar
+          name: img-amd64  # Artifact 名称
+          path: img-amd64.tar
 
   combine-two-images:
     runs-on: ubuntu-latest
@@ -69,19 +67,19 @@ jobs:
       - name: Download arm64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-img-arm64  # 下载名为 build-artifact 的 Artifact
+          name: img-arm64  # 下载名为 build-artifact 的 Artifact
           path: ./ 
 
       - name: Download amd64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: build-img-amd64  # 下载名为 build-artifact 的 Artifact
+          name: img-amd64  # 下载名为 build-artifact 的 Artifact
           path: ./ 
 
       - name: Load image
         run: |
-          docker load -i build-img-arm64.tar
-          docker load -i build-img-amd64.tar
+          docker load -i img-arm64.tar
+          docker load -i img-amd64.tar
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -93,12 +91,12 @@ jobs:
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass-builder:latest
-            images: build-img-amd64,build-img-arm64
+            images: img/amd64:latest,img/arm64:latest
             push: true
 
       - name: clear
         uses: geekyeggo/delete-artifact@v5
         with:
             name: |
-                build-img-amd64
-                build-img-arm64
+                img-amd64
+                img-arm64
