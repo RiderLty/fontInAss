@@ -16,12 +16,13 @@ jobs:
           file: Dockerfile-builder
           context: .
           load: true
+          provenance: false
           tags: |
-            img-arm64
+            img/arm64:latest
       
       - name: save img to artifacts 
         run: |
-          docker save img-arm64 -o img-arm64.tar  
+          docker save img/arm64:latest -o img-arm64.tar  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -44,6 +45,7 @@ jobs:
           file: Dockerfile-builder
           context: .
           load: true
+          provenance: false
           tags: |
             img-amd64
 
