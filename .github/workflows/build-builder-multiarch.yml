@@ -97,7 +97,7 @@ jobs:
             push: true
 
       - name: clear
-      - uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v5
         with:
             name: |
                 build-img-amd64
