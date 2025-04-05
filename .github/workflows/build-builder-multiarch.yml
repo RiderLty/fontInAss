@@ -15,7 +15,7 @@ jobs:
         with:
           file: Dockerfile-builder
           context: .
-          push: false
+          load: true
           tags: |
             img/arm64:latest
       
@@ -43,7 +43,7 @@ jobs:
         with:
           file: Dockerfile-builder
           context: .
-          push: false
+          load: true
           tags: |
             img/amd64:latest
 
