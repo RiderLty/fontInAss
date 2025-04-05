@@ -18,11 +18,11 @@ jobs:
           load: true
           provenance: false
           tags: |
-            img/arm64:latest
+            riderlty/fontinass-builder:latest-arm64
       
       - name: save img to artifacts 
         run: |
-          docker save img/arm64:latest -o img-arm64.tar  
+          docker save riderlty/fontinass-builder:latest-arm64 -o img-arm64.tar  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -47,11 +47,11 @@ jobs:
           load: true
           provenance: false
           tags: |
-            img-amd64
+            riderlty/fontinass-builder:latest-amd64
 
       - name: save img to artifacts 
         run: |
-          docker save img-amd64 -o img-amd64.tar  
+          docker save riderlty/fontinass-builder:latest-amd64 -o img-amd64.tar  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -93,7 +93,7 @@ jobs:
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass-builder:latest
-            images: img-amd64,img-arm64
+            images: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
             push: true
 
       - name: clear
