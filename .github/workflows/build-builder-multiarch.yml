@@ -6,58 +6,41 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+ 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: build-arm64
         uses: docker/build-push-action@v4
         with:
           file: Dockerfile-builder
           context: .
-          load: true
-          provenance: false
+          push: true
           tags: |
             riderlty/fontinass-builder:latest-arm64
       
-      - name: save img to artifacts 
-        run: |
-          docker save riderlty/fontinass-builder:latest-arm64 -o img-arm64.tar  
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: img-arm64  # Artifact 名称
-          path: img-arm64.tar
-
-
   build-amd64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
+ 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+     
       - name: build-amd64
         uses: docker/build-push-action@v4
         with:
           file: Dockerfile-builder
           context: .
-          load: true
-          provenance: false
+          push: true
           tags: |
             riderlty/fontinass-builder:latest-amd64
-
-      - name: save img to artifacts 
-        run: |
-          docker save riderlty/fontinass-builder:latest-amd64 -o img-amd64.tar  
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: img-amd64  # Artifact 名称
-          path: img-amd64.tar
 
   combine-two-images:
     runs-on: ubuntu-latest
@@ -72,33 +55,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Download arm64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: img-arm64  # 下载名为 build-artifact 的 Artifact
-          path: ./ 
-
-      - name: Download amd64 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: img-amd64  # 下载名为 build-artifact 的 Artifact
-          path: ./ 
-
-      - name: Load image
-        run: |
-          docker load -i img-arm64.tar
-          docker load -i img-amd64.tar
-      
       - name: Create and push manifest images
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass-builder:latest
             images: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
             push: true
-
-      - name: clear
-        uses: geekyeggo/delete-artifact@v5
-        with:
-            name: |
-                img-amd64
-                img-arm64
