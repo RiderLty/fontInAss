@@ -26,9 +26,10 @@ jobs:
         with:
           file: Dockerfile-builder
           context: .
-          push: false
+          push: true
+          provenance: false
           tags: |
-            riderlty/fontinass-builder-arm64:latest
+            riderlty/fontinass-builder:latest-arm64
   
   build-amd64:
     runs-on: ubuntu-latest
@@ -52,9 +53,10 @@ jobs:
         with:
           file: Dockerfile-builder
           context: .
-          push: false
+          push: true
+          provenance: false
           tags: |
-            riderlty/fontinass-builder-amd64:latest
+            riderlty/fontinass-builder:latest-amd64
 
   combine-two-images:
     runs-on: ubuntu-latest
@@ -72,5 +74,5 @@ jobs:
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass-builder:latest
-            images: riderlty/fontinass-builder-amd64:latest,riderlty/fontinass-builder-arm64:latest
+            images: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
             push: true
