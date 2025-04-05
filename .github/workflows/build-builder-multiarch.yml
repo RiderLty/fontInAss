@@ -1,8 +1,6 @@
 name: build-builder-multiarch
-
 on:
   workflow_dispatch:
-
 jobs:
   build-arm64:
     runs-on: ubuntu-22.04-arm
