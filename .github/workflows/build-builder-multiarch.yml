@@ -1,6 +1,13 @@
 name: build-builder-multiarch
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - requirements.txt
+      - src/py2cy/c_utils.pyx
+      - src/py2cy/cpp_utils.cpp
+      - src/py2cy/setup.py
+      
 jobs:
   build-arm64:
     runs-on: ubuntu-22.04-arm
