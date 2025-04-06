@@ -5,5 +5,8 @@ COPY onlineFonts.json run.sh requirements.txt /
 COPY src /src/
 COPY --from=builder /wheels /wheels
 COPY --from=builder /app/src/py2cy/* /src/py2cy/
-RUN chmod 777 /run.sh && pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_SYSTEM_PYTHON=1
+RUN chmod 777 /run.sh && uv pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data
 CMD ["/bin/sh" , "-c" , "/run.sh"]
