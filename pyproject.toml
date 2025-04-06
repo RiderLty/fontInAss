@@ -1,0 +1,25 @@
+[project]
+name = "fontinass"
+version = "0.1.0"
+description = ""
+readme = "README.MD"
+requires-python = ">=3.10.16"
+dependencies = [
+    "aiofiles==24.1.0",
+    "aiohttp==3.11.11",
+    "ass==0.5.4",
+    "cachetools==5.5.1",
+    "chardet==5.2.0",
+    "coloredlogs==15.0.1",
+    "colour-science==0.4.6",
+    "fastapi==0.115.6",
+    "freetype-py==2.5.1",
+    "jsmin==3.0.1",
+    "numpy==2.2.2",
+    "requests==2.32.3",
+    "sqlalchemy==2.0.37",
+    "tqdm==4.67.1",
+    "uharfbuzz==0.45.0",
+    "uvicorn==0.32.1",
+    "watchdog==6.0.0",
+]
