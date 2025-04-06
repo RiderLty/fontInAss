@@ -21,6 +21,7 @@ if platform.system() == "Windows":
     ext_modules[0].ext_suffix = ".pyd"
 elif platform.system() in ["Linux", "Darwin"]:
     # Linux 或 macOS 上生成 .so 文件
+    ext_modules[0].extra_compile_args = ["-std=c++17"]
     ext_modules[0].ext_suffix = ".so"
 
 setup(
