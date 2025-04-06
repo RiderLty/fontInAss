@@ -53,19 +53,29 @@ Docker > 添加容器 > 选择一个模版 > fontinass
 应用
 ## 手动运行
 
-安装依赖
-```
-pip install -r ./requirements.txt
-```
-编译c部分
+### 编译c部分
 ```
 python src/py2cy/setup.py
 ```
-添加环境变量 EMBY_SERVER_URL ，例如：
+
+### 添加环境变量 EMBY_SERVER_URL
 ```
 EMBY_SERVER_URL = "http://192.168.3.3:7096"
 ```
-添加nginx反向代理
+
+### 安装依赖&运行
+```
+pip install -r ./requirements.txt
+python src/main.py
+```
+或者使用uv（推荐）
+```
+uv sync
+uv run src/main.py
+```
+
+
+### 添加nginx反向代理
 ```
 server {
     listen 8012; #新的Emby访问端口
