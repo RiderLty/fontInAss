@@ -1,8 +1,8 @@
 ARG BUILDER=riderlty/fontinass-builder:latest
 FROM ${BUILDER} AS builder
 FROM python:3.10-slim-bookworm
-COPY onlineFonts.json run.sh requirements.txt /
-COPY src uv.lock pyproject.toml /
+COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
+COPY src  /src/
 COPY --from=builder /wheels /wheels
 COPY --from=builder /app/src/py2cy/* /src/py2cy/
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
