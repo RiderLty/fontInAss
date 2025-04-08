@@ -279,8 +279,24 @@ bool is_zero_and_space(char *str)
     return true;
 }
 
+// if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
 bool is_rnd_code(string_view &code)
 {
+    if (code.size() < 3)
+        return false;
+    if (code.substr(0, 3) == "rnd")
+    {
+        if (code.size() == 3)
+            return true;
+        if (code[3] == 'x' || code[3] == 'y' || code[3] == 'z')
+        {
+            if (code.size() > 4 && isDigitStr_SV(code.substr(4)))
+                return true;
+        }
+        else if (isDigitStr_SV(code.substr(3)))
+            return true;
+    }
+    // 其他情况
     return false;
 }
 
@@ -434,7 +450,6 @@ extern "C"
                     {
                         code.remove_suffix(1);
                     }
-                    // if (startsWith(code, "rnd") && (((strcmp(code + 3, "x") || strcmp(code + 3, "y") || strcmp(code + 3, "z")) && isDigitStr(code + 4)) || (isDigitStr(code + 3))))
                     if (is_rnd_code(code))
                     {
                     }
