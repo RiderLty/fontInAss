@@ -6,10 +6,10 @@ import chardet
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontManager import fontManager
-import hdrify
+import colorAdjust
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
-from constants import ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, HDR
+from constants import ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT
 
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
@@ -61,8 +61,8 @@ class assSubsetter:
             return f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}", ""
         return assSubsetter.fontSubsetter(fontBytes, index, fontName, weight, italic, unicodeSet)
 
-    async def process(self, subtitleBytes, userHDR=0):
-        bytesHash = bytesToHashName(subtitleBytes + userHDR.to_bytes(4, byteorder="big", signed=True))
+    async def process(self, subtitleBytes, user_hsv_s,user_hsv_v):
+        bytesHash = bytesToHashName(subtitleBytes + int((user_hsv_s*10 + user_hsv_v) * 100).to_bytes(4, byteorder="big", signed=True))
         # if bytesHash in self.cache:
         #     (srt, resultBytes) = self.cache[bytesHash]
         #     self.cache[bytesHash] = (srt, resultBytes)
@@ -84,13 +84,11 @@ class assSubsetter:
             logger.error("已有内嵌字体")
             return ("已有内嵌字体", False, subtitleBytes)
 
-        targetHDR = HDR if userHDR == 0 else userHDR
-        if targetHDR != -1:
-            logger.info(f"HDR适配 {targetHDR}")
-            try:
-                assText = hdrify.ssaProcessor(assText, targetHDR)
-            except Exception as e:
-                logger.error(f"HDR适配出错: \n{traceback.format_exc()}")
+        if user_hsv_s == 1 and user_hsv_v == 1:
+            pass
+        else:
+            logger.info(f"颜色调整 饱和度x{user_hsv_s} 亮度x{user_hsv_v}")
+            assText = colorAdjust.ssaProcessor(assText , user_hsv_s , user_hsv_v)
 
         if bytesHash in self.cache:
             embedFontsText = self.cache[bytesHash]

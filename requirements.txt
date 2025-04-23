@@ -4,8 +4,6 @@ watchdog==6.0.0
 cachetools==5.5.1
 coloredlogs==15.0.1
 chardet==5.2.0
-colour-science==0.4.6
-numpy==2.2.2
 uharfbuzz==0.45.0
 fastapi==0.115.6
 aiofiles==24.1.0

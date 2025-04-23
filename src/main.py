@@ -324,7 +324,7 @@ async def set_saturation(val: float):
         user_hsv_s = 0
     if user_hsv_s > 1:
         user_hsv_s = 1
-    logger.info(f"临时饱和度 已设置为 {user_hsv_s}")
+    logger.info(f"饱和度 已设置为 {user_hsv_s}")
     return val
 
 @app.get("/color/set/brightness/{val}")
@@ -338,7 +338,7 @@ async def set_brightness(val: float):
         user_hsv_v = 0
     if user_hsv_v > 1:
         user_hsv_v = 1
-    logger.info(f"临时亮度 已设置为 {user_hsv_v}")
+    logger.info(f"亮度 已设置为 {user_hsv_v}")
     return val      
         
 @app.post("/fontinass/process_bytes")
