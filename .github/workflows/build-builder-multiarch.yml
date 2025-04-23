@@ -65,6 +65,6 @@ jobs:
       - name: Create and push manifest images
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
-            inputs: riderlty/fontinass-builder:latest
-            tags: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
+            inputs: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
+            tags: riderlty/fontinass-builder:latest
             push: true

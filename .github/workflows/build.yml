@@ -111,8 +111,8 @@ jobs:
       - name: Create and push manifest images
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
-            inputs: riderlty/fontinass:noproxy
-            tags: riderlty/fontinass:noproxy-amd64,riderlty/fontinass:noproxy-arm64
+            inputs: riderlty/fontinass:noproxy-amd64,riderlty/fontinass:noproxy-arm64
+            tags: riderlty/fontinass:noproxy
             push: true
 
 
@@ -132,6 +132,6 @@ jobs:
       - name: Create and push manifest images
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
-            inputs: riderlty/fontinass:latest
-            tags: riderlty/fontinass:latest-amd64,riderlty/fontinass:latest-arm64
+            inputs: riderlty/fontinass:latest-amd64,riderlty/fontinass:latest-arm64
+            tags: riderlty/fontinass:latest
             push: true
