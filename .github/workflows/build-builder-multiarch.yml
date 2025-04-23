@@ -66,5 +66,5 @@ jobs:
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass-builder:latest
-            images: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
+            tags: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
             push: true
