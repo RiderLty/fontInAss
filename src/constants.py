@@ -52,7 +52,7 @@ FONT_CACHE_TTL = int(os.environ.get("FONT_CACHE_TTL", default=30)) * 60
 SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
 SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
 
-HDR = int(os.environ.get("HDR", "-1"))
+
 
 FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
 

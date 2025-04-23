@@ -175,7 +175,6 @@ server {
 | FONT_CACHE_SIZE     | 字体缓存上限，单位（条）                                                          | 30   |
 | FONT_CACHE_TTL      | 字体缓存在内存的过期时间，单位（分钟），<br/>FONT_CACHE_TTL <= 0 禁用过期                     | 30   |
 | NGINX_GZIP_COMP_LEVEL | nginx的gzip压缩等级,可用值1~9，设置为其他值则禁用gzip（noproxy无作用） | 1 |
-| HDR                 | 通过HDR来设置字幕亮度峰值，例如1000nit，默认-1 不开启                                     | -1   |
 | LOG_LEVEL           | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO |
 | ERROR_DISPLAY       | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0    |
 | ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，忽略字形缺失，默认关闭，设置值为True后仅当字体缺失时会提示错误 | False |
@@ -193,11 +192,8 @@ server {
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
 
-支持[HDR适配](https://github.com/yyymeow/ssaHdrify)，避免亮度过高
+通过```http://[ip]:8011/color/adjust```可调整字幕整体颜色亮度与饱和度，避免HDR显示时过亮(需开放8011端口)
 
-也可通过```http://[ip]:8011/setHDR```临时调整(需开放8011端口)
-
-通过HDR来设置字幕亮度峰值, 例如1000nit，默认-1 不开启
 
 # 原理说明
 
