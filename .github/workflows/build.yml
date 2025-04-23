@@ -112,7 +112,7 @@ jobs:
         uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
         with:
             inputs: riderlty/fontinass:noproxy
-            images: riderlty/fontinass:noproxy-amd64,riderlty/fontinass:noproxy-arm64
+            tags: riderlty/fontinass:noproxy-amd64,riderlty/fontinass:noproxy-arm64
             push: true
 
 
