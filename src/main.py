@@ -46,7 +46,7 @@ app = FastAPI()
 
 process = None
 
-@app.get("/color/adjust", response_class=HTMLResponse)
+@app.get("/color/set", response_class=HTMLResponse)
 async def setColor():
     return open(os.path.join(os.path.join(os.path.dirname(__file__) , "html"), "color.html"), "r", encoding="utf-8").read()
 
