@@ -1,12 +1,15 @@
 ARG BUILDER=riderlty/fontinass-builder:latest
 FROM ${BUILDER} AS builder
 FROM python:3.10-slim-bookworm
+# FROM python:3.10.17-alpine
 COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
-COPY --from=builder /wheels /wheels
+# COPY --from=builder /wheels /wheels
 COPY --from=builder /app/src/py2cy/* /src/py2cy/
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_SYSTEM_PYTHON=1
-RUN chmod 777 /run.sh && uv pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data
+RUN --mount=type=bind,target=/wheels,from=builder,source=/wheels \
+    chmod 777 /run.sh &&  pip install --no-cache --find-links /wheels -r /requirements.txt  && mkdir /data
+# RUN chmod 777 /run.sh && uv pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data
 CMD ["/bin/sh" , "-c" , "/run.sh"]

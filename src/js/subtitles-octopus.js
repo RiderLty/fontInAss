@@ -53,12 +53,20 @@ function uudecode(enc) {
             binaryData[index++] = ((encoded[2] & 0x3) << 6) | encoded[3];
         }
     }
-     // 返回有效部分的 Uint8Array
+    // 返回有效部分的 Uint8Array
     return binaryData.slice(0, index);
 }
 
 
-console.log("subtitles-octopus options : \n",options)
-if (options.subContent && options.subContent.length > 0){
-    options.fonts = analyseAss(options.subContent).map( encodedFont => URL.createObjectURL(new Blob([uudecode(encodedFont)], {type: "font/ttf"})))
+console.log("subtitles-octopus options : \n", options)
+if (options.subContent && options.subContent.length > 0) {
+    const embeddedFonts = analyseAss(options.subContent);
+    console.log("embeddedFonts : \n", embeddedFonts)
+    if (embeddedFonts.length === 0) {
+        console.warn("No embedded fonts found in the subtitle content.");
+        console.warn("not change options.fonts");
+    } else {
+        options.fonts = embeddedFonts.map(encodedFont => URL.createObjectURL(new Blob([uudecode(encodedFont)], { type: "font/ttf" })))
+        console.log("options.fonts : \n", options.fonts)
+    }
 }
