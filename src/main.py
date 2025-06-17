@@ -163,10 +163,14 @@ async def proxy_pass(request: Request, response: Response):
         return Response(content=bytes, headers=headers)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        reHeader = {key: value for (key, value) in serverResponse.headers.items()}
-        reHeader["Content-Length"] = str(len(serverResponse.content))
+        excluded_headers = ["Content-Encoding", "Transfer-Encoding", "Content-Length", "Connection"]
+        reHeader = {
+            key: value
+            for key, value in serverResponse.headers.items()
+            if key not in excluded_headers
+        }
         # print("reHeader",reHeader)
-        return Response(content=serverResponse.content , headers=reHeader)
+        return Response(content=serverResponse.content, status_code=serverResponse.status_code, headers=reHeader)
 
 
 def getServer(port, serverLoop, app):
