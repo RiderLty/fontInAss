@@ -83,6 +83,10 @@ class assSubsetter:
         if "[Fonts]\n" in assText:
             logger.error("已有内嵌字体")
             return ("已有内嵌字体", False, subtitleBytes)
+        
+        if "Font Subset" in assText:
+            logger.info("已有内封字体子集")
+            return ("已有内封字体子集", False, subtitleBytes)
 
         if user_hsv_s == 1 and user_hsv_v == 1:
             pass
