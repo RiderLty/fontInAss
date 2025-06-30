@@ -9,7 +9,7 @@ from fontManager import fontManager
 import colorAdjust
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
-from constants import ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT
+from constants import RENAMED_FONT_RESTORE ,EMBY_WEB_EMBED_FONT, ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT
 
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
@@ -102,8 +102,10 @@ class assSubsetter:
                 fontCharList, subRename = analyseAss(assBytes=subtitleBytes)
             else:
                 fontCharList, subRename = analyseAss(assText=assText)
-            for replacedName, originName in subRename.items():
-                assText = assText.replace(replacedName, originName)
+            
+            if RENAMED_FONT_RESTORE:
+                for replacedName, originName in subRename.items():
+                    assText = assText.replace(replacedName, originName)
 
             assFinish = time.perf_counter_ns()
             tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]

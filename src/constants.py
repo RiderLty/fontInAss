@@ -90,3 +90,5 @@ if EMBY_WEB_EMBED_FONT:
     with open(os.path.join(os.path.dirname(ROOT_PATH),"src/js/subtitles-octopus.js") , 'r', encoding='utf-8') as file:
         content = file.read()
     INSERT_JS = jsmin(content)
+    
+RENAMED_FONT_RESTORE = os.environ.get("RENAMED_FONT_RESTORE", default="True") == "True"

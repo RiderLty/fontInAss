@@ -167,6 +167,7 @@ server {
 | 配置项                 | 描述                                                                    | 默认值  |
 |:--------------------|:----------------------------------------------------------------------|:-----|
 | EMBY_WEB_EMBED_FONT | 修改Emby的字幕渲染文件让Web端也可以正确渲染内嵌字体的字幕<br/>（Jellyfin最新版用户请设置为False，详细说明看下面） | True |
+| RENAMED_FONT_RESTORE | 还原字幕中被重命名字体的名称 | True |
 | SRT_2_ASS_FORMAT    | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None |
 | SRT_2_ASS_STYLE     | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None |
 | SUB_CACHE_SIZE      | 字幕缓存上限，单位（条）                                                          | 50   |
