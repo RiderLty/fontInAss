@@ -7,7 +7,7 @@
 无需修改Emby/Jellyfin服务器与客户端，实现使用播放外挂ass/srt字幕时，在没有安装字体的设备上正确显示字幕。
 
 
-![](http://s3.rd5isto.org/img?id=3825282c14374a0b9e1fd5fb65666177)
+![](http://s3.rd5isto.org/img?id=c8afb503157c4f3fb124c5d38f4c30ec)
 
 # 快速开始
 
