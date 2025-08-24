@@ -103,5 +103,5 @@ MISS_LOGS_NAME = str(os.environ.get("MISS_LOGS_NAME", default="miss_logs"))
 MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))
 MISS_LOGS_ORDER = os.environ.get("MISS_LOGS_ORDER", default="False") == "True"
 MISS_LOGS_PATH = os.path.join(LOGS_PATH, f"{MISS_LOGS_NAME}.txt")
-if MISS_LOGS:
+if MISS_LOGS or MISS_GLYPH_LOGS:
     miss_logs = logsManager(MISS_LOGS_PATH, MISS_LOGS_SIZE, MISS_LOGS_ORDER)
