@@ -20,7 +20,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
   -v /etc/fontinassData:/data \
   riderlty/fontinass:latest
 ```
-设置EMBY_SERVER_URL为你的Emby/Jellyfin服务器的地址
+设置环境变量EMBY_SERVER_URL为你的Emby/Jellyfin服务器的地址
 
 如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
 
@@ -28,6 +28,12 @@ docker run -d --name=fontinass --restart=unless-stopped \
   -v /path/to/your/fonts1:/fonts/dir1 \
   -v /path/to/your/fonts2:/fonts/dir2 \
   -v /path/to/your/fonts3:/fonts/dir3 \
+```
+
+如果你需要缺失字体/字形日记文件，将日记目录映射到`/logs`下并且设置环境变量（见下）`MISS_LOGS` 或者`MISS_GLYPH_LOGS`
+
+```
+  -v /path/to/your/logs:/logs \
 ```
 
 > [!NOTE]
@@ -164,27 +170,32 @@ server {
 
 ## 配置
 
-| 配置项                 | 描述                                                                    | 默认值  |
-|:--------------------|:----------------------------------------------------------------------|:-----|
-| EMBY_WEB_EMBED_FONT | 修改Emby的字幕渲染文件让Web端也可以正确渲染内嵌字体的字幕<br/>（Jellyfin最新版用户请设置为False，详细说明看下面） | True |
-| RENAMED_FONT_RESTORE | 还原字幕中被重命名字体的名称 | True |
-| SRT_2_ASS_FORMAT    | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None |
-| SRT_2_ASS_STYLE     | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None |
-| SUB_CACHE_SIZE      | 字幕缓存上限，单位（条）                                                          | 50   |
-| SUB_CACHE_TTL       | 字幕缓存在内存的过期时间，单位（分钟），<br/>SUB_CACHE_TTL <= 0 禁用过期                      | 60   |
-| FONT_CACHE_SIZE     | 字体缓存上限，单位（条）                                                          | 30   |
-| FONT_CACHE_TTL      | 字体缓存在内存的过期时间，单位（分钟），<br/>FONT_CACHE_TTL <= 0 禁用过期                     | 30   |
-| NGINX_GZIP_COMP_LEVEL | nginx的gzip压缩等级,可用值1~9，设置为其他值则禁用gzip（noproxy无作用） | 1 |
-| LOG_LEVEL           | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO |
-| ERROR_DISPLAY       | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0    |
-| ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，忽略字形缺失，默认关闭，设置值为True后仅当字体缺失时会提示错误 | False |
+| 配置项                 | 描述                                                                    | 默认值   |
+|:--------------------|:----------------------------------------------------------------------|:------|
+| EMBY_WEB_EMBED_FONT | 修改Emby的字幕渲染文件让Web端也可以正确渲染内嵌字体的字幕<br/>（Jellyfin最新版用户请设置为False，详细说明看下面） | True  |
+| RENAMED_FONT_RESTORE | 还原字幕中被重命名字体的名称                                                        | True  |
+| SRT_2_ASS_FORMAT    | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None  |
+| SRT_2_ASS_STYLE     | 可实现SRT转ASS，统一在不同设备上的播放效果<br/>（Jellyfin无法使用，详细设置看下面）                   | None  |
+| SUB_CACHE_SIZE      | 字幕缓存上限，单位（条）                                                          | 50    |
+| SUB_CACHE_TTL       | 字幕缓存在内存的过期时间，单位（分钟），<br/>SUB_CACHE_TTL <= 0 禁用过期                      | 60    |
+| FONT_CACHE_SIZE     | 字体缓存上限，单位（条）                                                          | 30    |
+| FONT_CACHE_TTL      | 字体缓存在内存的过期时间，单位（分钟），<br/>FONT_CACHE_TTL <= 0 禁用过期                     | 30    |
+| NGINX_GZIP_COMP_LEVEL | nginx的gzip压缩等级,可用值1~9，设置为其他值则禁用gzip（noproxy无作用）                       | 1     |
+| LOG_LEVEL           | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO  |
+| ERROR_DISPLAY       | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0     |
+| ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，忽略字形缺失，默认关闭，设置值为True后仅当字体缺失时会提示错误                           | False |
+| MISS_LOGS | 字体缺失文件记录开关，设置为True会把字体缺失记录到`MISS_LOGS_NAME`                             | False |
+| MISS_GLYPH_LOGS | 缺少字形文件记录开关，设置为True会把缺少字形记录到`MISS_LOGS_NAME`                             | False |
+| MISS_LOGS_NAME | 缺失字体/字形日记文件名，任意中英文/组合（特殊符号除外）                                         | miss_logs |
+| MISS_LOGS_SIZE | 缺失字体/字形日记最大记录数（行数），单位（行）                                              | 20    |
+| MISS_LOGS_ORDER | 缺失字体/字形日记新增顺序，设置为True时新增日记会记录到最后面，反之最前面                               | False |
 > [!NOTE]
 > 当 EMBY_WEB_EMBED_FONT 设置为 True 时，Nginx 的反向代理会将 Emby 的字幕渲染文件 subtitles-octopus.js 转发给程序处理。程序将在该 JS 文件中新增两个方法：
 > </br>1.解析字幕文件获取字体信息
 > </br>2.对获取的字体信息的 UUEncode 进行解码，并转为字体文件供字幕渲染文件使用
 > </br>需要注意的是，修改原始 JS 文件可能会引发安全性或稳定性问题，请根据实际情况自行斟酌是否启用。
 > </br>目前已在 Emby 4.7.14 至 4.9.0.37 版本中测试通过。如果未来 Emby 更新支持内嵌字体功能，可以关闭此项功能。但鉴于 Emby 升级可能存在一定难度，且新版通常不向下兼容，因此该功能可能会长期保留。
-> </br> Emby 48b 版本更新加入则内嵌字体的支持，经测试EMBY_WEB_EMBED_FONT不影响
+> </br> Emby 4.9.0.48b 版本更新加入字幕内嵌字体的支持，经测试开启EMBY_WEB_EMBED_FONT不影响，大于该版本可选择关闭这个。
 
 添加环境变量SRT_2_ASS_FORMAT与SRT_2_ASS_STYLE，可实现SRT转ASS，统一在不同设备上的播放效果（Jellyfin无法使用）
 ```

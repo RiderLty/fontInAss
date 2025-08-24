@@ -303,6 +303,7 @@ class fontManager:
             fontSavePath = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
             fontSaveDir = os.path.dirname(fontSavePath)
             os.makedirs(fontSaveDir, exist_ok=True)
-            asyncio.run_coroutine_threadsafe(saveToDisk(fontSavePath, fontBytes), MAIN_LOOP)
+            # asyncio.run_coroutine_threadsafe(saveToDisk(fontSavePath, fontBytes), MAIN_LOOP)
+            asyncio.create_task(saveToDisk(fontSavePath, fontBytes))
             return (fontBytes, index)
         return (None, None)

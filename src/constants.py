@@ -4,6 +4,7 @@ import logging
 import builtins
 import coloredlogs
 from jsmin import jsmin
+from logs import logsManager
 
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"🤖 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
@@ -22,6 +23,7 @@ builtins.print = custom_print
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_FONT_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"fonts")
 DATA_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"data")
+LOGS_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"logs")
 FONT_DIRS = [DEFAULT_FONT_PATH]
 
 if os.environ.get("FONT_DIRS"):
@@ -35,6 +37,7 @@ LOCAL_FONTS_DB_VERSION = "2.6"
 LOCAL_FONTS_DB_PATH = os.path.join(DATA_PATH, f"localFonts.ver.{LOCAL_FONTS_DB_VERSION}.db")
 
 os.makedirs(DATA_PATH, exist_ok=True)
+os.makedirs(LOGS_PATH, exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
 cpu_count = int(os.cpu_count())
 POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
@@ -92,3 +95,13 @@ if EMBY_WEB_EMBED_FONT:
     INSERT_JS = jsmin(content)
     
 RENAMED_FONT_RESTORE = os.environ.get("RENAMED_FONT_RESTORE", default="True") == "True"
+
+miss_logs = ""
+MISS_LOGS = os.environ.get("MISS_LOGS", default="False") == "True"
+MISS_GLYPH_LOGS = os.environ.get("MISS_GLYPH_LOGS", default="False") == "True"
+MISS_LOGS_NAME = str(os.environ.get("MISS_LOGS_NAME", default="miss_logs"))
+MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))
+MISS_LOGS_ORDER = os.environ.get("MISS_LOGS_ORDER", default="False") == "True"
+MISS_LOGS_PATH = os.path.join(LOGS_PATH, f"{MISS_LOGS_NAME}.txt")
+if MISS_LOGS or MISS_GLYPH_LOGS:
+    miss_logs = logsManager(MISS_LOGS_PATH, MISS_LOGS_SIZE, MISS_LOGS_ORDER)
