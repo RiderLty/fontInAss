@@ -9,7 +9,7 @@ from fontManager import fontManager
 import colorAdjust
 from utils import assInsertLine, bytesToStr, isSRT, bytesToHashName, srtToAss, subfonts_rename_restore
 from py2cy.c_utils import uuencode
-from constants import RENAMED_FONT_RESTORE ,EMBY_WEB_EMBED_FONT, ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT
+from constants import RENAMED_FONT_RESTORE , ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY, PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, MISS_LOGS, MISS_GLYPH_LOGS, miss_logs
 
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
@@ -54,7 +54,8 @@ class assSubsetter:
         try:
             fontBytes, index = await self.fontManagerInstance.loadFont(fontName, weight, italic)
             if fontBytes is None:
-                logger.error(f"字体缺失 \t\t[{fontName}]")
+                # 与return后的totalErrors显示重复
+                # logger.error(f"字体缺失 \t\t[{fontName}]")
                 return f"字体缺失 \t\t[{fontName}]", ""
         except Exception as e:
             logger.error(f"加载字体出错 \t[{fontName}]: \n{traceback.format_exc()}")
@@ -111,13 +112,19 @@ class assSubsetter:
             tasks = [self.loadSubsetEncode(fontName, weight, italic, unicodeSet) for ((fontName, weight, italic), unicodeSet) in fontCharList.items()]
             totalErrors = []
             displayErrors = []
+            errLogs = []
             for task in asyncio.as_completed(tasks):
                 err, result = await task
                 if err:
                     totalErrors.append(err)
+                    if err.startswith("字体缺失"):
+                        if MISS_LOGS:
+                            errLogs.append(err)
                     if err.startswith("缺少字形"):
                         if not ERROR_DISPLAY_IGNORE_GLYPH:
                             displayErrors.append(err)
+                        if MISS_GLYPH_LOGS:
+                            errLogs.append(err)
                     else:
                         displayErrors.append(err)
                 embedFontsText += result
@@ -125,6 +132,8 @@ class assSubsetter:
             logger.info(f"子集化嵌入 {(time.perf_counter_ns() - assFinish) / 1000000:.2f}ms")  # {len(embedFontsText) / (1024 * 1024):.2f}MB in
             if len(displayErrors) != 0 and ERROR_DISPLAY > 0 and ERROR_DISPLAY <= 60:
                 assText = assInsertLine(assText, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(displayErrors))
+            if errLogs:
+                asyncio.create_task(miss_logs.insert(errLogs))
         head, tai = assText.split("[Events]")
         resultText = head + embedFontsText + "\n[Events]" + tai
         resultBytes = resultText.encode("UTF-8-sig")
