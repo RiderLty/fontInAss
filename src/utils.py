@@ -616,15 +616,15 @@ def getFontFileInfos(fontPath):
         if font_name_list:
             if "head" in face.table_tags:
                 table_blob = face.reference_table("head")
-                table_data_filter = parse_table(table_blob.data, "head", ["macStyle"])
-                macStyle = table_data_filter["macStyle"]
+                table_data_filter = parse_table(table_blob.data, "head", [13])
+                macStyle = table_data_filter[0]
             else:
                 macStyle = 0  # 如果没有head表格，也给macStyle默认值
             if "OS/2" in face.table_tags:
                 table_blob = face.reference_table("OS/2")
-                table_data_filter = parse_table(table_blob.data, "OS/2", ["usWeightClass", "fsSelection"])
-                weight = table_data_filter["usWeightClass"]
-                fsSelection = table_data_filter["fsSelection"]
+                table_data_filter = parse_table(table_blob.data, "OS/2", [2, 22])
+                weight = table_data_filter[0]
+                fsSelection = table_data_filter[1]
                 bold = bool(fsSelection & 0x20 or macStyle & 0x01)
                 italic = bool(fsSelection & 0x01 or macStyle & 0x02)
                 fontInfo["bold"] = bold
