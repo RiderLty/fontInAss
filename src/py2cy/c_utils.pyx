@@ -213,12 +213,11 @@ cdef inline tuple parse_bytes10(const unsigned char* data):
         data[0], data[1], data[2], data[3], data[4],
         data[5], data[6], data[7], data[8], data[9]
     )
-
 cdef object parse_bytes4(const unsigned char* p):
-    cdef void* null_pos = memchr(p, 0, 4)
+    cdef const void* null_pos = memchr(p, 0, 4)
     cdef Py_ssize_t length
     if null_pos != NULL:
-        length = <char*>null_pos - <char*>p
+        length = <const char*>null_pos - <const char*>p
     else:
         length = 4
     return PyUnicode_DecodeASCII(<char*>p, length, "strict")
