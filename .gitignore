@@ -3,9 +3,7 @@ localFontMap.json
 fonts
 TEST
 *.pyc
-localFontMap.json
 
-localFontMap.json
 test.ass
 # test
 data/localFonts.json
@@ -24,3 +22,4 @@ src/lib/analyseAss.so
 test/\[Haruhana] Shigatsu wa Kimi no Uso \[16].chs_jpn.ass
 test.result
 src/py2cy/c_utils.cpp
+src/subset/node_modules/*

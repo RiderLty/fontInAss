@@ -8,7 +8,7 @@ import time
 
 cdef int CHUNK_SIZE = 80
 cdef int OFFSET = 33
-cdef unsigned char chr_map[64]
+cdef char chr_map[64]
 for i in range(64):
     chr_map[i] = OFFSET + i
 
@@ -21,21 +21,15 @@ def uuencode(const unsigned char[:] binaryData):
     cdef int data_len = binaryData.shape[0]
     cdef int remainder = data_len % 3
     cdef int encoded_size = (data_len + 2) // 3 * 4
-    cdef unsigned char *encoded = <unsigned char *>malloc(encoded_size)
+    cdef int encoded_lines_size = encoded_size + (encoded_size + CHUNK_SIZE - 1) // CHUNK_SIZE
+    cdef char *encoded = <char *>malloc(encoded_lines_size)
     if not encoded:
         raise MemoryError("Unable to allocate memory for encoded data")
-    cdef int encoded_lines_size = (encoded_size + CHUNK_SIZE - 1) // CHUNK_SIZE * (CHUNK_SIZE + 1)
-    cdef unsigned char *encoded_lines = <unsigned char *>malloc(encoded_lines_size)
-    if not encoded_lines:
-        free(encoded)
-        raise MemoryError("Unable to allocate memory for encoded lines")
     cdef int packed, i
     cdef int index = 0
+    cdef int counter = CHUNK_SIZE
     cdef int six_bit0, six_bit1, six_bit2, six_bit3
     cdef const unsigned char *binaryData_ptr = &binaryData[0]
-    cdef int line_index = 0
-    cdef int line_length = 0
-
     try:
         # 遍历 3 字节一组的块
         for i in range(0, data_len - remainder, 3):
@@ -49,6 +43,12 @@ def uuencode(const unsigned char[:] binaryData):
             encoded[index + 2] = chr_map[six_bit2]
             encoded[index + 3] = chr_map[six_bit3]
             index += 4
+            counter -= 4
+            if counter == 0:
+                encoded[index] = 10
+                index += 1
+                counter = CHUNK_SIZE
+
         # 处理不足 3 字节的情况
         if remainder == 1:
             packed = binaryData_ptr[data_len - 1] << 16
@@ -66,19 +66,11 @@ def uuencode(const unsigned char[:] binaryData):
             encoded[index + 1] = chr_map[six_bit1]
             encoded[index + 2] = chr_map[six_bit2]
             index += 3
-        # 分行显示，每行 80 字符
-        for i in range(0, index, CHUNK_SIZE):
-            line_length = min(CHUNK_SIZE, index - i)
-            memcpy(encoded_lines + line_index, encoded + i, line_length)
-            line_index += line_length
-            if i + CHUNK_SIZE < index:
-                encoded_lines[line_index] = ord('\n')
-                line_index += 1
-
-        return PyUnicode_DecodeASCII(<char *>encoded_lines, line_index, NULL)
+        if index > 0 and counter == CHUNK_SIZE and encoded[index - 1] == 10:
+            index -= 1
+        return PyUnicode_DecodeASCII(encoded, index, NULL)
     finally:
         free(encoded)
-        free(encoded_lines)
 
 cdef enum FieldType:
     F_UINT16 = 0

@@ -6,7 +6,7 @@ import asyncio
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
-from utils import getAllFiles, getFontFileInfos, saveToDisk, selectFontFromList
+from utils import getAllFiles, get_font_info, save_to_disk, selectFontFromList
 from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
@@ -78,7 +78,7 @@ class FontName(Base):
     uid = Column(String, ForeignKey("font_info.uid", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True, index=True, nullable=False)
 
 # 数据库管理类
-class fontManager:
+class FontManager:
     def __init__(self):
         self.cache = TTLCache(maxsize=FONT_CACHE_SIZE, ttl=FONT_CACHE_TTL) if FONT_CACHE_TTL > 0 else LRUCache(maxsize=FONT_CACHE_SIZE)
 
@@ -159,7 +159,7 @@ class fontManager:
                 position=0,
             ) as pbar:
                 for file in data:
-                    file_info_list, font_info_list, font_name_list = getFontFileInfos(file)
+                    file_info_list, font_info_list, font_name_list = get_font_info(file)
                     file_info.extend(file_info_list)
                     font_info.extend(font_info_list)
                     font_name.extend(font_name_list)
@@ -303,7 +303,16 @@ class fontManager:
             fontSavePath = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
             fontSaveDir = os.path.dirname(fontSavePath)
             os.makedirs(fontSaveDir, exist_ok=True)
-            # asyncio.run_coroutine_threadsafe(saveToDisk(fontSavePath, fontBytes), MAIN_LOOP)
-            asyncio.create_task(saveToDisk(fontSavePath, fontBytes))
+            asyncio.create_task(save_to_disk(fontSavePath, fontBytes))
             return (fontBytes, index)
         return (None, None)
+
+    async def select_font(self, request_font_name, target_weight, target_italic):
+        target_font_name = request_font_name.strip().lower()
+        if (
+            (target_font_name, target_weight, target_italic) in self.cache
+            or self.selectFontLocal(target_font_name, target_weight, target_italic)
+            or self.selectFontOnline(target_font_name, target_weight, target_italic)
+        ):
+            return True, None
+        return False, request_font_name

@@ -1,11 +1,8 @@
-import base64
 import warnings
-
 from colorAdjust import colorAdjust
-
-
 warnings.filterwarnings("ignore")
-
+import base64
+import json
 import os
 import ssl
 import logging
@@ -14,14 +11,15 @@ import requests
 import traceback
 import coloredlogs
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from uvicorn import Config, Server
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS, ROOT_PATH
 from dirmonitor import dirmonitor
-from fontManager import fontManager
+from fontmanager import FontManager
 from assSubsetter import assSubsetter
 from utils import insert_str
-
 
 def init_logger():
     LOGGER_NAMES = (
@@ -44,7 +42,82 @@ def init_logger():
 # sub_app = FastAPI()
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    # 本地前后端分离开发npm dev端口
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Code", "X-Message"],
+)
+
 process = None
+process_subset = None
+
+# 挂载前端静态文件，访问 ip:8011/subset
+app.mount(
+    "/subset",
+    StaticFiles(directory=os.path.join(ROOT_PATH, "subset/dist"), html=True),
+    name="subset"
+)
+
+@app.post("/api/subset")
+async def index_subset(request: Request):
+    try:
+        raw_bytes = await request.body()
+        srt_format = request.headers.get("X-Srt-Format")
+        srt_style = request.headers.get("X-Srt-Style")
+        if srt_format:
+            srt_format = base64.b64decode(srt_format).decode("utf-8")
+        if srt_style:
+            srt_style = base64.b64decode(srt_style).decode("utf-8")
+        renamed_restore = request.headers.get("X-Renamed-Restore") == "1"
+        clear_fonts = request.headers.get("X-Clear-Fonts") == "1"
+        fonts_check = request.headers.get("X-Fonts-Check") == "1"
+
+        result = await process_subset(
+            raw_bytes,
+            fonts_check=fonts_check,
+            srt_format=srt_format,
+            srt_style=srt_style,
+            renamed_restore=renamed_restore,
+            clear_fonts=clear_fonts
+        )
+
+        message = ""
+        if result.message:
+            message = base64.b64encode(json.dumps(result.message).encode("utf-8")).decode("ascii")
+
+        return Response(
+            content=result.data,
+            media_type="application/octet-stream",
+            headers={
+                "X-Code": str(result.code),
+                "X-Message": message,
+            }
+        )
+    except Exception as e:
+        logger.error(f"/api/subset 处理出错: \n{traceback.format_exc()}")
+        message = base64.b64encode(str(e).encode('utf-8')).decode('ascii')
+        return Response(
+            content= b"",
+            media_type="application/octet-stream",
+            headers={
+                "X-Code": str(500),
+                "X-Message": message,
+            }
+        )
+
+# 重定向/subset 到 /subset/
+@app.get("/subset")
+async def redirect_subset():
+    return RedirectResponse(url="/subset/")
+
+# 不加这个会导致这个请求到最后的 @app.get("/{path:path}") 这个匹配最好同步nginx.conf配置
+@app.get("/.well-known/appspecific/com.chrome.devtools.json")
+async def chrome_devtools_probe():
+    return JSONResponse({}, status_code=404)
+
 
 @app.get("/color/set", response_class=HTMLResponse)
 async def setColor():
@@ -102,40 +175,39 @@ async def process_bytes(request: Request):
 @app.get("/web/modules/htmlvideoplayer/plugin.js")
 async def htmlvideoplayer_plugin_js(request: Request, response: Response):
     try:
-        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        embyRequestUrl = EMBY_SERVER_URL + sourcePath
-        logger.info(f"JSURL: {embyRequestUrl}")
-        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+        source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+        request_url = EMBY_SERVER_URL + source_path
+        logger.info(f"JSURL: {request_url}")
+        server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
         logger.error(f"获取原始JS出错:{str(e)}")
         return ""
     try:
-        jsContent = serverResponse.content.decode("utf-8")
-        jsContent = jsContent.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
-        return Response(content=jsContent)
+        content = server_response.content.decode("utf-8")
+        content = content.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
+        return Response(content=content)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
+        return Response(content=server_response.content)
 
 
 @app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
 async def subtitles_octopus_js(request: Request, response: Response):
     try:
-        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        embyRequestUrl = EMBY_SERVER_URL + sourcePath
-        logger.info(f"JSURL: {embyRequestUrl}")
-        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+        source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+        request_url = EMBY_SERVER_URL + source_path
+        logger.info(f"JSURL: {request_url}")
+        server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
         logger.error(f"获取原始JS出错:{str(e)}")
         return ""
     try:
-        jsContent = serverResponse.content.decode("utf-8")
-        jsContent = insert_str(jsContent, INSERT_JS, "function(options){")
-        return Response(content=jsContent)
+        content = server_response.content.decode("utf-8")
+        content = insert_str(content, INSERT_JS.replace("export ", ""), "function(options){")
+        return Response(content=content)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=serverResponse.content)
-
+        return Response(content=server_response.content)
 
 @app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
@@ -151,8 +223,8 @@ async def proxy_pass(request: Request, response: Response):
     headers = {}
     try:
         subtitleBytes = serverResponse.content
-        error, srt, bytes = await process(subtitleBytes, user_hsv_s,user_hsv_v)
-        logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(bytes) / (1024 * 1024):.2f}MB")
+        error, srt, res_bytes = await process(subtitleBytes, user_hsv_s,user_hsv_v)
+        logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(res_bytes) / (1024 * 1024):.2f}MB")
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
             raise BaseException("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
         headers["content-type"] = "text/x-ssa"
@@ -160,7 +232,7 @@ async def proxy_pass(request: Request, response: Response):
         headers["srt"] = "true" if srt else "false"
         if "content-disposition" in serverResponse.headers:
             headers["content-disposition"] = serverResponse.headers["content-disposition"]
-        return Response(content=bytes, headers=headers)
+        return Response(content=res_bytes, headers=headers)
     except Exception as e:
         logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         excluded_headers = ["Content-Encoding", "Transfer-Encoding", "Content-Length", "Connection"]
@@ -191,11 +263,12 @@ if __name__ == "__main__":
     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
     asyncio.set_event_loop(MAIN_LOOP)
     ssl._create_default_https_context = ssl._create_unverified_context
-    fontManagerInstance = fontManager()
+    fontManagerInstance = FontManager()
     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
     event_handler = dirmonitor(callback=fontManagerInstance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = assSubsetterInstance.process  # 绑定函数
+    process_subset = assSubsetterInstance.process_subset  # 绑定函数
     serverInstance = getServer(8011, MAIN_LOOP, app)
     init_logger()
     MAIN_LOOP.run_until_complete(serverInstance.serve())

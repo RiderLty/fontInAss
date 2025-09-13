@@ -1,0 +1,55 @@
+{
+    "upload": "上传",
+    "retry": "重新上传失败文件",
+    "removeAll": "全部删除",
+    "download": "下载",
+    "settings": "设置",
+    "dropTip": "拖动文件到此处上传 (.ass / .srt / .ssa)",
+    "filename": "文件名",
+    "status": "状态",
+    "message": "提示",
+    "action": "操作",
+    "delete": "删除",
+    "modalTitle": "设置参数",
+
+    "srtFormatLabel": "SRT 转 ASS 格式",
+    "srtFormatDesc": "选择将 SRT 转换为 ASS 时使用的格式模板，对应环境变量SRT_2_ASS_FORMAT",
+
+    "srtStyleLabel": "SRT 转 ASS 样式",
+    "srtStyleDesc": "为 SRT 转换为 ASS 指定字幕样式，对应环境变量SRT_2_ASS_STYLE",
+
+    "restoreRenamedFont": "恢复重命名字体",
+    "restoreRenamedFontDesc": "启用后会自动将被重命名的字体恢复为原始字体名称，对应环境变量RENAMED_FONT_RESTORE",
+
+    "clearEmbeddedFonts": "清除内嵌字体",
+    "clearEmbeddedFontsDesc": "启用后会删除字幕文件中的内嵌字体然后再进行子集化",
+
+    "downloadFonts": "下载时附带子集化后字体文件",
+    "downloadFontsDesc": "启用后会从字幕提取出字体一起打包下载",
+
+    "clearAfterDownload": "下载后清除列表中成功字幕文件",
+    "clearAfterDownloadDesc": "下载完成后清理列表中已成功处理的字幕文件",
+
+    "strictMode": "严格模式",
+    "strictModeDesc": "启用后会先对字幕做一次字体检查，只要缺失任意字体就不会进行子集化",
+
+    "languageLabel": "界面语言",
+    "languageDesc": "选择界面显示的语言",
+
+    "copied": "已复制到剪贴板",
+    "copyFail": "复制失败",
+    "noFailed": "没有失败的文件需要重新上传",
+    "retryDone": "失败文件已重新上传",
+    "noDownloadable": "没有可下载的文件",
+    "200": "成功",
+    "201": "警告",
+    "300": "缺失字体",
+    "301": "缺失字形",
+    "500": "程序错误",
+    "statusError": "错误",
+    "statusUploading": "上传中",
+    "statusRetrying": "重新上传中",
+    "srtFormatPlaceholder": "请输入或选择格式",
+    "srtStylePlaceholder": "请输入或选择样式"
+
+}
