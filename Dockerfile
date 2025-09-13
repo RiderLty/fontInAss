@@ -8,7 +8,7 @@ COPY ./src/py2cy /workspace
 COPY ./requirements.txt /
 RUN pip install cython && python /workspace/setup.py && pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /requirements.txt 
 
-FROM python:3.10-bookworm 
+FROM python:3.10-slim-bookworm
 COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
 COPY --from=npm_builder /workspace/dist /src/subset/
