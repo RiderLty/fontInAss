@@ -5,9 +5,9 @@ import aiofiles
 
 class LogsManager:
     def __init__(self, file_path, max_lines, order=True):
-        self._check_and_create_file()
         self._lock = asyncio.Lock()
         self._file_path = file_path
+        self._check_and_create_file()
         self._max_lines = max(max_lines, 1)
         self._order = order
         self._data = OrderedDict()
