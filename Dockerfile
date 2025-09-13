@@ -11,7 +11,7 @@ RUN pip install cython && python /workspace/setup.py && pip wheel --no-cache-dir
 FROM python:3.10-slim-bookworm
 COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
-COPY --from=npm_builder /workspace/dist /src/subset/
+COPY --from=npm_builder /workspace/dist /src/subset/dist/
 COPy --from=cython_builder /workspace/*.so /src/py2cy/
 # COPY --from=cython_builder /wheels /wheels
 RUN --mount=type=bind,target=/wheels,from=cython_builder,source=/wheels \
