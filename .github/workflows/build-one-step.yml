@@ -1,0 +1,130 @@
+name: build-one-step
+on:
+  workflow_dispatch:
+
+jobs:
+  build-amd64-noproxy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push noproxy
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: riderlty/fontinass:noproxy-amd64
+
+  build-arm64-noproxy:
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - uses: actions/checkout@v2
+ 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push noproxy
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile
+          context: .
+          push: true
+          tags: riderlty/fontinass:noproxy-arm64
+
+  build-amd64-default:
+    runs-on: ubuntu-latest
+    needs:
+      - build-amd64-noproxy
+    steps:
+      - uses: actions/checkout@v2
+     
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push latest
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile-default
+          build-args: |
+            BASE=riderlty/fontinass:noproxy-amd64
+          context: .
+          push: true
+          tags: riderlty/fontinass:latest-amd64
+
+  build-arm64-default:
+    runs-on: ubuntu-22.04-arm
+    needs:
+      - build-arm64-noproxy
+    steps:
+      - uses: actions/checkout@v2
+     
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push latest
+        uses: docker/build-push-action@v4
+        with:
+          file: Dockerfile-default
+          build-args: |
+            BASE=riderlty/fontinass:noproxy-arm64
+          context: .
+          push: true
+          tags: riderlty/fontinass:latest-arm64
+
+
+  combine-noproxy:
+    runs-on: ubuntu-latest
+    needs:
+      - build-amd64-noproxy
+      - build-arm64-noproxy
+    steps:
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push manifest images
+        uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
+        with:
+            inputs: riderlty/fontinass:noproxy-amd64,riderlty/fontinass:noproxy-arm64
+            tags: riderlty/fontinass:noproxy
+            push: true
+
+
+  combine-default:
+    runs-on: ubuntu-latest
+    needs:
+      - build-amd64-default
+      - build-arm64-default
+    steps:
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push manifest images
+        uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
+        with:
+            inputs: riderlty/fontinass:latest-amd64,riderlty/fontinass:latest-arm64
+            tags: riderlty/fontinass:latest
+            push: true
