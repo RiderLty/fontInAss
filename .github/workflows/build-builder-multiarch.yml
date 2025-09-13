@@ -9,6 +9,25 @@ on:
       - src/py2cy/setup.py
       
 jobs:
+  npm run build on subset:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/subset
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '21'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
   build-arm64:
     runs-on: ubuntu-22.04-arm
     steps:
