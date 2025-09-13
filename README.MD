@@ -1,6 +1,7 @@
 # FontInAss
 
-实时将字体子集化后嵌入ass的小工具，用于在未安装对应字体的系统上正确显示字幕 
+1、实时将字体子集化后嵌入ass的小工具，用于在未安装对应字体的系统上正确显示字幕  
+2、批量字幕字体子集化后嵌入后保存于本地。  
 
 # 能做什么？
 
@@ -12,7 +13,7 @@
 
 | 原效果                        | 子集化嵌入字体后                        |
 |----------------------------|---------------------------------|
-| ![原效果](example_origin.png) | ![子集化嵌入字体后](example_subset.png) |
+| ![原效果](image/example_origin.png) | ![子集化嵌入字体后](image/example_subset.png) |
 
 # 快速开始
 
@@ -20,9 +21,11 @@
 
 ```
 docker run -d --name=fontinass --restart=unless-stopped \
+  -p 8011:8011 \
   -p 8012:8012 \
   -e EMBY_SERVER_URL=http://[ip]:[port] \
-  -v /etc/fontinassData:/data \
+  -v /yourDir/fontinass/data:/data \
+  -v /yourDir/fontinass/fonts:/fonts \
   riderlty/fontinass:latest
 ```
 设置环境变量`EMBY_SERVER_URL`为你的Emby/Jellyfin服务器的地址
@@ -30,21 +33,52 @@ docker run -d --name=fontinass --restart=unless-stopped \
 如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
 
 ```
-  -v /path/to/your/fonts1:/fonts/dir1 \
-  -v /path/to/your/fonts2:/fonts/dir2 \
-  -v /path/to/your/fonts3:/fonts/dir3 \
-```
-
-如果你需要缺失字体/字形日记文件，将日记目录映射到`/logs`下并且设置环境变量（见下）`MISS_LOGS` 或者`MISS_GLYPH_LOGS`
-
-```
-  -v /path/to/your/logs:/logs \
+  -v /yourDir/fonts1:/fonts/dir1 \
+  -v /yourDir/fonts2:/fonts/dir2 \
+  -v /yourDir/fonts3:/fonts/dir3 \
 ```
 
 > [!NOTE]
 > 联网下载的字体存储在/fonts/download</br>即使无本地字体，也建议映射/fonts到主机路径，避免重复下载字体
 
 在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
+
+
+如果你需要缺失字体/字形日记文件，将日记目录映射到`/logs`下并且设置环境变量（见下）`MISS_LOGS` 或者`MISS_GLYPH_LOGS`
+
+```
+  -v /yourDir/fontinass/logs:/logs \
+```
+
+如果你需要批量字幕字体子集化，映射8011端口后在网页访问`http://[ip]:8011/subset`（详细功能见下展开）
+
+
+<details>
+<summary><span style="font-size:1.0em; font-weight:bold;">批量字幕子集化介绍（点击展开）</span></summary>
+
+### 1.界面介绍
+打开网页后界面如下所示：  
+<img src="image/web_subset_01.png" width="75%">
+
+### 2.如何使用
+只需要点击上传或者将文件拖动到界面即可：  
+<img src="image/web_subset_02.png" width="75%">
+
+### 3.设置
+更多功能可以打开设置，具体详细介绍可以把鼠标放到标题上查看：  
+<img src="image/web_subset_03.png" width="75%">
+
+### 4.提示缺失字体或者字形
+网上找到对应的字体文件并放入 `fonts` 文件夹后，重新上传文件即可。缺失字形通常也是字体问题，可以尝试使用更新的字体替换。
+
+### 5.提示已有内嵌字体
+如果你需要重新嵌入字体，打开界面中的设置并开启`清除内嵌字体`
+
+### 6.我需要子集化后的字体文件
+同上打开界面中的设置并开启`下载时附带子集化后字体文件`
+
+
+</details>
 
 ### 无nginx版本
 使用```riderlty/fontinass:noproxy```tag，不整合nginx，避免在使用302直链时套壳nginx
@@ -62,7 +96,9 @@ Docker > 添加容器 > 选择一个模版 > fontinass
 修改环境变量并移除你不需要的配置项
 
 应用
-## 手动运行
+
+<details>
+<summary><span style="font-size:1.8em; font-weight:bold;">手动运行（点击展开）</span></summary>
 
 ### 编译c部分
 ```
@@ -112,7 +148,7 @@ server {
         proxy_pass $EMBY_SERVER_URL;
     }
 
-    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt|Stream) {
+    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt|Stream)$ {
         #仅匹配ass与srt字幕文件，Stream适配infuse
         #修改为你的fontinass服务器地址
         proxy_pass http://127.0.0.1:8011;
@@ -138,6 +174,7 @@ server {
     }
 }
 ```
+</details>
 
 ## 关于客户端与播放器
 内嵌字体的ASS并非所有播放器都支持，以下为部分播放器（客户端）的支持情况

@@ -3,9 +3,9 @@ import os
 from collections import OrderedDict
 import aiofiles
 
-class logsManager:
+class LogsManager:
     def __init__(self, file_path, max_lines, order=True):
-        self._check_and_create_file(file_path)
+        self._check_and_create_file()
         self._lock = asyncio.Lock()
         self._file_path = file_path
         self._max_lines = max(max_lines, 1)
@@ -14,12 +14,12 @@ class logsManager:
         self._last_known_state = self._get_file_state()
         self._load()
 
-    def _check_and_create_file(self, file_path):
-        if not file_path.lower().endswith(".txt"):
+    def _check_and_create_file(self):
+        if not self._file_path.lower().endswith(".txt"):
             raise ValueError("必须为txt文件")
-        if not os.path.exists(file_path):
+        if not os.path.exists(self._file_path):
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(self._file_path, 'w', encoding='utf-8'):
                     pass
             except Exception as e:
                 print(f"创建日记文件失败: {e}")
@@ -28,7 +28,7 @@ class logsManager:
         if not os.path.exists(self._file_path):
             return None
         stat = os.stat(self._file_path)
-        return (stat.st_mtime, stat.st_size)
+        return stat.st_mtime, stat.st_size
 
     def _sync_with_file(self):
         current_state = self._get_file_state()
@@ -76,7 +76,6 @@ class logsManager:
             # print("完成开始保存")
             await self._save()
 
-
     async def delete(self, keys):
         async with self._lock:
             if not isinstance(keys, (list, tuple)):
@@ -93,22 +92,3 @@ class logsManager:
         async with aiofiles.open(self._file_path, "w", encoding="utf-8") as f:
             await f.write(content)
         self._last_known_state = self._get_file_state()
-
-# if __name__ == "__main__":
-#     # 测试用例
-#     logs = logsManager(
-#         "logs.txt",
-#         max_lines=3,
-#         order=False
-#     )
-#     # for i in range(1, 3):
-#     #     logs.insert(f"字体{i}")
-#
-#     logs.insert(f"字体99")
-#     logs.insert(f"字体98")
-#     # logs.delete(f"字体99")
-#     logs.insert(f"字体99")
-#     logs.insert(["字体96","字体989",])
-#     logs.delete(f"字体96")
-#     logs.delete(f"字体2")
-#     logs.delete(f"字体1")

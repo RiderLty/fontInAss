@@ -1,0 +1,54 @@
+{
+    "upload": "Upload",
+    "retry": "Retry Failed Files",
+    "removeAll": "Remove All",
+    "download": "Download",
+    "settings": "Settings",
+    "dropTip": "Drag files here to upload (.ass / .srt / .ssa)",
+    "filename": "Filename",
+    "status": "Status",
+    "message": "Message",
+    "action": "Action",
+    "delete": "Delete",
+    "modalTitle": "Settings",
+
+    "srtFormatLabel": "SRT to ASS Format",
+    "srtFormatDesc": "Select the format template to use when converting SRT to ASS, corresponds to environment variable SRT_2_ASS_FORMAT",
+
+    "srtStyleLabel": "SRT to ASS Style",
+    "srtStyleDesc": "Specify the subtitle style when converting SRT to ASS, corresponds to environment variable SRT_2_ASS_STYLE",
+
+    "restoreRenamedFont": "Restore Renamed Fonts",
+    "restoreRenamedFontDesc": "When enabled, automatically restores fonts that have been renamed to their original font names, corresponds to environment variable RENAMED_FONT_RESTORE",
+
+    "clearEmbeddedFonts": "Clear Embedded Fonts",
+    "clearEmbeddedFontsDesc": "When enabled, deletes embedded fonts in subtitle files before performing subsetting",
+
+    "downloadFonts": "Include Subsetted Fonts When Downloading",
+    "downloadFontsDesc": "When enabled, extracts fonts from subtitles and packages them for download",
+
+    "clearAfterDownload": "Clear Successfully Processed Files After Download",
+    "clearAfterDownloadDesc": "After downloading, clears files in the list that have been successfully processed",
+
+    "strictMode": "Strict Mode",
+    "strictModeDesc": "When enabled, performs a font check first. If any font is missing, subsetting will not proceed",
+
+    "languageLabel": "Interface Language",
+    "languageDesc": "Select the display language of the interface",
+
+    "copied": "Copied to clipboard",
+    "copyFail": "Copy failed",
+    "noFailed": "No failed files to retry",
+    "retryDone": "Failed files have been retried",
+    "noDownloadable": "No files available for download",
+    "200": "Success",
+    "201": "Warning",
+    "300": "Missing Fonts",
+    "301": "Missing Glyphs",
+    "500": "Program Error",
+    "statusError": "Error",
+    "statusUploading": "Uploading",
+    "statusRetrying": "Retrying Upload",
+    "srtFormatPlaceholder": "Please enter or select a format",
+    "srtStylePlaceholder": "Please enter or select a style"
+}

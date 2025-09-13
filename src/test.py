@@ -22,10 +22,10 @@
 # from uvicorn import Config, Server
 # from constants import FT_STYLE_FLAG_BOLD, FT_STYLE_FLAG_ITALIC, logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP
 # from dirmonitor import dirmonitor
-# from fontManager import fontManager
+# from fontmanager import FontManager
 # from assSubsetter import assSubsetter
 # from py2cy.c_utils import uuencode
-# from utils import assInsertLine, bytesToHashName, bytesToStr, getFontScore, strCaseCmp, tagToInteger
+# from utils import assInsertLine, bytes_to_hash, bytes_to_str, getFontScore, strCaseCmp, tagToInteger
 
 
 # def init_logger():
@@ -480,7 +480,7 @@
 #     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
 #     asyncio.set_event_loop(MAIN_LOOP)
 #     ssl._create_default_https_context = ssl._create_unverified_context
-#     fontManagerInstance = fontManager()
+#     fontManagerInstance = FontManager()
 #     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
 #     event_handler = dirmonitor(callBack=fontManagerInstance)  # 创建fonts字体文件夹监视实体
 #     event_handler.start()
@@ -510,8 +510,8 @@
 #             with open(file, "rb") as f:
 #                 subtitleBytes = f.read()
 #             start = time.perf_counter_ns()
-#             # print(analyseAss_libassLike( bytesToStr(subtitleBytes) ))
-#             # assInsertLine(bytesToStr(subtitleBytes),"hello insert")
+#             # print(analyseAss_libassLike( bytes_to_str(subtitleBytes) ))
+#             # assInsertLine(bytes_to_str(subtitleBytes),"hello insert")
 #             print(assInsertLine(bytesToStr(subtitleBytes),"hello insert"))
 #             logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
 #             logger.error(f"")
