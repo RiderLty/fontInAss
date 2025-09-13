@@ -1,19 +1,19 @@
-FROM node:22.19-slim as NPM_BUILDER
+FROM node:22.19-slim as npm_builder
 COPY ./src/subset /workspace
 WORKDIR /workspace
 RUN npm install && npm run build
 
-FROM python:3.10-bookworm AS CYTHON_BUILDER
+FROM python:3.10-bookworm AS cython_builder
 COPY ./src/py2cy /workspace
-WORKDIR /workspace
-RUN pip install cython && python /workspace/setup.py
+COPY ./requirements.txt /
+RUN pip install cython && python /workspace/setup.py && pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /requirements.txt 
 
-FROM astral/uv:python3.10-bookworm-slim
+FROM python:3.10-bookworm 
 COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
-COPy --from=CYTHON_BUILDER /workspace/*.so /src/py2cy/
-COPY --from=NPM_BUILDER /workspace/dist /src/subset/
-ENV UV_COMPILE_BYTECODE=1
-ENV UV_SYSTEM_PYTHON=1
-RUN uv pip install -r /requirements.txt && chmod 777 /run.sh
+COPY --from=npm_builder /workspace/dist /src/subset/
+COPy --from=cython_builder /workspace/*.so /src/py2cy/
+# COPY --from=cython_builder /wheels /wheels
+RUN --mount=type=bind,target=/wheels,from=cython_builder,source=/wheels \
+    chmod 777 /run.sh &&  pip install --no-cache --find-links /wheels -r /requirements.txt  && mkdir /data
 CMD ["/bin/sh" , "-c" , "/run.sh"]
