@@ -6,7 +6,6 @@ COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
 # COPY --from=builder /wheels /wheels
 COPY --from=builder /app/src/py2cy/* /src/py2cy/
-COPY --from=builder /app/src/subset/* /src/subset/
 
 # COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1
