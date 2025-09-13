@@ -11,9 +11,7 @@ on:
 jobs:
   npm-run-build-on-subset:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src/subset
+
     steps:
       - uses: actions/checkout@v2
 
@@ -23,16 +21,18 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
+        working-directory: ./src/subset
         run: npm install
 
       - name: Build project
+        working-directory: ./src/subset
         run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: subset-dist          # 制品任意取名
-          path: ./dist      # 保留的目录
+          path: ./src/subset/dist      # 保留的目录
           retention-days: 1          # 可选：只存 1 天，省额度
 
   build-arm64:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: subset-dist
-          path: src/subset/dist
+          path: src/subset
  
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -74,7 +74,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: subset-dist
-          path: src/subset/dist
+          path: src/subset
  
       - name: Login to Docker Hub
         uses: docker/login-action@v2
