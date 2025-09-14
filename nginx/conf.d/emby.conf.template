@@ -19,7 +19,7 @@ server {
         proxy_set_header X-Forwarded-Host $http_host;
     }
 
-    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt|Stream)$ {
+    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream)$ {
         proxy_pass http://127.0.0.1:8011;
     }
 

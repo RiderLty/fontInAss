@@ -556,7 +556,7 @@ extern "C"
 
             if (state == 0)
             {
-                if (startsWith(line, "[V4+ Styles]"))
+                if (startsWith(line, "[V4+ Styles]") || startsWith(line, "[V4 Styles]"))
                 {
                     state = 1;
                 }
