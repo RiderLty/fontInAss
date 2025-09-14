@@ -138,26 +138,44 @@ const uploadFile = async (fileObj) => {
 };
 
 
-const processFiles = async (fileList) => {
-  const promises = [];
-  for (let f of fileList) {
-    if (!f.name.endsWith(".ass") && !f.name.endsWith(".srt") && !f.name.endsWith(".ssa")) continue;
-    const arrayBuffer = await f.arrayBuffer();
-    const extMatch = f.name.match(/\.\w+$/);
-    const origExt = extMatch ? extMatch[0] : "";
-    const fileObj = reactive({
-      key: Date.now() + "_" + f.name,
-      name: f.name,
-      arrayBuffer,
-      status: t("statusUploading"),
-      msg: [],
-      resultBytes: null,
-      origExt,
+const uploadFile = async (fileObj) => {
+  try {
+    const headers = {
+      "Content-Type": "application/octet-stream",
+      "X-Srt-Format": settings.SRT_2_ASS_FORMAT ? base64Utf8Encode(settings.SRT_2_ASS_FORMAT) : "",
+      "X-Srt-Style": settings.SRT_2_ASS_STYLE ? base64Utf8Encode(settings.SRT_2_ASS_STYLE) : "",
+      "X-Renamed-Restore": settings.RENAMED_FONT_RESTORE ? "1" : "0",
+      "X-Clear-Fonts": settings.CLEAR_FONTS ? "1" : "0",
+      "X-Fonts-Check": settings.STRICT_MODE ? "1" : "0",
+    };
+
+    const response = await fetch(`${API_BASE_URL}/api/subset`, {
+      method: "POST",
+      headers,
+      body: fileObj.arrayBuffer,
     });
-    files.value.push(fileObj);
-    promises.push(uploadFile(fileObj));
+
+    const arrayBuffer = await response.arrayBuffer();
+    const resultBytes = new Uint8Array(arrayBuffer);
+
+    const code = response.headers.get("X-Code");
+    const msgHeader = response.headers.get("X-Message");
+    let msgArr = [];
+    if (msgHeader) {
+      const decoded = base64Utf8Decode(msgHeader);
+      const parsed = JSON.parse(decoded);
+      msgArr = Array.isArray(parsed) ? parsed : [parsed];
+    }
+    //console.log("X-Code:", code, typeof code);
+    if (code) {
+      fileObj.status =  t(code) !== code ? t(code) : t("statusError");
+      fileObj.msg = msgArr.length ? msgArr : "";
+      fileObj.resultBytes = resultBytes && resultBytes.length > 0 ? resultBytes : null;
+    }
+  } catch (e) {
+    fileObj.status = t("statusError");
+    fileObj.msg = [String(e.message || e)];
   }
-  await Promise.all(promises);
 };
 
 const handleClickUpload = async () => {
