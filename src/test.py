@@ -756,11 +756,13 @@ from py2cy.c_utils import analyseAss
 from utils import  getAllFiles,assInsertLine
 
 for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
-    # print(file)
-    # analyseAss(assBytes = open(file,'rb').read())
-    # print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+    print(file)
     start = time.perf_counter_ns()
-    with open(file,'r',encoding="UTF-8") as f:
-        res = assInsertLine(f.read(),"0:00:59.00","hello world")
-    with open(file+"insert.ass",'w',encoding="UTF-8") as f:
-        f.write(res)    
+    res = analyseAss(assBytes = open(file,'rb').read())
+    # print(res)
+    print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
+    # exit()
+    # with open(file,'r',encoding="UTF-8") as f:
+    #     res = assInsertLine(f.read(),"0:00:59.00","hello world")
+    # with open(file+"insert.ass",'w',encoding="UTF-8") as f:
+    #     f.write(res)    

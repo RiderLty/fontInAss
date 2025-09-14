@@ -172,7 +172,7 @@ def bytes_to_str(b: bytes) -> str:
         except UnicodeDecodeError:
             return b.decode('latin-1')
     logger.debug(f"判断编码: {result.encoding}")
-    return b.decode(result.encoding)
+    return result.output().decode(result.encoding)
 
 def strCaseCmp(str1: str, str2: str) -> bool:
     return str1.lower().strip() == str2.lower().strip()

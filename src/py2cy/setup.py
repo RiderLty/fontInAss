@@ -17,11 +17,11 @@ ext_modules = cythonize(extensions)
 
 if platform.system() == "Windows":
     # Windows 上生成 .pyd 文件
-    ext_modules[0].extra_compile_args = ["/std:c++17"]
+    ext_modules[0].extra_compile_args = ["/std:c++20"]
     ext_modules[0].ext_suffix = ".pyd"
 elif platform.system() in ["Linux", "Darwin"]:
     # Linux 或 macOS 上生成 .so 文件
-    ext_modules[0].extra_compile_args = ["-std=c++17"]
+    ext_modules[0].extra_compile_args = ["-std=c++20"]
     ext_modules[0].ext_suffix = ".so"
 
 setup(

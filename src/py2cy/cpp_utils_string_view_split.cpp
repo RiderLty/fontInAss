@@ -9,8 +9,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <algorithm>
-
-
+#include <ranges>
 using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
@@ -34,6 +33,18 @@ using namespace std;
 #define DEBUG(...)    // 不输出任何信息
 #define DEBUG_SV(...) // 不输出任何信息
 #endif
+
+auto split_view(string_view str, string_view delimiter)
+{
+    // 将split的结果转换为string_view的视图
+    return str | std::views::split(delimiter) | std::views::transform([](auto &&part)
+                                                                      { return string_view(part.begin(), part.size()); });
+}
+
+auto split_view(const char *str, string_view delimiter)
+{
+    return split_view(string_view(str), delimiter);
+}
 
 void strip(string_view &str)
 {
@@ -252,18 +263,23 @@ bool isDigitStr(char *str)
     return true;
 }
 
-bool isDigitStr_SV(std::string_view sv) {
-    if (sv.empty()) return false;  // 空字符串直接返回false
+bool isDigitStr_SV(std::string_view sv)
+{
+    if (sv.empty())
+        return false; // 空字符串直接返回false
 
     // 处理负数情况
-    if (sv.front() == '-') {
+    if (sv.front() == '-')
+    {
         // 负号后至少需要1个数字字符
-        return sv.size() > 1 && all_of(sv.begin() + 1, sv.end(), 
-            [](char c) { return c >= '0' && c <= '9'; });
+        return sv.size() > 1 && all_of(sv.begin() + 1, sv.end(),
+                                       [](char c)
+                                       { return c >= '0' && c <= '9'; });
     }
     // 非负数情况：所有字符均为数字
-    return all_of(sv.begin(), sv.end(), 
-        [](char c) { return c >= '0' && c <= '9'; });
+    return all_of(sv.begin(), sv.end(),
+                  [](char c)
+                  { return c >= '0' && c <= '9'; });
 }
 
 bool is_zero_and_space(char *str)
@@ -302,12 +318,8 @@ bool is_rnd_code(string_view &code)
 
 extern "C"
 {
-    unsigned char *analyseAss_CPP(const char *__assStr)
+    unsigned char *analyseAss_CPP(const char *assStr)
     {
-        size_t assStrLen = strlen(__assStr);
-        char *assStr = (char *)malloc(assStrLen + 1);
-        memcpy(assStr, __assStr, assStrLen + 1);
-
         unordered_map<fontKey, set<uint32_t>, fontKeyHash> fontCharList;
         unordered_map<string_view, fontKey> styleFont;
         unordered_map<string_view, string_view> fontSubsetRename;
@@ -321,15 +333,18 @@ extern "C"
         int eventTextIndex = -1;
         char *lineSplitPtr = NULL;
         string_view defaultStyleName;
-        
-        auto analyssLine = [&](char *line)
+
+        auto analyssLine = [&](string_view line)
         {
-            char *dialogue = line + strlen("Dialogue:");
+            // char *dialogue = line + strlen("Dialogue:");
+            char *dialogue = (char *)line.data() + strlen("Dialogue:");
+            // printf("Dialogue: [%s]\n", dialogue);
             int commaCount = 0;
             int styleStart = 0;
             int styleEnd = 0;
             int textStart = 0;
-            int dialogueLen = strlen(dialogue);
+            // int dialogueLen = strlen(dialogue);
+            int dialogueLen = line.size() - strlen("Dialogue:") ;
             // DEBUG("\n%s\n", dialogue);
             for (int index = 0; index < dialogueLen; index++)
             {
@@ -382,7 +397,8 @@ extern "C"
             int codeStart = -1;
             bool drawMod = false;
             int index = 0;
-            int textLen = strlen(text);
+            // int textLen = strlen(text);
+            int textLen = dialogueLen - textStart;
             DEBUG("=======================================================\ntext:%s\n", text);
             while (index < textLen)
             {
@@ -552,22 +568,25 @@ extern "C"
             DEBUG("\n\n");
         };
 
-        for (char *line = strtok_rs((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_rs(NULL, "\n", &lineSplitPtr))
+        // for (char *line = strtok_rs((char *)assStr, "\n", &lineSplitPtr); line != NULL; line = strtok_rs(NULL, "\n", &lineSplitPtr))
+        for (string_view line : split_view(assStr, "\n"))
         {
             DEBUG("line:%s\n", line);
-            if (strlen(line) < 1) // 小于最小长度，不用处理
+            if (line.length() < 1) // 小于最小长度，不用处理
                 continue;
 
             if (state == 0)
             {
-                if (startsWith(line, "[V4+ Styles]") || startsWith(line, "[V4 Styles]"))
+                if (startsWith_SV(line, "[V4+ Styles]") || startsWith_SV(line, "[V4 Styles]"))
                 {
                     state = 1;
                 }
-                else if (startsWith(line, "; Font Subset:"))
+                else if (startsWith_SV(line, "; Font Subset:"))
                 {
-                    string_view replacedName(line + strlen("; Font Subset: "), 8);
-                    string_view originName(line + strlen("; Font Subset: 59W6OVGX - "), strlen(line) - strlen("; Font Subset: 59W6OVGX - "));
+                    // string_view replacedName(line + strlen("; Font Subset: "), 8);
+                    // string_view originName(line + strlen("; Font Subset: 59W6OVGX - "), strlen(line) - strlen("; Font Subset: 59W6OVGX - "));
+                    string_view replacedName = line.substr(strlen("; Font Subset: "), 8);
+                    string_view originName = line.substr(strlen("; Font Subset: 59W6OVGX - "));
                     while (!originName.empty() && isspace(originName.back()))
                     {
                         originName.remove_suffix(1);
@@ -578,23 +597,40 @@ extern "C"
             else if (state == 1)
             {
                 state = 2;
-                if (startsWith(line, "Format:"))
+                if (startsWith_SV(line, "Format:"))
                 {
-                    char *format = line + strlen("Format:");
+                    // char *format = line + strlen("Format:");
+                    // int index = 0;
+                    // char *tokenSplitPtr = NULL;
+                    // char *token = strtok_rs(format, ",", &tokenSplitPtr);
+                    // while (token != NULL)
+                    // {
+                    //     if (strstr(token, "Name"))
+                    //         styleNameIndex = index;
+                    //     else if (strstr(token, "Fontname"))
+                    //         fontNameIndex = index;
+                    //     else if (strstr(token, "Bold"))
+                    //         boldIndex = index;
+                    //     else if (strstr(token, "Italic"))
+                    //         italicIndex = index;
+                    //     token = strtok_rs(NULL, ",", &tokenSplitPtr);
+                    //     index++;
+                    // }
+
+                    // char *format = line + strlen("Format:");
+                    string_view format = line.substr(strlen("Format:"));
                     int index = 0;
-                    char *tokenSplitPtr = NULL;
-                    char *token = strtok_rs(format, ",", &tokenSplitPtr);
-                    while (token != NULL)
+                    for (string_view part : split_view(format, ","))
                     {
-                        if (strstr(token, "Name"))
+                        strip(part);
+                        if (startsWith_SV(part, "Name"))
                             styleNameIndex = index;
-                        else if (strstr(token, "Fontname"))
+                        else if (startsWith_SV(part, "Fontname"))
                             fontNameIndex = index;
-                        else if (strstr(token, "Bold"))
+                        else if (startsWith_SV(part, "Bold"))
                             boldIndex = index;
-                        else if (strstr(token, "Italic"))
+                        else if (startsWith_SV(part, "Italic"))
                             italicIndex = index;
-                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     DEBUG(" styleNameIndex, fontNameIndex, boldIndex, italicIndex [%d,%d,%d,%d]\n", styleNameIndex, fontNameIndex, boldIndex, italicIndex);
@@ -607,43 +643,76 @@ extern "C"
             }
             else if (state == 2)
             {
-                if (startsWith(line, "[Events]"))
+                if (startsWith_SV(line, "[Events]"))
                 {
                     state = 3;
                 }
-                else if (startsWith(line, "Style:"))
+                else if (startsWith_SV(line, "Style:"))
                 {
-                    char *style = line + strlen("Style:");
+                    // char *style = line + strlen("Style:");
+                    // int index = 0;
+                    // char *tokenSplitPtr = NULL;
+                    // char *token = strtok_rs(style, ",", &tokenSplitPtr);
+                    // string_view styleName;
+                    // string_view fontName;
+                    // int32_t weight = 400;
+                    // int32_t italic = 0;
+                    // while (token != NULL)
+                    // {
+                    //     if (index == styleNameIndex)
+                    //     {
+                    //         styleName = string_view(token);
+                    //         trimLC_strip(styleName, '*');
+                    //     }
+                    //     else if (index == fontNameIndex)
+                    //     {
+                    //         fontName = string_view(token);
+                    //         trimLC_strip(fontName, '@');
+                    //     }
+                    //     else if (index == boldIndex)
+                    //     {
+                    //         if (!is_zero_and_space(token))
+                    //             weight = 700;
+                    //     }
+                    //     else if (index == italicIndex)
+                    //     {
+                    //         if (!is_zero_and_space(token))
+                    //             italic = 1; // 0 则false 其他都为true
+                    //     }
+                    //     token = strtok_rs(NULL, ",", &tokenSplitPtr);
+                    //     index++;
+                    // }
+
+                    // char *style = line + strlen("Style:");
+                    string_view style = line.substr(strlen("Style:"));
                     int index = 0;
-                    char *tokenSplitPtr = NULL;
-                    char *token = strtok_rs(style, ",", &tokenSplitPtr);
                     string_view styleName;
                     string_view fontName;
                     int32_t weight = 400;
                     int32_t italic = 0;
-                    while (token != NULL)
+                    for (string_view token : split_view(style, ","))
                     {
+                        strip(token);
                         if (index == styleNameIndex)
                         {
-                            styleName = string_view(token);
+                            styleName = token;
                             trimLC_strip(styleName, '*');
                         }
                         else if (index == fontNameIndex)
                         {
-                            fontName = string_view(token);
+                            fontName = token;
                             trimLC_strip(fontName, '@');
                         }
                         else if (index == boldIndex)
                         {
-                            if (!is_zero_and_space(token))
+                            if (!is_zero_and_space((char *)token.data()))
                                 weight = 700;
                         }
                         else if (index == italicIndex)
                         {
-                            if (!is_zero_and_space(token))
+                            if (!is_zero_and_space((char *)token.data()))
                                 italic = 1; // 0 则false 其他都为true
                         }
-                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     styleFont[styleName].italic = italic;
@@ -661,19 +730,32 @@ extern "C"
             else if (state == 3)
             {
                 state = 4;
-                if (startsWith(line, "Format:"))
+                if (startsWith_SV(line, "Format:"))
                 {
-                    char *format = line + strlen("Format:");
+                    // char *format = line + strlen("Format:");
+                    // int index = 0;
+                    // char *tokenSplitPtr = NULL;
+                    // char *token = strtok_rs(format, ",", &tokenSplitPtr);
+                    // while (token != NULL)
+                    // {
+                    //     if (strstr(token, "Style"))
+                    //         eventStyleIndex = index;
+                    //     else if (strstr(token, "Text"))
+                    //         eventTextIndex = index;
+                    //     token = strtok_rs(NULL, ",", &tokenSplitPtr);
+                    //     index++;
+                    // }
+
+                    // char *format = line + strlen("Format:");
+                    string_view format = line.substr(strlen("Format:"));
                     int index = 0;
-                    char *tokenSplitPtr = NULL;
-                    char *token = strtok_rs(format, ",", &tokenSplitPtr);
-                    while (token != NULL)
+                    for (string_view part : split_view(format, ","))
                     {
-                        if (strstr(token, "Style"))
+                        strip(part);
+                        if (startsWith_SV(part, "Style"))
                             eventStyleIndex = index;
-                        else if (strstr(token, "Text"))
+                        else if (startsWith_SV(part, "Text"))
                             eventTextIndex = index;
-                        token = strtok_rs(NULL, ",", &tokenSplitPtr);
                         index++;
                     }
                     DEBUG(" eventStyleIndex, eventTextIndex [%d,%d]\n", eventStyleIndex, eventTextIndex);
@@ -686,7 +768,7 @@ extern "C"
             }
             else if (state == 4)
             {
-                if (startsWith(line, "Dialogue:"))
+                if (startsWith_SV(line, "Dialogue:"))
                 {
                     analyssLine(line);
                 }
@@ -778,7 +860,6 @@ extern "C"
 
             DEBUG_SV("[" << pair.first << " <==> " << pair.second << "]" << endl);
         }
-        free(assStr);
         return result;
     }
 
