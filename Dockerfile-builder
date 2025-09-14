@@ -1,10 +1,16 @@
 FROM riderlty/fontinass-builder:latest AS cache
-FROM python:3.10-bookworm AS builder
-COPY . /app
-RUN pip install cython 
-RUN python /app/src/py2cy/setup.py
+FROM python:3.10-bookworm AS cython_builder
+COPY ./src/py2cy /src/py2cy
+COPY ./requirements.txt /
 COPY --from=cache /wheels /wheels
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /app/requirements.txt 
-FROM scratch 
-COPY --from=builder /wheels /wheels
-COPY --from=builder /app/src/py2cy /app/src/py2cy
+RUN pip install cython && python src/py2cy/setup.py && pip wheel --no-cache-dir --no-deps --wheel-dir /wheels --find-links /wheels  -r /requirements.txt 
+
+FROM node:22.19-slim as npm_builder
+COPY ./src/subset /src/subset/
+WORKDIR /src/subset
+RUN npm install && npm run build
+
+FROM scratch
+COPY --from=cython_builder /wheels /wheels
+COPY --from=cython_builder /src/py2cy/*.so /src/py2cy/
+COPY --from=npm_builder /src/subset/dist /src/subset/dist

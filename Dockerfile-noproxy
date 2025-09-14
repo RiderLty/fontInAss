@@ -5,11 +5,11 @@ FROM python:3.10-slim-bookworm
 COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
 # COPY --from=builder /wheels /wheels
-COPY --from=builder /app/src/py2cy/* /src/py2cy/
-
+COPY --from=builder /app/src/py2cy/*.so /src/py2cy/
+COPY --from=builder /app/src/subset /src/py2cy/subset
 # COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ENV UV_COMPILE_BYTECODE=1
-ENV UV_SYSTEM_PYTHON=1
+# ENV UV_COMPILE_BYTECODE=1
+# ENV UV_SYSTEM_PYTHON=1
 RUN --mount=type=bind,target=/wheels,from=builder,source=/wheels \
     chmod 777 /run.sh &&  pip install --no-cache --find-links /wheels -r /requirements.txt  && mkdir /data
 # RUN chmod 777 /run.sh && uv pip install --no-cache --find-links /wheels -r /requirements.txt  && rm -rf /wheels && mkdir /data

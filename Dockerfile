@@ -13,7 +13,6 @@ COPY onlineFonts.json run.sh requirements.txt uv.lock pyproject.toml /
 COPY src  /src/
 COPY --from=npm_builder /workspace/dist /src/subset/dist/
 COPy --from=cython_builder /workspace/*.so /src/py2cy/
-# COPY --from=cython_builder /wheels /wheels
 RUN --mount=type=bind,target=/wheels,from=cython_builder,source=/wheels \
     chmod 777 /run.sh &&  pip install --no-cache --find-links /wheels -r /requirements.txt  && mkdir /data
 CMD ["/bin/sh" , "-c" , "/run.sh"]
