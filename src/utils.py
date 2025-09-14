@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 import sys
 import aiofiles
-import chardet
+from charset_normalizer import from_bytes
 import uharfbuzz
 from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
 from py2cy.c_utils import parse_table
@@ -160,12 +160,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     logger.debug("SRT转ASS\n" + output_str)
     return output_str
 
-
-def bytes_to_str(bytes):
-    result = chardet.detect(bytes)
-    logger.debug(f"判断编码:{str(result)}")
-    return bytes.decode(result["encoding"])
-
+def bytes_to_str(b: bytes) -> str:
+    """
+    快速将 bytes 转成 str，自动检测编码
+    """
+    result = from_bytes(b).best()
+    if result is None:
+        # 如果检测失败，则尝试 utf-8 解码，失败再用 latin-1
+        try:
+            return b.decode('utf-8')
+        except UnicodeDecodeError:
+            return b.decode('latin-1')
+    logger.debug(f"判断编码: {result.encoding}")
+    return b.decode(result.encoding)
 
 def strCaseCmp(str1: str, str2: str) -> bool:
     return str1.lower().strip() == str2.lower().strip()
@@ -524,3 +531,26 @@ def remove_section(ass_text: str, section: str) -> str:
     # 构造正则，匹配 [Section] 开头，到下一个 [XXX] 段之前
     pattern = rf"\[{re.escape(section)}\][\s\S]*?(?=\n\[|$)"
     return re.sub(pattern, "", ass_text, count=1)
+
+def check_section(ass_text: str, section: str) -> int:
+    """
+    检测 ASS 文本中的指定段落情况。
+
+    参数:
+        ass_text (str): 原始 ASS 字符串
+        section (str): 段落名，不带中括号，例如 "Fonts" 或 "Events"
+
+    返回:
+        int: 检测结果
+            - 0: 没有该段落
+            - 1: 有该段落且有内容
+            - 2: 有该段落但无内容
+    """
+    pattern = rf"\[{re.escape(section)}\]([\s\S]*?)(?=\n\[|$)"
+    match = re.search(pattern, ass_text)
+
+    if not match:
+        return 0
+
+    content = match.group(1).strip()
+    return 1 if content else 2

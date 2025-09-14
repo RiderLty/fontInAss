@@ -7,7 +7,7 @@ import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontmanager import FontManager
 import colorAdjust
-from utils import assInsertLine, bytes_to_str, is_srt, bytes_to_hash, srt_to_ass, remove_section
+from utils import assInsertLine, bytes_to_str, is_srt, bytes_to_hash, srt_to_ass, remove_section, check_section
 from py2cy.c_utils import uuencode
 from constants import (RENAMED_FONT_RESTORE , ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY,
                        PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE,
@@ -83,9 +83,12 @@ class assSubsetter:
                 logger.info("未开启SRT转ASS")
                 return ("未开启SRT转ASS", True, assText.encode("UTF-8-sig"))
 
-        if "[Fonts]\n" in assText:
+        status = check_section(assText, "Fonts")
+        if status == 1:  # 有 Fonts 且有内容
             logger.error("已有内嵌字体")
             return ("已有内嵌字体", False, subtitleBytes)
+        elif status == 2:  # 有 Fonts 但是没内容
+            assText = remove_section(assText, "Fonts")
 
         if user_hsv_s == 1 and user_hsv_v == 1:
             pass
@@ -161,11 +164,14 @@ class assSubsetter:
                 # 缺失错误
                 return Result(400, "未开启SRT转ASS", None)
 
-        if "[Fonts]\n" in ass_text:
+        status = check_section(ass_text, "Fonts")
+        if status == 1:  # 有 Fonts 且有内容
             if clear_fonts:
                 ass_text = remove_section(ass_text, "Fonts")
             else:
                 return Result(401, "已有内嵌字体", None)
+        elif status == 2:  # 有 Fonts 但是没内容
+            ass_text = remove_section(ass_text, "Fonts")
 
         total_errors = []
         if bytes_hash in self.cache:
