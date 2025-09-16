@@ -1,7 +1,7 @@
 # FontInAss
 
 1、实时将字体子集化后嵌入ass的小工具，用于在未安装对应字体的系统上正确显示字幕  
-2、批量字幕字体子集化后嵌入后保存于本地。  
+2、批量字幕字体子集化嵌入后保存于本地。  
 
 # 能做什么？
 
@@ -30,7 +30,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
 ```
 设置环境变量`EMBY_SERVER_URL`为你的Emby/Jellyfin服务器的地址
 
-如果你有本地字体，将字体目录映射到`/fonts`下即可被自动识别
+如果你有本地字体，将字体目录映射到`/fonts`下即可自动识别（子文件夹下的文件也会识别）
 
 ```
   -v /yourDir/fonts1:/fonts/dir1 \
@@ -44,7 +44,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
 在客户端上使用`http://[ip]:8012`访问容器代理后的服务器
 
 
-如果你需要缺失字体/字形日记文件，将日记目录映射到`/logs`下并且设置环境变量（见下）`MISS_LOGS` 或者`MISS_GLYPH_LOGS`
+如果你需要字体缺失/缺少字形日记文件，将日记目录映射到`/logs`下并且设置环境变量（见下）`MISS_LOGS` 或者`MISS_GLYPH_LOGS`
 
 ```
   -v /yourDir/fontinass/logs:/logs \
@@ -52,9 +52,10 @@ docker run -d --name=fontinass --restart=unless-stopped \
 
 如果你需要批量字幕字体子集化，映射8011端口后在网页访问`http://[ip]:8011/subset`（详细功能见下展开）
 
+### 批量字幕子集化介绍
 
 <details>
-<summary><span style="font-size:1.0em; font-weight:bold;">批量字幕子集化介绍（点击展开）</span></summary>
+<summary>（点击展开）</summary>
 
 ### 1.界面介绍
 打开网页后界面如下所示：  
@@ -97,8 +98,9 @@ Docker > 添加容器 > 选择一个模版 > fontinass
 
 应用
 
+## 手动运行
 <details>
-<summary><span style="font-size:1.8em; font-weight:bold;">手动运行（点击展开）</span></summary>
+<summary>（点击展开）</summary>
 
 ### 编译c部分
 ```
@@ -119,6 +121,12 @@ python src/main.py
 ```
 uv sync
 uv run src/main.py
+```
+
+### 生成前端文件
+```
+进入 src/subset
+npm run build
 ```
 
 
@@ -225,12 +233,12 @@ server {
 | NGINX_GZIP_COMP_LEVEL      | nginx的gzip压缩等级,可用值1~9，设置为其他值则禁用gzip（noproxy无作用）                       | 1         |
 | LOG_LEVEL                  | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO      |
 | ERROR_DISPLAY              | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0         |
-| ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，忽略字形缺失，默认关闭，设置值为True后仅当字体缺失时会提示错误                           | False     |
+| ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，设置为False显示缺少字形+字体缺失信息，设置为True后只会显示字体缺失信息                    | False     |
 | MISS_LOGS                  | 字体缺失文件记录开关，设置为True会把字体缺失记录到`MISS_LOGS_NAME`                           | False     |
 | MISS_GLYPH_LOGS            | 缺少字形文件记录开关，设置为True会把缺少字形记录到`MISS_LOGS_NAME`                           | False     |
-| MISS_LOGS_NAME             | 缺失字体/字形日记文件名，任意中英文/组合（特殊符号除外）                                         | miss_logs |
-| MISS_LOGS_SIZE             | 缺失字体/字形日记最大记录数（行数），单位（行）                                              | 20        |
-| MISS_LOGS_ORDER            | 缺失字体/字形日记新增顺序，设置为True时新增日记会记录到最后面，反之最前面                               | False     |
+| MISS_LOGS_NAME             | 字体缺失/缺少字形日记文件名，任意中英文/组合（特殊符号除外）                                       | miss_logs |
+| MISS_LOGS_SIZE             | 字体缺失/缺少字形日记最大记录数（行数），单位（行）                                            | 20        |
+| MISS_LOGS_ORDER            | 字体缺失/缺少字形日记新增顺序，设置为True时新增日记会记录到最后面，反之最前面                             | False     |
 > [!NOTE]
 > 当 `EMBY_WEB_EMBED_FONT` 设置为 True 时，Nginx 的反向代理会将 Emby 的字幕渲染文件 subtitles-octopus.js 转发给程序处理。程序将在该 JS 文件中新增两个方法：
 > </br>1.解析字幕文件获取字体信息

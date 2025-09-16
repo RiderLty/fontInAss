@@ -1,5 +1,4 @@
 import warnings
-from colorAdjust import colorAdjust
 warnings.filterwarnings("ignore")
 import base64
 import json
@@ -8,7 +7,6 @@ import ssl
 import logging
 import asyncio
 import requests
-import traceback
 import coloredlogs
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -18,16 +16,16 @@ from uvicorn import Config, Server
 from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS, ROOT_PATH
 from dirmonitor import dirmonitor
 from fontmanager import FontManager
-from assSubsetter import assSubsetter
+from subsetter import SubSetter
 from utils import insert_str
 
 def init_logger():
-    LOGGER_NAMES = (
+    logger_name = (
         "uvicorn",
         "uvicorn.access",
     )
-    for logger_name in LOGGER_NAMES:
-        logging_logger = logging.getLogger(logger_name)
+    for name in logger_name:
+        logging_logger = logging.getLogger(name)
         fmt = f"🌏 %(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"  # 📨
         coloredlogs.install(
             level=logging.DEBUG,
@@ -97,7 +95,8 @@ async def index_subset(request: Request):
             }
         )
     except Exception as e:
-        logger.error(f"/api/subset 处理出错: \n{traceback.format_exc()}")
+        logger.exception("/api/subset 处理出错")
+        # logger.error(f"/api/subset 处理出错: \n{traceback.format_exc()}")
         message = base64.b64encode(str(e).encode('utf-8')).decode('ascii')
         return Response(
             content= b"",
@@ -120,7 +119,7 @@ async def chrome_devtools_probe():
 
 
 @app.get("/color/set", response_class=HTMLResponse)
-async def setColor():
+async def set_color():
     return open(os.path.join(os.path.join(os.path.dirname(__file__) , "html"), "color.html"), "r", encoding="utf-8").read()
 
 user_hsv_s = 1
@@ -157,37 +156,39 @@ async def set_brightness(val: float):
 @app.post("/fontinass/process_bytes")
 async def process_bytes(request: Request):
     global user_hsv_s,user_hsv_v
-    subtitleBytes = await request.body()
+    raw_bytes = await request.body()
     try:
-        error, srt, bytes = await process(subtitleBytes, user_hsv_s,user_hsv_v)
+        error, srt, result_bytes = await process(raw_bytes, user_hsv_s,user_hsv_v)
         return Response(
-            content=bytes,
+            content=result_bytes,
             headers={
-                "error": base64.b64encode((error).encode("utf-8")).decode("ASCII"),
+                "error": base64.b64encode(error.encode("utf-8")).decode("ASCII"),
                 "srt": "true" if srt else "false",
             },
         )
     except Exception as e:
-        print(f"ERROR : {str(e)}")
-        return Response(subtitleBytes)
+        logger.exception("/fontinass/process_bytes ERROR")
+        # logger.error(f"ERROR : {traceback.format_exc()}")
+        return Response(raw_bytes)
 
 
 @app.get("/web/modules/htmlvideoplayer/plugin.js")
-async def htmlvideoplayer_plugin_js(request: Request, response: Response):
+async def html_videoplayer_plugin_js(request: Request, response: Response):
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
         request_url = EMBY_SERVER_URL + source_path
         logger.info(f"JSURL: {request_url}")
         server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
-        logger.error(f"获取原始JS出错:{str(e)}")
+        logger.exception("获取原始JS出错")
         return ""
     try:
         content = server_response.content.decode("utf-8")
         content = content.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
         return Response(content=content)
     except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        logger.exception("处理出错，返回原始内容")
+        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=server_response.content)
 
 
@@ -199,63 +200,67 @@ async def subtitles_octopus_js(request: Request, response: Response):
         logger.info(f"JSURL: {request_url}")
         server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
-        logger.error(f"获取原始JS出错:{str(e)}")
+        logger.exception("获取原始JS出错")
         return ""
     try:
         content = server_response.content.decode("utf-8")
-        content = insert_str(content, INSERT_JS.replace("export ", ""), "function(options){")
+        content = insert_str(content, INSERT_JS, "function(options){")
         return Response(content=content)
     except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        logger.exception("处理出错，返回原始内容")
+        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=server_response.content)
 
 @app.get("/{path:path}")
 async def proxy_pass(request: Request, response: Response):
     global user_hsv_s,user_hsv_v
     try:
-        sourcePath = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        embyRequestUrl = EMBY_SERVER_URL + sourcePath
-        logger.info(f"字幕URL: {embyRequestUrl}")
-        serverResponse = requests.get(url=embyRequestUrl, headers=request.headers)
+        source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+        request_url = EMBY_SERVER_URL + source_path
+        logger.info(f"字幕URL: {request_url}")
+        server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
-        logger.error(f"获取原始字幕出错:{str(e)}")
+        logger.exception("获取原始字幕出错")
         return ""
     headers = {}
     try:
-        subtitleBytes = serverResponse.content
-        error, srt, res_bytes = await process(subtitleBytes, user_hsv_s,user_hsv_v)
-        logger.info(f"字幕处理完成: {len(subtitleBytes) / (1024 * 1024):.2f}MB ==> {len(res_bytes) / (1024 * 1024):.2f}MB")
+        raw_bytes = server_response.content
+        error, srt, result_bytes = await process(raw_bytes, user_hsv_s,user_hsv_v)
+        if not result_bytes:
+            raise Exception(f"{error}，返回原始内容")
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):
-            raise BaseException("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+            raise Exception("infuse客户端，无法使用SRT转ASS功能，返回原始字幕")
+        logger.info(f"字幕处理完成: {len(raw_bytes) / (1024 * 1024):.2f}MB ==> {len(result_bytes) / (1024 * 1024):.2f}MB")
         headers["content-type"] = "text/x-ssa"
         headers["error"] = base64.b64encode((error).encode("utf-8")).decode("ASCII")
         headers["srt"] = "true" if srt else "false"
-        if "content-disposition" in serverResponse.headers:
-            headers["content-disposition"] = serverResponse.headers["content-disposition"]
-        return Response(content=res_bytes, headers=headers)
+        if "content-disposition" in server_response.headers:
+            headers["content-disposition"] = server_response.headers["content-disposition"]
+        return Response(content=result_bytes, headers=headers)
     except Exception as e:
-        logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
+        logger.exception("处理出错，返回原始内容")
+        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         excluded_headers = ["Content-Encoding", "Transfer-Encoding", "Content-Length", "Connection"]
-        reHeader = {
+        source_headers = {
             key: value
-            for key, value in serverResponse.headers.items()
+            for key, value in server_response.headers.items()
             if key not in excluded_headers
         }
-        # print("reHeader",reHeader)
-        return Response(content=serverResponse.content, status_code=serverResponse.status_code, headers=reHeader)
+        # print(f"source_headers: {source_headers}")
+        return Response(content=server_response.content, status_code=server_response.status_code, headers=source_headers)
 
 
-def getServer(port, serverLoop, app):
-    serverConfig = Config(
-        app=app,
+def get_server(port, server_loop, web_app):
+    server_config = Config(
+        app=web_app,
         # host="::",
         host="0.0.0.0",
         port=port,
         log_level="info",
-        loop=serverLoop,
+        loop=server_loop,
         ws_max_size=1024 * 1024 * 1024 * 1024,
     )
-    return Server(serverConfig)
+    return Server(server_config)
 
 
 if __name__ == "__main__":
@@ -263,20 +268,20 @@ if __name__ == "__main__":
     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
     asyncio.set_event_loop(MAIN_LOOP)
     ssl._create_default_https_context = ssl._create_unverified_context
-    fontManagerInstance = FontManager()
-    assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-    event_handler = dirmonitor(callback=fontManagerInstance)  # 创建fonts字体文件夹监视实体
+    font_manager_instance = FontManager()
+    subsetter_instance = SubSetter(font_manager_instance=font_manager_instance)
+    event_handler = dirmonitor(font_manager_instance=font_manager_instance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
-    process = assSubsetterInstance.process  # 绑定函数
-    process_subset = assSubsetterInstance.process_subset  # 绑定函数
-    serverInstance = getServer(8011, MAIN_LOOP, app)
+    process = subsetter_instance.process  # 绑定函数
+    process_subset = subsetter_instance.process_subset  # 绑定函数
+    server_instance = get_server(8011, MAIN_LOOP, app)
     init_logger()
-    MAIN_LOOP.run_until_complete(serverInstance.serve())
+    MAIN_LOOP.run_until_complete(server_instance.serve())
     # # 关闭和清理资源
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
-    fontManagerInstance.close()  # 关闭aiohttp的session
-    # assSubsetterInstance.close()  # 关闭进程池
+    font_manager_instance.close()  # 关闭aiohttp的session
+    # subsetter_instance.close()  # 关闭进程池
     pending = asyncio.all_tasks(MAIN_LOOP)
     MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))  # 等待异步任务结束
     MAIN_LOOP.stop()  # 停止事件循环

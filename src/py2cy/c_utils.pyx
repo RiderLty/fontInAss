@@ -272,7 +272,7 @@ def analyseAss(assText: str = None, assBytes: bytes = None):
         start = time.perf_counter_ns()
         assChars = assText.encode("UTF-8")  # 耗时 考虑直接传递bytes
         middle = time.perf_counter_ns()
-        print("encode time:", (middle - start) / 1000000 , "ms")
+        # print("encode time:", (middle - start) / 1000000 , "ms")
     else:
         assChars = assBytes
     cdef unsigned char* result = analyseAss_CPP(assChars)

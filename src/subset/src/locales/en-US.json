@@ -4,7 +4,7 @@
     "removeAll": "Remove All",
     "download": "Download",
     "settings": "Settings",
-    "dropTip": "Drag files here to upload (.ass / .srt / .ssa)",
+    "dropTip": "Drag files here to upload (.ass / .ssa / .srt)",
     "filename": "Filename",
     "status": "Status",
     "message": "Message",

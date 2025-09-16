@@ -139,7 +139,7 @@ const uploadFile = async (fileObj) => {
 const processFiles = async (fileList) => {
   const promises = [];
   for (let f of fileList) {
-    if (!f.name.endsWith(".ass") && !f.name.endsWith(".srt") && !f.name.endsWith(".ssa")) continue;
+    if (!f.name.endsWith(".ass") && !f.name.endsWith(".ssa") && !f.name.endsWith(".srt")) continue;
     const arrayBuffer = await f.arrayBuffer();
     const extMatch = f.name.match(/\.\w+$/);
     const origExt = extMatch ? extMatch[0] : "";
@@ -161,7 +161,7 @@ const processFiles = async (fileList) => {
 const handleClickUpload = async () => {
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = ".ass,.srt,.ssa";
+  input.accept = ".ass,.ssa,.srt";
   input.multiple = true;
   input.onchange = async (e) => {
     const selectedFiles = e.target.files;

@@ -1,7 +1,6 @@
 import contextlib
 import errno
 import os
-import traceback
 from pathlib import Path
 from stat import S_ISDIR
 from threading import Timer, Lock
@@ -10,6 +9,7 @@ from watchdog import observers
 from watchdog.utils.dirsnapshot import DirectorySnapshot, DirectorySnapshotDiff
 from watchdog.events import FileSystemEventHandler
 from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
+from fontmanager import FontManager
 
 class _DirectorySnapshot(DirectorySnapshot):
     def walk(self, root: str) -> Iterator[tuple[str, os.stat_result]]:
@@ -109,12 +109,12 @@ class _DirectorySnapshotDiff(DirectorySnapshotDiff):
         return [{"old": src, "new": new} for src, new in self._files_moved]
 
 class FileEventHandler(FileSystemEventHandler):
-    def __init__(self, fontDir, callback):
+    def __init__(self, font_dir, font_manager_instance: FontManager):
         FileSystemEventHandler.__init__(self)
-        self.fontDir = fontDir
-        self.snapshot = _DirectorySnapshot(self.fontDir)
+        self.font_dir = font_dir
+        self.snapshot = _DirectorySnapshot(self.font_dir)
         self.timer = None
-        self.callback = callback
+        self.font_manager_instance = font_manager_instance
         self.lock = Lock()
         self.delay = 1 if LOG_LEVEL == "DEBUG" else 5
 
@@ -127,42 +127,43 @@ class FileEventHandler(FileSystemEventHandler):
     def check_snapshot(self):
         with self.lock:
             try:
-                snapshot = _DirectorySnapshot(self.fontDir)
+                snapshot = _DirectorySnapshot(self.font_dir)
                 diff = _DirectorySnapshotDiff(self.snapshot, snapshot)
                 self.snapshot = snapshot
                 self.timer = None
                 if diff.files_deleted:
                     # print(f"diff.files_deleted: {diff.files_deleted}")
-                    self.callback.del_fileinfo_with_filepath(diff.files_deleted)
+                    self.font_manager_instance.del_fileinfo_with_filepath(diff.files_deleted)
                 if diff.files_created:
                     # print(f"diff.files_created: {diff.files_created}")
-                    self.callback.ins_fileinfo_and_fontinfo(diff.files_created)
+                    self.font_manager_instance.ins_fileinfo_and_fontinfo(diff.files_created)
                 if diff.files_modified:
                     # print(f"diff.files_modified: {diff.files_modified}")
-                    self.callback.del_fileinfo_with_filepath(diff.files_modified)
-                    self.callback.ins_fileinfo_and_fontinfo(diff.files_modified)
+                    self.font_manager_instance.del_fileinfo_with_filepath(diff.files_modified)
+                    self.font_manager_instance.ins_fileinfo_and_fontinfo(diff.files_modified)
                 if diff.files_moved:
                     # print(f"diff.files_moved: {diff.files_moved}")
-                    self.callback.update_fileinfo_with_filepath(diff.files_moved)
+                    self.font_manager_instance.update_fileinfo_with_filepath(diff.files_moved)
             except Exception as e:
-                print(e)
+                logger.exception("监视文件变化发生错误")
 
 class dirmonitor(object):
 
-    def __init__(self, callback: callable):
+    def __init__(self, font_manager_instance: FontManager):
         self.observer = observers.Observer()
-        self.callback = callback
+        self.font_manager_instance = font_manager_instance
 
     def start(self):
         try:
-            for fontDir in FONT_DIRS:
-                fontpath = os.path.abspath(fontDir)
-                logger.info("监控中:" + fontpath)
-                eventHandler = FileEventHandler(fontpath, callback=self.callback)
-                self.observer.schedule(eventHandler, fontpath, recursive=True)
+            for font_dir in FONT_DIRS:
+                font_path = os.path.abspath(font_dir)
+                logger.info("监控中:" + font_path)
+                event_handler = FileEventHandler(font_path, font_manager_instance=self.font_manager_instance)
+                self.observer.schedule(event_handler, font_path, recursive=True)
             self.observer.start()
         except Exception as e:
-            logger.error(f"监视文件错误 : \n{traceback.format_exc()}")
+            logger.exception("监视文件错误")
+            # logger.error(f"监视文件错误 : \n{traceback.format_exc()}")
 
     def stop(self):
         self.observer.stop()

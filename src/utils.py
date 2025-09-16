@@ -7,11 +7,11 @@ import sys
 import aiofiles
 from charset_normalizer import from_bytes
 import uharfbuzz
-from constants import logger, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE, FONTS_TYPE
+from constants import logger, FONTS_TYPE
 from py2cy.c_utils import parse_table
 
 
-def makeMiniSizeFontMap(data):
+def make_mini_size_fontmap(data):
     """
     {
         /path/to/ttf/or/otf : {
@@ -29,31 +29,31 @@ def makeMiniSizeFontMap(data):
     }
 
     """
-    fontFileMap = {}
-    fontMiniSize = {}
+    file_set = {}
+    font_mini_size = {}
     for path in data.keys():
         size = data[path]["size"]
         for fontName, index in data[path]["fonts"].items():
-            if fontName not in fontFileMap or fontMiniSize[fontName] > size:
-                fontFileMap[fontName] = (path, index)
-                fontMiniSize[fontName] = size
-    return fontFileMap
+            if fontName not in file_set or font_mini_size[fontName] > size:
+                file_set[fontName] = (path, index)
+                font_mini_size[fontName] = size
+    return file_set
 
 
-def getAllFiles(path, types=FONTS_TYPE):
-    Filelist = []
+def get_all_files(path, types=FONTS_TYPE):
+    file_list = []
     for home, _, files in os.walk(path):
         for filename in files:
             if Path(filename).suffix.lower()[1:] in types:
                 # 保证所有系统下\\转变成/
-                Filelist.append(Path(home, filename).as_posix())
-    return Filelist
+                file_list.append(Path(home, filename).as_posix())
+    return file_list
 
 
-async def save_to_disk(path, fontBytes):
+async def save_to_disk(path, raw_bytes):
     # await asyncio.sleep(3)
     async with aiofiles.open(path, "wb") as f:
-        await f.write(fontBytes)
+        await f.write(raw_bytes)
         logger.info(f"网络字体已保存\t\t[{path}]")
 
 
@@ -75,9 +75,9 @@ def tag_to_integer(tag: str) -> int:
     return int.from_bytes(tag.encode("latin-1"), byteorder="big")
 
 
-def bytes_to_hash(bytes, hash_algorithm="sha256"):
+def bytes_to_hash(raw_bytes, hash_algorithm="sha256"):
     hash_func = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256}.get(hash_algorithm, hashlib.sha256)()  # 默认使用 SHA-256
-    hash_func.update(bytes)
+    hash_func.update(raw_bytes)
     return hash_func.hexdigest()
 
 
@@ -98,42 +98,42 @@ srt_font_color_start_pattern = re.compile(r'<font\s+color="?#(\w{2})(\w{2})(\w{2
 srt_font_color_end_pattern = re.compile(r"</font>")
 
 
-def srt_to_ass(srtText, srt_format, srt_style):
-    srtText = srtText.replace("\r", "")
-    lines = [x.strip() for x in srtText.split("\n") if x.strip()]
-    subLines = ""
-    tmpLines = ""
-    lineCount = 0
+def srt_to_ass(srt_text, srt_format, srt_style):
+    srt_text = srt_text.replace("\r", "")
+    lines = [x.strip() for x in srt_text.split("\n") if x.strip()]
+    sub_lines = ""
+    tmp_lines = ""
+    line_count = 0
 
     for ln in range(len(lines)):
         line = lines[ln]
         if line.isdigit() and srt_time_pattern.match(lines[(ln + 1)]):
-            if tmpLines:
-                subLines += tmpLines.replace("\n", "\\n") + "\n"
-            tmpLines = ""
-            lineCount = 0
+            if tmp_lines:
+                sub_lines += tmp_lines.replace("\n", "\\n") + "\n"
+            tmp_lines = ""
+            line_count = 0
             continue
         else:
             if srt_time_pattern.match(line):
                 line = line.replace("-0", "0")
-                tmpLines += "Dialogue: 0," + line + ",Default,,0,0,0,,"
+                tmp_lines += "Dialogue: 0," + line + ",Default,,0,0,0,,"
             else:
-                if lineCount < 2:
-                    tmpLines += line
+                if line_count < 2:
+                    tmp_lines += line
                 else:
-                    tmpLines += "\n" + line
-            lineCount += 1
+                    tmp_lines += "\n" + line
+            line_count += 1
         ln += 1
 
-    subLines += tmpLines + "\n"
+    sub_lines += tmp_lines + "\n"
 
-    subLines = srt_time_capture_pattern.sub("\\1.\\2", subLines)
-    subLines = srt_time_arrow_pattern.sub(",", subLines)
+    sub_lines = srt_time_capture_pattern.sub("\\1.\\2", sub_lines)
+    sub_lines = srt_time_arrow_pattern.sub(",", sub_lines)
     # replace style
-    subLines = html_start_tag_pattern.sub("{\\\\\g<1>1}", subLines)
-    subLines = html_end_tag_pattern.sub("{\\\\\g<1>0}", subLines)
-    subLines = srt_font_color_start_pattern.sub("{\\\\c&H\\3\\2\\1&}", subLines)
-    subLines = srt_font_color_end_pattern.sub("", subLines)
+    sub_lines = html_start_tag_pattern.sub("{\\\\\g<1>1}", sub_lines)
+    sub_lines = html_end_tag_pattern.sub("{\\\\\g<1>0}", sub_lines)
+    sub_lines = srt_font_color_start_pattern.sub("{\\\\c&H\\3\\2\\1&}", sub_lines)
+    sub_lines = srt_font_color_end_pattern.sub("", sub_lines)
 
     head_str = (
         """[Script Info]
@@ -156,73 +156,69 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     )
     # Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
     # Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
-    output_str = head_str + "\n" + subLines
+    output_str = head_str + "\n" + sub_lines
     logger.debug("SRT转ASS\n" + output_str)
     return output_str
 
-def bytes_to_str(b: bytes) -> str:
+def bytes_to_str(raw_bytes: bytes) -> tuple[str | None, str | None]:
     """
     快速将 bytes 转成 str，自动检测编码
     """
-    result = from_bytes(b).best()
-    if result is None:
-        # 如果检测失败，则尝试 utf-8 解码，失败再用 latin-1
-        try:
-            return b.decode('utf-8')
-        except UnicodeDecodeError:
-            return b.decode('latin-1')
-    logger.debug(f"判断编码: {result.encoding}")
-    return result.output().decode(result.encoding)
+    result = from_bytes(raw_bytes).best()
+    if result:
+        logger.debug(f"判断编码: {result.encoding}")
+        return result.encoding, str(result)
+    else:
+        return None, None
 
-def strCaseCmp(str1: str, str2: str) -> bool:
+def equals_ignore_case(str1: str, str2: str) -> bool:
     return str1.lower().strip() == str2.lower().strip()
 
-
-def getFontScore(
-    fontName: str,
+def get_font_score(
+    font_name: str,
     weight: int,
     italic: bool,
-    fontInfo: dict,
+    font_info: dict,
 ) -> int:
     """
-    fontName：ass中用到的字体名称
+    font_name：ass中用到的字体名称
 
     weight： ass中字体bold或者指定了其他值
 
     italic： ass中字体是否为斜体
 
-    fontInfo: 待打分的字体信息
+    font_info: 待打分的字体信息
 
     返回分数，越小越好，为0则直接选中
 
     跳过字形检测~~在取得分数后，还需要检测是否包含指定字形，如不包含字形则不会采用~~
     """
-    if any([strCaseCmp(fontName, x) for x in fontInfo["familyName"]]):
+    if any([equals_ignore_case(font_name, x) for x in font_info["familyName"]]):
         score = 0
-        if italic and (fontInfo["italic"] == False):
+        if italic and (font_info["italic"] == False):
             score += 1
-        elif (italic == False) and fontInfo["italic"]:
+        elif (italic == False) and font_info["italic"]:
             score += 4
-        a_weight = fontInfo["weight"]
-        if (weight > fontInfo["weight"] + 150) and (fontInfo["bold"] == False):
+        a_weight = font_info["weight"]
+        if (weight > font_info["weight"] + 150) and (font_info["bold"] == False):
             a_weight += 120
         score += (73 * abs(a_weight - weight)) // 256
         return score
     else:
-        fullNamesMatch = any([strCaseCmp(fontName, x) for x in fontInfo["fullName"]])
-        postscriptNameMatch = any([strCaseCmp(fontName, x) for x in fontInfo["postscriptName"]])
-        if fullNamesMatch == postscriptNameMatch:
-            if fullNamesMatch:
+        full_name_match = any([equals_ignore_case(font_name, x) for x in font_info["fullName"]])
+        postscript_name_match = any([equals_ignore_case(font_name, x) for x in font_info["postscriptName"]])
+        if full_name_match == postscript_name_match:
+            if full_name_match:
                 return 0
             else:
                 return sys.maxsize
-        if fontInfo["postscriptCheck"]:
-            if postscriptNameMatch:
+        if font_info["postscriptCheck"]:
+            if postscript_name_match:
                 return 0
             else:
                 return sys.maxsize
         else:
-            if fullNamesMatch:
+            if full_name_match:
                 return 0
             else:
                 return sys.maxsize
@@ -236,25 +232,25 @@ italic，是斜体则100 普通则为100
 """
 
 
-def selectFontFromList(targetFontName, targetWeight, targetItalic, fontInfos):
+def select_font_fromlist(target_font_name, target_weight, target_italic, font_infos):
     """
-    给定的fontInfos中的font，必定是满足family postscriptName fullName 其中有一个包含 targetFontName
+    给定的font_infos中的font，必定是满足family postscriptName fullName 其中有一个包含 target_font_name
     """
-    if len(fontInfos) == 0:
+    if len(font_infos) == 0:
         return None
     scores = {}
-    miniScore = sys.maxsize
-    for fontInfo in fontInfos:
-        score = getFontScore(targetFontName, targetWeight, targetItalic, fontInfo)
-        miniScore = min(miniScore, score)
+    mini_score = sys.maxsize
+    for fontInfo in font_infos:
+        score = get_font_score(target_font_name, target_weight, target_italic, fontInfo)
+        mini_score = min(mini_score, score)
         scores.setdefault(score, []).append(fontInfo)
-    target = sorted(scores[miniScore], key=lambda x: x["size"], reverse=False)[0]
+    target = sorted(scores[mini_score], key=lambda x: x["size"], reverse=False)[0]
     # print("选择字体:", scores.keys())
     # print(json.dumps(target, indent=4, ensure_ascii=False))
     return target["path"], target["index"]
 
 
-# def assInsertLine(ass_str, endTimeText, insertContent):
+# def ass_insert_line(ass_str, endTimeText, insertContent):
 #     try:
 #         lines = ass_str.splitlines()
 #         state = 0
@@ -337,7 +333,7 @@ styleMap = {
 eventMap = {"Layer": "0", "Start": "0:00:00.00", "End": "endTime", "Style": "InsertByFontinass", "Name": "INSERT", "MarginL": "0", "MarginR": "0", "MarginV": "0", "Effect": "", "Text": "insertContent"}
 
 
-def assInsertLine(ass_str, endTime, insertContent):
+def ass_insert_line(ass_str, end_time, insert_content):
     style = ("", -1)
     event = ("", -1)
     state = 0
@@ -359,19 +355,20 @@ def assInsertLine(ass_str, endTime, insertContent):
                 event = (line[8:].replace(" ", ""), lineIndex + 1)
                 break
         assert style[1] != -1 and event[1] != -1, ValueError("解析失败")
-        insertStyle = "Style: " + style[0]
+        insert_style = "Style: " + style[0]
         for key, value in styleMap.items():
-            insertStyle = insertStyle.replace(key, value)
+            insert_style = insert_style.replace(key, value)
 
-        insertEvent = "Dialogue: " + event[0]
+        insert_event = "Dialogue: " + event[0]
         for key, value in eventMap.items():
-            insertEvent = insertEvent.replace(key, value)
-        insertEvent = insertEvent.replace("endTime", endTime)
-        insertEvent = insertEvent.replace("insertContent", insertContent)
-        return "\n".join(lines[: style[1]] + [insertStyle] + lines[style[1] : event[1]] + [insertEvent] + lines[event[1] :])
+            insert_event = insert_event.replace(key, value)
+        insert_event = insert_event.replace("endTime", end_time)
+        insert_event = insert_event.replace("insertContent", insert_content)
+        return "\n".join(lines[: style[1]] + [insert_style] + lines[style[1] : event[1]] + [insert_event] + lines[event[1] :])
     except Exception as e:
-        print("插入内容出错" + str(e))
-    print("插入内容失败")
+        logger.exception("插入内容出错")
+        # print("插入内容出错" + str(e))
+    # print("插入内容失败")
     return ass_str
 
 def get_font_info(font_path):
@@ -495,7 +492,8 @@ def insert_str(original, str, marker):
     else:
         return original
 
-def subfonts_rename_restore(ass_text: str) -> str:
+# 没有使用
+def restore_subset_fonts(ass_text: str) -> str:
     state = 0
     name_info = []
     for line in ass_text.splitlines():

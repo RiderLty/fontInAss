@@ -6,7 +6,7 @@ import asyncio
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
-from utils import getAllFiles, get_font_info, save_to_disk, selectFontFromList
+from utils import get_all_files, get_font_info, save_to_disk, select_font_fromlist
 from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
 from sqlalchemy.exc import SQLAlchemyError
@@ -39,14 +39,14 @@ class PathBase64(TypeDecorator):
     impl = String
     def process_bind_param(self, value, dialect):
         if value:
-            bytes = os.fsencode(value) if isinstance(value, str) else value
-            return base64.b64encode(bytes).decode("utf-8")
+            raw_bytes = os.fsencode(value) if isinstance(value, str) else value
+            return base64.b64encode(raw_bytes).decode("utf-8")
         return None
 
     def process_result_value(self, value, dialect):
         if value:
-            bytes = base64.b64decode(value.encode("utf-8"))
-            return os.fsdecode(bytes)
+            raw_bytes = base64.b64decode(value.encode("utf-8"))
+            return os.fsdecode(raw_bytes)
         return None
 
 
@@ -72,6 +72,7 @@ class FontInfo(Base):
 
 
 class FontName(Base):
+    # 不推荐用name名字， 可能是数据库中的保留关键字
     __tablename__ = "name"
     # id = Column(Integer, index=True, primary_key=True, autoincrement=True)
     name = Column(String, primary_key=True, index=True)
@@ -91,7 +92,7 @@ class FontManager:
         self.db_session = Session()
         # 同步目录
         self.sync_db_with_dir()
-        # self.makeOnlineMap()
+        # self.make_online_map()
 
     def sync_db_with_dir(self):
         try:
@@ -101,16 +102,16 @@ class FontManager:
             result = self.db_session.execute(stmt).all()
             db_files = {row.path: row.size for row in result}
             # 获取目录中的所有字体文件
-            fontdir_files = {}
+            fonts_files = {}
             for dir_path in FONT_DIRS:
-                files = getAllFiles(dir_path)
+                files = get_all_files(dir_path)
                 for file_path in files:
-                    fontdir_files[file_path] = os.path.getsize(file_path)
+                    fonts_files[file_path] = os.path.getsize(file_path)
 
             # 计算差异
-            ins_files = set(fontdir_files.keys()) - set(db_files.keys())
-            del_files = set(db_files.keys()) - set(fontdir_files.keys())
-            update_files = {file_path for file_path in fontdir_files if file_path in db_files and fontdir_files[file_path] != db_files[file_path]}
+            ins_files = set(fonts_files.keys()) - set(db_files.keys())
+            del_files = set(db_files.keys()) - set(fonts_files.keys())
+            update_files = {file_path for file_path in fonts_files if file_path in db_files and fonts_files[file_path] != db_files[file_path]}
 
             # 将更新的文件同时加入删除和新增
             del_files.update(update_files)
@@ -123,7 +124,7 @@ class FontManager:
                 self.ins_fileinfo_and_fontinfo(list(ins_files))
 
         except Exception as e:
-            logger.error(f"检查数据库一致性时发生错误: {e}")
+            logger.exception("检查数据库一致性时发生错误")
             raise
 
     def update_fileinfo_with_filepath(self, data: List[Dict[str, str]]):
@@ -136,8 +137,8 @@ class FontManager:
             logger.info(f"更新了 {len(data)} 条记录，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
         except SQLAlchemyError as e:
             self.db_session.rollback()  # 回滚事务
-            logger.error(f"更新数据时发生错误: {e}")
-            raise e
+            logger.exception("更新数据时发生错误")
+            raise
 
     def ins_fileinfo_and_fontinfo(self, data: List[str]):
         # print("插入:",data)
@@ -165,7 +166,7 @@ class FontManager:
                     font_name.extend(font_name_list)
                     pbar.update(1)
             logger.info(f"分析了 {len(data)} 个字体，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
-            insertStart = time.perf_counter_ns()
+            start = time.perf_counter_ns()
             if file_info:
                 self.db_session.execute(insert(FileInfo).on_conflict_do_nothing(), file_info)
             if font_info:
@@ -173,11 +174,11 @@ class FontManager:
             if font_name:
                 self.db_session.execute(insert(FontName).on_conflict_do_nothing(), font_name)
             self.db_session.commit()
-            logger.info(f"添加记录，耗时 {(time.perf_counter_ns() - insertStart) / 1_000_000:.2f}ms")
+            logger.info(f"添加记录，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
         except SQLAlchemyError as e:
             self.db_session.rollback()  # 回滚事务
-            logger.error(f"添加数据时发生错误: {e}")
-            raise e
+            logger.exception("添加数据时发生错误")
+            raise
 
     def del_fileinfo_with_filepath(self, data: List[str]):
         # print("删除:",data)
@@ -189,10 +190,10 @@ class FontManager:
             logger.info(f"删除了 {len(data)} 条记录，耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
         except SQLAlchemyError as e:
             self.db_session.rollback()  # 回滚事务
-            logger.error(f"删除数据时发生错误: {e}")
-            raise e
+            logger.exception("删除数据时发生错误")
+            raise
 
-    def makeOnlineMap(self):
+    def make_online_map(self):
         """
         创建在线列表，需要确保本地与在线文件格式一致
         """
@@ -215,34 +216,34 @@ class FontManager:
             .all()
         )
 
-        nameMapIndexSet = {}
+        name_index_map = {}
         for index, fontInfo in enumerate(result):
             for names in [fontInfo.familyName, fontInfo.postscriptName, fontInfo.fullName]:
                 for name in names:
-                    nameMapIndexSet.setdefault(name, set()).add(index)
+                    name_index_map.setdefault(name, set()).add(index)
 
-        nameMapDetail = {}
-        for name, indexSet in nameMapIndexSet.items():
-            nameMapDetail[name] = list(indexSet)
+        name_index_dict = {}
+        for name, indexSet in name_index_map.items():
+            name_index_dict[name] = list(indexSet)
 
-        toSelectFontsList = []
+        font_list = []
         for row in result:
             rec = dict(row)
             rec["path"] = rec["path"][30:]
-            toSelectFontsList.append(rec)
+            font_list.append(rec)
 
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
-            json.dump([nameMapDetail, toSelectFontsList], f, ensure_ascii=True)
+            json.dump([name_index_dict, font_list], f, ensure_ascii=True)
         print("onlineFonts.json 已写入")
 
-    def selectFontOnline(self, targetFontName, targetWeight, targetItalic):
-        if targetFontName in self.onlineMapIndex:
-            toSelectFonts = [self.onlineMapData[index] for index in self.onlineMapIndex[targetFontName]]
-            (path, index) = selectFontFromList(targetFontName, targetWeight, targetItalic, toSelectFonts)
+    def select_font_online(self, target_font_name, target_weight, target_italic):
+        if target_font_name in self.onlineMapIndex:
+            font_list = [self.onlineMapData[index] for index in self.onlineMapIndex[target_font_name]]
+            path, index = select_font_fromlist(target_font_name, target_weight, target_italic, font_list)
             return path, index
         return None
 
-    def selectFontLocal(self, targetFontName, targetWeight, targetItalic):
+    def select_font_local(self, target_font_name, target_weight, target_italic):
         result = (
             self.db_session.execute(
                 select(
@@ -259,13 +260,13 @@ class FontManager:
                 )
                 .join(FontName, FontInfo.uid == FontName.uid)
                 .where(
-                    FontName.name == targetFontName,
+                    FontName.name == target_font_name,
                 )
             )
             .mappings()
             .all()
         )
-        return selectFontFromList(targetFontName, targetWeight, targetItalic, result)
+        return select_font_fromlist(target_font_name, target_weight, target_italic, result)
 
     def close(self):
         try:
@@ -274,45 +275,45 @@ class FontManager:
             engine.dispose()
             MAIN_LOOP.create_task(self.http_session.close())
         except Exception as e:
-            logger.error(f"发生错误: {e}")
+            logger.exception("关闭数据库连接发生错误")
 
-    async def loadFont(self, requestFontName, targetWeight, targetItalic):
-        targetFontName = requestFontName.strip().lower()
-        if (targetFontName, targetWeight, targetItalic) in self.cache:
-            (fontBytes, index) = self.cache[(targetFontName, targetWeight, targetItalic)]  # 刷新缓存
-            self.cache[(targetFontName, targetWeight, targetItalic)] = (fontBytes, index)
-            logger.info(f"已缓存 {len(fontBytes) / (1024 * 1024):.2f}MB \t\t[{(targetFontName,targetWeight,targetItalic)} <== <cache> ]")
-            return (fontBytes, index)
-        elif result := self.selectFontLocal(targetFontName, targetWeight, targetItalic):
+    async def load_font(self, target_font_name, target_weight, target_italic):
+        db_font_name = target_font_name.strip().lower()
+        if (db_font_name, target_weight, target_italic) in self.cache:
+            (font_bytes, index) = self.cache[(db_font_name, target_weight, target_italic)]  # 刷新缓存
+            self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
+            logger.info(f"已缓存 {len(font_bytes) / (1024 * 1024):.2f}MB \t\t[{(db_font_name, target_weight, target_italic)} <== <cache> ]")
+            return font_bytes, index
+        elif result := self.select_font_local(db_font_name, target_weight, target_italic):
             path, index = result
             start = time.perf_counter_ns()
-            fontBytes = uharfbuzz.Blob.from_file_path(path)
-            logger.info(f"本地 {len(fontBytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(targetFontName, targetWeight, targetItalic)} <== {path}]")
-            self.cache[(targetFontName, targetWeight, targetItalic)] = (fontBytes, index)
-            return (fontBytes, index)
-        elif result := self.selectFontOnline(targetFontName, targetWeight, targetItalic):
+            font_bytes = uharfbuzz.Blob.from_file_path(path)
+            logger.info(f"本地 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== {path}]")
+            self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
+            return font_bytes, index
+        elif result := self.select_font_online(db_font_name, target_weight, target_italic):
             path, index = result
             logger.info(f"下载字体 [CDN:{path}]")
             start = time.perf_counter_ns()
             resp = await self.http_session.get(f"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/{path}", timeout=10)
             if not resp.ok:
                 resp = await self.http_session.get(f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}", timeout=10)
-            fontBytes = await resp.read()
-            logger.info(f"下载 {len(fontBytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(targetFontName, targetWeight, targetItalic)} <== CDN:{path}]")
-            self.cache[(targetFontName, targetWeight, targetItalic)] = (fontBytes, index)
-            fontSavePath = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
-            fontSaveDir = os.path.dirname(fontSavePath)
-            os.makedirs(fontSaveDir, exist_ok=True)
-            asyncio.create_task(save_to_disk(fontSavePath, fontBytes))
-            return (fontBytes, index)
-        return (None, None)
+            font_bytes = await resp.read()
+            logger.info(f"下载 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
+            self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
+            save_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
+            save_dir = os.path.dirname(save_path)
+            os.makedirs(save_dir, exist_ok=True)
+            asyncio.create_task(save_to_disk(save_path, font_bytes))
+            return font_bytes, index
+        return None, None
 
-    async def select_font(self, request_font_name, target_weight, target_italic):
-        target_font_name = request_font_name.strip().lower()
+    async def select_font(self, target_font_name, target_weight, target_italic):
+        db_font_name = target_font_name.strip().lower()
         if (
-            (target_font_name, target_weight, target_italic) in self.cache
-            or self.selectFontLocal(target_font_name, target_weight, target_italic)
-            or self.selectFontOnline(target_font_name, target_weight, target_italic)
+            (db_font_name, target_weight, target_italic) in self.cache
+            or self.select_font_local(db_font_name, target_weight, target_italic)
+            or self.select_font_online(db_font_name, target_weight, target_italic)
         ):
             return True, None
-        return False, request_font_name
+        return False, f"[{target_font_name}]"
