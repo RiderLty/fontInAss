@@ -4,7 +4,7 @@
     "removeAll": "全部删除",
     "download": "下载",
     "settings": "设置",
-    "dropTip": "拖动文件到此处上传 (.ass / .srt / .ssa)",
+    "dropTip": "拖动文件到此处上传 (.ass / .ssa / .srt)",
     "filename": "文件名",
     "status": "状态",
     "message": "提示",

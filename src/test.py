@@ -23,9 +23,9 @@
 # from constants import FT_STYLE_FLAG_BOLD, FT_STYLE_FLAG_ITALIC, logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP
 # from dirmonitor import dirmonitor
 # from fontmanager import FontManager
-# from assSubsetter import assSubsetter
+# from subsetter import SubSetter
 # from py2cy.c_utils import uuencode
-# from utils import assInsertLine, bytes_to_hash, bytes_to_str, getFontScore, strCaseCmp, tagToInteger
+# from utils import ass_insert_line, bytes_to_hash, bytes_to_str, get_font_score, equals_ignore_case, tagToInteger
 
 
 # def init_logger():
@@ -177,17 +177,17 @@
 #         return Response(content=serverResponse.content)
 
 
-# def getServer(port, serverLoop):
-#     serverConfig = Config(
+# def get_server(port, server_loop):
+#     server_config = Config(
 #         app=app,
 #         # host="::",
 #         host="0.0.0.0",
 #         port=port,
 #         log_level="info",
-#         loop=serverLoop,
+#         loop=server_loop,
 #         ws_max_size=1024 * 1024 * 1024 * 1024,
 #     )
-#     return Server(serverConfig)
+#     return Server(server_config)
 
 
 # # "[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
@@ -278,7 +278,7 @@
 #         }
 
 
-# def getAllFiles(path):
+# def get_all_files(path):
 #     Filelist = []
 #     for home, _, files in os.walk(path):
 #         for filename in files:
@@ -389,7 +389,7 @@
 #     # bytes = (await process(open("test.ass", "rb").read()))[1]
 #     # with open("test_emb.ass", "wb") as f:
 #     #     f.write(bytes)
-#     files = getAllFiles(r"/mnt/storage/Fonts/超级字体整合包 XZ")
+#     files = get_all_files(r"/mnt/storage/Fonts/超级字体整合包 XZ")
 #     print("共", len(files))
 #     fontInfoList = []
 #     for fileIndex, file in enumerate(files):
@@ -462,7 +462,7 @@
 #     miniScore = sys.maxsize
 #     for fontInfo in data:
 #         if fontName in fontInfo["allNames"]:
-#             score = getFontScore(fontName, weight, italic, fontInfo)
+#             score = get_font_score(fontName, weight, italic, fontInfo)
 #             miniScore = min(miniScore, score)
 #             scores.setdefault(score, []).append(fontInfo)
 #     if scores == {}:
@@ -480,23 +480,23 @@
 #     os.makedirs(DEFAULT_FONT_PATH, exist_ok=True)
 #     asyncio.set_event_loop(MAIN_LOOP)
 #     ssl._create_default_https_context = ssl._create_unverified_context
-#     fontManagerInstance = FontManager()
-#     assSubsetterInstance = assSubsetter(fontManagerInstance=fontManagerInstance)
-#     event_handler = dirmonitor(callBack=fontManagerInstance)  # 创建fonts字体文件夹监视实体
+#     font_manager_instance = FontManager()
+#     subsetter_instance = SubSetter(font_manager_instance=font_manager_instance)
+#     event_handler = dirmonitor(callBack=font_manager_instance)  # 创建fonts字体文件夹监视实体
 #     event_handler.start()
-#     process = assSubsetterInstance.process  # 绑定函数
-#     serverInstance = getServer(8011, MAIN_LOOP)
+#     process = subsetter_instance.process  # 绑定函数
+#     server_instance = get_server(8011, MAIN_LOOP)
 #     init_logger()
 
 #     # MAIN_LOOP.run_until_complete(test())
 #     # MAIN_LOOP.run_until_complete(selectFont())
 #     async def loadTEst():
-#         # await fontManagerInstance.loadFont__("Arial",400,False)
-#         # await fontManagerInstance.loadFont__("Arial",700,False)
-#         # await fontManagerInstance.loadFont__("Arial",400,True)
-#         # await fontManagerInstance.loadFont__("Arial",700,True)
+#         # await font_manager_instance.loadFont__("Arial",400,False)
+#         # await font_manager_instance.loadFont__("Arial",700,False)
+#         # await font_manager_instance.loadFont__("Arial",400,True)
+#         # await font_manager_instance.loadFont__("Arial",700,True)
 
-#         # await fontManagerInstance.loadFont__("Arial",400,False)
+#         # await font_manager_instance.loadFont__("Arial",400,False)
 #         files = [
 #             "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E04][Ma10p_1080p][x265_flac_aac].chs.ass",
 #             "test/[UHA-WINGS&VCB-Studio] EIGHTY SIX [S01E03][Ma10p_1080p][x265_flac_aac].chs.ass",
@@ -511,8 +511,8 @@
 #                 subtitleBytes = f.read()
 #             start = time.perf_counter_ns()
 #             # print(analyseAss_libassLike( bytes_to_str(subtitleBytes) ))
-#             # assInsertLine(bytes_to_str(subtitleBytes),"hello insert")
-#             print(assInsertLine(bytesToStr(subtitleBytes),"hello insert"))
+#             # ass_insert_line(bytes_to_str(subtitleBytes),"hello insert")
+#             print(ass_insert_line(bytesToStr(subtitleBytes),"hello insert"))
 #             logger.error(f"测试完成 用时 {(time.perf_counter_ns() - start) / 1000000:.2f} ms")
 #             logger.error(f"")
 
@@ -521,8 +521,8 @@
 #     # # 关闭和清理资源
 #     event_handler.stop()  # 停止文件监视器
 #     event_handler.join()  # 等待文件监视退出
-#     fontManagerInstance.close()  # 关闭aiohttp的session
-#     # assSubsetterInstance.close()  # 关闭进程池
+#     font_manager_instance.close()  # 关闭aiohttp的session
+#     # subsetter_instance.close()  # 关闭进程池
 #     pending = asyncio.all_tasks(MAIN_LOOP)
 #     MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))  # 等待异步任务结束
 #     MAIN_LOOP.stop()  # 停止事件循环
@@ -657,7 +657,7 @@
 # import os
 # from ctypes import c_char, c_char_p, c_void_p, c_int, POINTER, c_size_t
 
-# def getAllFiles(path):
+# def get_all_files(path):
 #     Filelist = []
 #     for home, dirs, files in os.walk(path):
 #         for filename in files:
@@ -719,7 +719,7 @@
 
 # # 示例用法
 # if __name__ == "__main__":
-#     for file in getAllFiles("/mnt/storage/Fonts/超级字体整合包 XZ"):
+#     for file in get_all_files("/mnt/storage/Fonts/超级字体整合包 XZ"):
 #         if file.endswith("ttf"):
 #             print(file)
 #             with open(file, "rb") as f:
@@ -734,7 +734,7 @@
 # import time
 # import freetype
 # import freetype.raw
-# from utils import  getAllFiles, getFontFileInfos
+# from utils import  get_all_files, getFontFileInfos
 # from constants import ONLINE_FONTS_DB_PATH
 # with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
 #     onlineMapIndex, onlineMapData = json.load(f)
@@ -744,7 +744,7 @@
 # if __name__ == "__main__":
 #     font_path = "/mnt/storage/Projects/fontInAss/FZLTCH.ttf"
 #     start = time.perf_counter_ns()
-#     for file in getAllFiles("/mnt/storage/Fonts/超级字体整合包 XZ"):
+#     for file in get_all_files("/mnt/storage/Fonts/超级字体整合包 XZ"):
 #         res = getFontFileInfos(file)
 #         # print(res)
 #     print(f"读取 {(time.perf_counter_ns() - start) / 1000000000:.2f}s")
@@ -753,9 +753,9 @@
 
 import time
 from py2cy.c_utils import analyseAss
-from utils import  getAllFiles,assInsertLine
+from utils import  get_all_files, ass_insert_line
 
-for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
+for file in get_all_files("/mnt/storage/Projects/fontInAss/test","ass"):
     print(file)
     start = time.perf_counter_ns()
     res = analyseAss(assBytes = open(file,'rb').read())
@@ -763,6 +763,6 @@ for file in getAllFiles("/mnt/storage/Projects/fontInAss/test","ass"):
     print(f"耗时 {(time.perf_counter_ns() - start) / 1_000_000:.2f}ms")
     # exit()
     # with open(file,'r',encoding="UTF-8") as f:
-    #     res = assInsertLine(f.read(),"0:00:59.00","hello world")
+    #     res = ass_insert_line(f.read(),"0:00:59.00","hello world")
     # with open(file+"insert.ass",'w',encoding="UTF-8") as f:
     #     f.write(res)    
