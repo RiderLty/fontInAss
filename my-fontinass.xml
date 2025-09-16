@@ -21,7 +21,7 @@ https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
-  <DateInstalled>1756042900</DateInstalled>
+  <DateInstalled>1758029270</DateInstalled>
   <DonateText/>
   <DonateLink/>
   <Requires/>
@@ -30,7 +30,7 @@ https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
   <Config Name="&#x5B57;&#x4F53;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#x7AEF;&#x53E3;" Target="8011" Default="8011" Mode="tcp" Description="&#x5B57;&#x4F53;&#x5904;&#x7406;&#x670D;&#x52A1;&#x7AEF;&#x53E3;&#xFF0C;&#x624B;&#x52A8;&#x8BBE;&#x7F6E;&#x53CD;&#x5411;&#x4EE3;&#x7406;&#x65F6;&#x4F7F;&#x7528;&#xFF0C;&#x975E;&#x5FC5;&#x8981;" Type="Port" Display="always" Required="false" Mask="false">8011</Config>
   <Config Name="data" Target="/data" Default="/mnt/user/appdata/fontinass/" Mode="rw" Description="&#x6570;&#x636E;&#x5E93;&#x6587;&#x4EF6;&#x5B58;&#x50A8;&#x4F4D;&#x7F6E;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/fontinass/</Config>
   <Config Name="&#x65E5;&#x5FD7;" Target="/logs" Default="/mnt/user/appdata/fontinass/" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/fontinass/</Config>
-  <Config Name="fonts" Target="/fonts" Default="" Mode="ro" Description="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6620;&#x5C04;&#x7684;&#x8DEF;&#x5F84;&#xFF0C;&#x540C;&#x65F6;&#x7528;&#x4E8E;&#x5B58;&#x50A8;&#x4E0B;&#x8F7D;&#x7684;&#x5B57;&#x4F53;&#x3002;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/storage/Fonts/</Config>
+  <Config Name="fonts" Target="/fonts" Default="" Mode="rw" Description="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6620;&#x5C04;&#x7684;&#x8DEF;&#x5F84;&#xFF0C;&#x540C;&#x65F6;&#x7528;&#x4E8E;&#x5B58;&#x50A8;&#x4E0B;&#x8F7D;&#x7684;&#x5B57;&#x4F53;&#x3002;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/storage/Fonts/</Config>
   <Config Name="HDR" Target="HDR" Default="-1" Mode="" Description="HDR&#x9002;&#x914D;&#xFF0C;-1 &#x4E0D;&#x5F00;&#x542F;" Type="Variable" Display="always" Required="false" Mask="false">-1</Config>
   <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="" Mode="" Description="&#x65E5;&#x5FD7;&#x7B49;&#x7EA7;&#xFF0C;&#x53EF;&#x8BBE;&#x7F6E;&#x4E3A; DEBUG INFO WARNING ERROR CRITICAL" Type="Variable" Display="always" Required="false" Mask="false">DEBUG</Config>
   <Config Name="&#x9519;&#x8BEF;&#x663E;&#x793A;" Target="ERROR_DISPLAY" Default="0" Mode="" Description="&#x9519;&#x8BEF;&#x4FE1;&#x606F;&#x663E;&#x793A;&#xFF0C;&#x9ED8;&#x8BA4;&#x5173;&#x95ED;&#xFF0C;&#x5355;&#x4F4D;&#xFF08;&#x79D2;&#xFF09;&#x8303;&#x56F4;&#x5927;&#x4E8E;0&#x5C0F;&#x4E8E;60&#13;&#10;&#x5F00;&#x542F;&#x540E;&#x4F1A;&#x5728;&#x5B57;&#x5E55;&#x5F00;&#x5934;&#x63D2;&#x5165;&#x9519;&#x8BEF;&#x4FE1;&#x606F;&#x7528;&#x6765;&#x544A;&#x77E5;&#x5B57;&#x4F53;&#x7F3A;&#x5931;&#x6216;&#x8005;&#x5176;&#x4ED6;&#x9519;&#x8BEF;&#x4FE1;&#x606F;" Type="Variable" Display="always" Required="false" Mask="false">3</Config>
