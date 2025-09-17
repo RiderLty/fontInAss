@@ -1,3 +1,4 @@
+from enum import Enum
 import warnings
 warnings.filterwarnings("ignore")
 import base64
@@ -112,12 +113,6 @@ async def index_subset(request: Request):
 async def redirect_subset():
     return RedirectResponse(url="/subset/")
 
-# 不加这个会导致这个请求到最后的 @app.get("/{path:path}") 这个匹配最好同步nginx.conf配置
-@app.get("/.well-known/appspecific/com.chrome.devtools.json")
-async def chrome_devtools_probe():
-    return JSONResponse({}, status_code=404)
-
-
 @app.get("/color/set", response_class=HTMLResponse)
 async def set_color():
     return open(os.path.join(os.path.join(os.path.dirname(__file__) , "html"), "color.html"), "r", encoding="utf-8").read()
@@ -211,8 +206,16 @@ async def subtitles_octopus_js(request: Request, response: Response):
         # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         return Response(content=server_response.content)
 
-@app.get("/{path:path}")
-async def proxy_pass(request: Request, response: Response):
+
+
+#/videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream) Emby
+#/v/api/v1/subtitle/dl/(.*) 飞牛
+@app.get("/{path:path}/Stream.ass")
+@app.get("/{path:path}/Stream.ssa")
+@app.get("/{path:path}/Stream.srt")
+@app.get("/v/api/v1/subtitle/dl/{subtitle}")
+# @app.get("{path:path}")
+async def proxy_pass(request: Request, response: Response ):
     global user_hsv_s,user_hsv_v
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
