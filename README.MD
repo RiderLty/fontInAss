@@ -84,7 +84,7 @@ docker run -d --name=fontinass --restart=unless-stopped \
 ### 无nginx版本
 使用```riderlty/fontinass:noproxy```tag，不整合nginx，避免在使用302直链时套壳nginx
 
-有需求的用户可参考手动部署，映射8011端口并配置字幕接口的nginx反向代理```location ~* /videos/(.*)/Subtitles```
+有需求的用户可参考手动部署，映射8011端口并配置字幕接口的nginx反向代理```location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream.)$```
 
 ## Unraid部署
 

@@ -208,9 +208,10 @@ async def subtitles_octopus_js(request: Request, response: Response):
 
 
 
-#/videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream) Emby
+#/videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt) Emby
+#/videos/(.*)/Subtitles/(.*)/(Stream.) infuse
 #/v/api/v1/subtitle/dl/(.*) 飞牛
-@app.get("/{path:path}/Stream")
+@app.get("/{path:path}/Stream.")
 @app.get("/{path:path}/Stream.ass")
 @app.get("/{path:path}/Stream.ssa")
 @app.get("/{path:path}/Stream.srt")
