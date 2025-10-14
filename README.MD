@@ -156,7 +156,7 @@ server {
         proxy_pass $EMBY_SERVER_URL;
     }
 
-    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt|Stream)$ {
+    location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.srt|Stream.)$ {
         #仅匹配ass与srt字幕文件，Stream适配infuse
         #修改为你的fontinass服务器地址
         proxy_pass http://127.0.0.1:8011;
