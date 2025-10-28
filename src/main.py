@@ -19,6 +19,9 @@ from dirmonitor import dirmonitor
 from fontmanager import FontManager
 from subsetter import SubSetter
 from utils import insert_str
+import mimetypes
+
+
 
 def init_logger():
     logger_name = (
@@ -52,6 +55,10 @@ app.add_middleware(
 
 process = None
 process_subset = None
+
+# 修复 Windows / 某些系统默认缺失的 MIME 类型
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 
 # 挂载前端静态文件，访问 ip:8011/subset
 app.mount(
