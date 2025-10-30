@@ -15,9 +15,9 @@ using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
 #ifdef _WIN32
-    #define startsWithIgnoreCase(str, prefix) (_strnicmp((str), (prefix), strlen(prefix)) == 0)
+#define startsWithIgnoreCase(str, prefix) (_strnicmp((str), (prefix), strlen(prefix)) == 0)
 #elif __linux__
-    #define startsWithIgnoreCase(str, prefix) (strncasecmp((str), (prefix), strlen(prefix)) == 0)
+#define startsWithIgnoreCase(str, prefix) (strncasecmp((str), (prefix), strlen(prefix)) == 0)
 #endif
 #define startsWith_SV(str, prefix) ((str).compare(0, strlen(prefix), prefix) == 0)
 
@@ -27,6 +27,7 @@ using namespace std;
 #define strtok_rs strtok_r
 #endif
 
+// #define DEBUG_ON true
 #define DEBUG_ON false
 #if DEBUG_ON
 #define DEBUG(fmt, args...) printf(fmt, ##args);
@@ -257,18 +258,23 @@ bool isDigitStr(char *str)
     return true;
 }
 
-bool isDigitStr_SV(std::string_view sv) {
-    if (sv.empty()) return false;  // 空字符串直接返回false
+bool isDigitStr_SV(std::string_view sv)
+{
+    if (sv.empty())
+        return false; // 空字符串直接返回false
 
     // 处理负数情况
-    if (sv.front() == '-') {
+    if (sv.front() == '-')
+    {
         // 负号后至少需要1个数字字符
-        return sv.size() > 1 && all_of(sv.begin() + 1, sv.end(), 
-            [](char c) { return c >= '0' && c <= '9'; });
+        return sv.size() > 1 && all_of(sv.begin() + 1, sv.end(),
+                                       [](char c)
+                                       { return c >= '0' && c <= '9'; });
     }
     // 非负数情况：所有字符均为数字
-    return all_of(sv.begin(), sv.end(), 
-        [](char c) { return c >= '0' && c <= '9'; });
+    return all_of(sv.begin(), sv.end(),
+                  [](char c)
+                  { return c >= '0' && c <= '9'; });
 }
 
 bool is_zero_and_space(char *str)
@@ -326,7 +332,7 @@ extern "C"
         int eventTextIndex = -1;
         char *lineSplitPtr = NULL;
         string_view defaultStyleName;
-        
+
         auto analyssLine = [&](char *line)
         {
             char *dialogue = line + strlen("Dialogue:");
@@ -578,6 +584,34 @@ extern "C"
                         originName.remove_suffix(1);
                     }
                     fontSubsetRename[replacedName] = originName;
+                }
+                else if (strstr(line, "----"))
+                {
+                    DEBUG("发现字体子集注释行: %s\n", line);
+                    char *pos = strstr(line, "----");
+                    if (strlen(pos) > 14)
+                        continue;
+                    char *code_part = pos + 5;
+                     DEBUG("发现字体子集注释行 code_part : %s\n", code_part);
+                    bool valid = true;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        if (!isalnum(static_cast<unsigned char>(code_part[i])))
+                        {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (valid)
+                    {
+                        string_view originName(line, pos - line);
+                        string_view replacedName(code_part, 8);
+                        while (!originName.empty() && isspace(originName.back()))
+                        {
+                            originName.remove_suffix(1);
+                        }
+                        fontSubsetRename[replacedName] = originName;
+                    }
                 }
             }
             else if (state == 1)

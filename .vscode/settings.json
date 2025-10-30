@@ -67,6 +67,8 @@
         "typeindex": "cpp",
         "fstream": "cpp",
         "ranges": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "complex": "cpp",
+        "sstream": "cpp"
     }
 }
