@@ -14,6 +14,11 @@
 using namespace std;
 
 #define startsWith(str, prefix) (strncmp((str), (prefix), strlen(prefix)) == 0)
+#ifdef _WIN32
+    #define startsWithIgnoreCase(str, prefix) (_strnicmp((str), (prefix), strlen(prefix)) == 0)
+#elif __linux__
+    #define startsWithIgnoreCase(str, prefix) (strncasecmp((str), (prefix), strlen(prefix)) == 0)
+#endif
 #define startsWith_SV(str, prefix) ((str).compare(0, strlen(prefix), prefix) == 0)
 
 #ifdef _WIN32
@@ -564,7 +569,7 @@ extern "C"
                 {
                     state = 1;
                 }
-                else if (startsWith(line, "; Font Subset:"))
+                else if (startsWithIgnoreCase(line, "; Font Subset:"))
                 {
                     string_view replacedName(line + strlen("; Font Subset: "), 8);
                     string_view originName(line + strlen("; Font Subset: 59W6OVGX - "), strlen(line) - strlen("; Font Subset: 59W6OVGX - "));
