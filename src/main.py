@@ -222,6 +222,10 @@ async def subtitles_octopus_js(request: Request, response: Response):
 @app.get("/{path:path}/Stream.ass")
 @app.get("/{path:path}/Stream.ssa")
 @app.get("/{path:path}/Stream.srt")
+@app.get("/{path:path}/stream.")
+@app.get("/{path:path}/stream.ass")
+@app.get("/{path:path}/stream.ssa")
+@app.get("/{path:path}/stream.srt")
 @app.get("/v/api/v1/subtitle/dl/{subtitle}")
 # @app.get("{path:path}")
 async def proxy_pass(request: Request, response: Response ):
