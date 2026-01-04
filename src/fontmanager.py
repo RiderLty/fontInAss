@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
-from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX
+from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX , DISABLE_ONLINE_FONTS
 from utils import get_all_files, get_font_info, save_to_disk, select_font_fromlist
 from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
@@ -291,22 +291,27 @@ class FontManager:
             logger.info(f"本地 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== {path}]")
             self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
             return font_bytes, index
-        elif result := self.select_font_online(db_font_name, target_weight, target_italic):
-            path, index = result
-            logger.info(f"下载字体 [CDN:{path}]")
-            start = time.perf_counter_ns()
-            resp = await self.http_session.get(f"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/{path}", timeout=10)
-            if not resp.ok:
-                resp = await self.http_session.get(f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}", timeout=10)
-            font_bytes = await resp.read()
-            logger.info(f"下载 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
-            self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
-            save_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
-            save_dir = os.path.dirname(save_path)
-            os.makedirs(save_dir, exist_ok=True)
-            asyncio.create_task(save_to_disk(save_path, font_bytes))
-            return font_bytes, index
-        return None, None
+        else:
+            if DISABLE_ONLINE_FONTS:
+                logger.info(f"已禁用在线字体下载 [{(target_font_name, target_weight, target_italic)}]")
+                return None, None
+            elif result := self.select_font_online(db_font_name, target_weight, target_italic):
+                path, index = result
+                logger.info(f"下载字体 [CDN:{path}]")
+                start = time.perf_counter_ns()
+                resp = await self.http_session.get(f"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/{path}", timeout=10)
+                if not resp.ok:
+                    resp = await self.http_session.get(f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}", timeout=10)
+                font_bytes = await resp.read()
+                logger.info(f"下载 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
+                self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
+                save_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
+                save_dir = os.path.dirname(save_path)
+                os.makedirs(save_dir, exist_ok=True)
+                asyncio.create_task(save_to_disk(save_path, font_bytes))
+                return font_bytes, index
+            else:
+                return None, None
 
     async def select_font(self, target_font_name, target_weight, target_italic):
         db_font_name = target_font_name.strip().lower()

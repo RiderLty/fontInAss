@@ -114,3 +114,4 @@ MISS_LOGS_ORDER = os.environ.get("MISS_LOGS_ORDER", default="False") == "True"
 MISS_LOGS_PATH = os.path.join(LOGS_PATH, f"{MISS_LOGS_NAME}.txt")
 if MISS_LOGS or MISS_GLYPH_LOGS:
     miss_logs_manager = LogsManager(MISS_LOGS_PATH, MISS_LOGS_SIZE, MISS_LOGS_ORDER)
+DISABLE_ONLINE_FONTS = os.environ.get("DISABLE_ONLINE_FONTS", default="False") == "True"

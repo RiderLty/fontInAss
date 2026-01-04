@@ -239,6 +239,7 @@ server {
 | MISS_LOGS_NAME             | 字体缺失/缺少字形日记文件名，任意中英文/组合（特殊符号除外）                                       | miss_logs |
 | MISS_LOGS_SIZE             | 字体缺失/缺少字形日记最大记录数（行数），单位（行）                                            | 20        |
 | MISS_LOGS_ORDER            | 字体缺失/缺少字形日记新增顺序，设置为True时新增日记会记录到最后面，反之最前面                             | False     |
+| DISABLE_ONLINE_FONTS       | 禁用在线字体下载开关，设置为True时会禁用从在线字体数据库下载字体，仅使用本地字体数据库中的字体 | False     |
 > [!NOTE]
 > 当 `EMBY_WEB_EMBED_FONT` 设置为 True 时，Nginx 的反向代理会将 Emby 的字幕渲染文件 subtitles-octopus.js 转发给程序处理。程序将在该 JS 文件中新增两个方法：
 > </br>1.解析字幕文件获取字体信息
