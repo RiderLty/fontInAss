@@ -269,7 +269,7 @@ async def proxy_pass(request: Request, response: Response ):
 def get_server(port, server_loop, web_app):
     server_config = Config(
         app=web_app,
-        host="::",
+        host=None,
         port=port,
         log_level="info",
         loop=server_loop,
