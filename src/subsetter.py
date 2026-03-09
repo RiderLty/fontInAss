@@ -97,9 +97,10 @@ class SubSetter:
             ass_text = colorAdjust.ssaProcessor(ass_text , user_hsv_s , user_hsv_v)
 
         if bytes_hash in self.cache:
-            embed_fonts_text = self.cache[bytes_hash]
+            result_bytes = self.cache[bytes_hash]
             total_errors = []
-            logger.info(f"字幕缓存命中 占用: {getsizeof(embed_fonts_text) / (1024 * 1024):.2f}MB")
+            logger.info(f"字幕缓存命中 占用: { len(result_bytes) / (1024 * 1024):.2f}MB")
+            return "", srt, result_bytes
         else:
             analyse_start_time = time.perf_counter_ns()
             if "utf_8" == ass_encode and not srt:
@@ -154,7 +155,7 @@ class SubSetter:
             return "没有找到[Events]标签，请检查字幕文件内容", srt, None
         result_bytes = result_text.encode("UTF-8-sig")
         if len(total_errors) == 0:
-            self.cache[bytes_hash] = embed_fonts_text
+            self.cache[bytes_hash] = result_bytes
         else:
             logger.error("存在错误，未缓存")
             for err in total_errors:
