@@ -40,6 +40,7 @@ if os.environ.get("FONT_DIRS"):
         if dirPath.strip() != "" and os.path.exists(dirPath):
             FONT_DIRS.append(dirPath.strip())
 
+CUSTOM_ONLINE_FONTS = os.path.join(DATA_PATH, r"customOnlineFonts.json")
 ONLINE_FONTS_DB_PATH = os.path.join(os.path.dirname(ROOT_PATH), r"onlineFonts.json")
 
 LOCAL_FONTS_DB_VERSION = "2.6"

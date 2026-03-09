@@ -281,3 +281,7 @@ server {
 # 其他说明
 
 自带的 [onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114)
+
+如有需求，可参考[onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 自定义字体在线数据库，映射容器内路径为 /data/customOnlineFonts.json
+
+会优先使用自定义字体在线数据库，如果自定义字体数据库不存在，则使用默认字体数据库

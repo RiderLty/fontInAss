@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
-from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX , DISABLE_ONLINE_FONTS
+from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX , DISABLE_ONLINE_FONTS,CUSTOM_ONLINE_FONTS
 from utils import get_all_files, get_font_info, save_to_disk, select_font_fromlist
 from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
@@ -82,9 +82,14 @@ class FontName(Base):
 class FontManager:
     def __init__(self):
         self.cache = TTLCache(maxsize=FONT_CACHE_SIZE, ttl=FONT_CACHE_TTL) if FONT_CACHE_TTL > 0 else LRUCache(maxsize=FONT_CACHE_SIZE)
-
-        with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
-            (self.onlineMapIndex, self.onlineMapData) = json.load(f)
+        if os.path.exists(CUSTOM_ONLINE_FONTS):
+            logger.info(f"加载自定义字体在线字体")
+            with open(CUSTOM_ONLINE_FONTS, "r", encoding="UTF-8") as f:
+                (self.onlineMapHosts , self.onlineMapIndex, self.onlineMapData) = json.load(f)
+        else:
+            with open(ONLINE_FONTS_DB_PATH, "r", encoding="UTF-8") as f:
+                (self.onlineMapHosts , self.onlineMapIndex, self.onlineMapData) = json.load(f)
+       
         self.http_session = aiohttp.ClientSession(loop=MAIN_LOOP, connector=aiohttp.TCPConnector(verify_ssl=False, loop=MAIN_LOOP))  # 下载的session
         # self.executor = ThreadPoolExecutor(max_workers=POOL_CPU_MAX * 2)
         # 初始化数据库
@@ -233,7 +238,7 @@ class FontManager:
             font_list.append(rec)
 
         with open("onlineFonts.json", "w", encoding="UTF-8") as f:
-            json.dump([name_index_dict, font_list], f, ensure_ascii=True)
+            json.dump([["https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/","https://fonts.storage.rd5isto.org/超级字体整合包 XZ/"],name_index_dict, font_list], f, ensure_ascii=True)
         print("onlineFonts.json 已写入")
 
     def select_font_online(self, target_font_name, target_weight, target_italic):
@@ -299,9 +304,10 @@ class FontManager:
                 path, index = result
                 logger.info(f"下载字体 [CDN:{path}]")
                 start = time.perf_counter_ns()
-                resp = await self.http_session.get(f"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/{path}", timeout=10)
-                if not resp.ok:
-                    resp = await self.http_session.get(f"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/{path}", timeout=10)
+                for host in self.onlineMapHosts:
+                    resp = await self.http_session.get(f"{host}{path}", timeout=10)
+                    if resp.ok:
+                        break
                 font_bytes = await resp.read()
                 logger.info(f"下载 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
                 self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
