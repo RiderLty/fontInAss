@@ -189,44 +189,44 @@ class SubSetter:
             ass_text = remove_section(ass_text, "Fonts")
 
         total_errors = []
-        if bytes_hash in self.cache:
-            embed_fonts_text = self.cache[bytes_hash]
-            logger.info(f"字幕缓存命中 占用: {getsizeof(embed_fonts_text) / (1024 * 1024):.2f}MB")
-        else:
+        # if bytes_hash in self.cache:
+        #     embed_fonts_text = self.cache[bytes_hash]
+        #     logger.info(f"字幕缓存命中 占用: {getsizeof(embed_fonts_text) / (1024 * 1024):.2f}MB")
+        # else:
             # print(ass_encode)
-            if "utf_8" == ass_encode and not srt:
-                font_char_list, sub_rename = analyseAss(assBytes=raw_bytes)
-            else:
-                font_char_list, sub_rename = analyseAss(assText=ass_text)
+        if "utf_8" == ass_encode and not srt:
+            font_char_list, sub_rename = analyseAss(assBytes=raw_bytes)
+        else:
+            font_char_list, sub_rename = analyseAss(assText=ass_text)
 
-            if not font_char_list:
-                # 缺失错误
-                return Result(400, "analyseAss无法解析字幕所需字体", None)
+        if not font_char_list:
+            # 缺失错误
+            return Result(400, "analyseAss无法解析字幕所需字体", None)
 
-            # 严格模式 缺一不可
-            if fonts_check:
-                tasks = [self.font_manager_instance.select_font(font_name, weight, italic) for
-                         ((font_name, weight, italic), _) in font_char_list.items()]
-                for task in asyncio.as_completed(tasks):
-                    result, message = await task
-                    if not result:
-                        total_errors.append(message)
-                if total_errors:
-                    return Result(300, total_errors, None)
-
-            embed_fonts_text = "[Fonts]\n"
-
-            if renamed_restore:
-                for replacedName, originName in sub_rename.items():
-                    ass_text = ass_text.replace(replacedName, originName)
-
-            tasks = [self.load_subset_encode(font_name, weight, italic, unicode_set) for
-                     ((font_name, weight, italic), unicode_set) in font_char_list.items()]
+        # 严格模式 缺一不可
+        if fonts_check:
+            tasks = [self.font_manager_instance.select_font(font_name, weight, italic) for
+                        ((font_name, weight, italic), _) in font_char_list.items()]
             for task in asyncio.as_completed(tasks):
-                err, result = await task
-                if err:
-                    total_errors.append(err)
-                embed_fonts_text += result
+                result, message = await task
+                if not result:
+                    total_errors.append(message)
+            if total_errors:
+                return Result(300, total_errors, None)
+
+        embed_fonts_text = "[Fonts]\n"
+
+        if renamed_restore:
+            for replacedName, originName in sub_rename.items():
+                ass_text = ass_text.replace(replacedName, originName)
+
+        tasks = [self.load_subset_encode(font_name, weight, italic, unicode_set) for
+                    ((font_name, weight, italic), unicode_set) in font_char_list.items()]
+        for task in asyncio.as_completed(tasks):
+            err, result = await task
+            if err:
+                total_errors.append(err)
+            embed_fonts_text += result
         # 经常报错点，理应先检查ass_text
         head, sep, tai = ass_text.partition("[Events]")
         if sep:
@@ -236,8 +236,8 @@ class SubSetter:
             return Result(400, "没有找到[Events]标签，请检查字幕文件内容", None)
         result_bytes = result_text.encode("UTF-8")
         if len(total_errors) == 0:
-            self.cache[bytes_hash] = embed_fonts_text
-            # 成功
+            # self.cache[bytes_hash] = embed_fonts_text //网页端处理不缓存
+            # # 成功
             return Result(200, None, result_bytes)
         else:
             # 警告 部分错误
