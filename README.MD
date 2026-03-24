@@ -285,3 +285,16 @@ server {
 如有需求，可参考[onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 自定义字体在线数据库，映射容器内路径为 /data/customOnlineFonts.json
 
 会优先使用自定义字体在线数据库，如果自定义字体数据库不存在，则使用默认字体数据库
+
+提供了一个实用工具脚本 `src/create_onlineFonts.json.py`，可用于自动扫描本地字体目录并生成该文件。
+
+`HOSTS`: 填写在线字体库 URL 前缀列表，以/结尾。
+
+`TARGET_DIR`: 设置为本地字体库的**绝对路径**。
+
+`OUTPUT_FILE`: 设置生成的 JSON 文件的输出路径和文件名。
+
+确保`HOST` + (字体绝对路径 - `TARGET_DIR`) 是一个有效的URL，且在线文件服务器目录结构与本地`TARGET_DIR`一致。
+
+脚本执行完毕后，将在指定的路径生成json文件。将该文件映射到容器的 `/data/customOnlineFonts.json` ，`fontmanager` 会自动检测并优先加载它。
+
