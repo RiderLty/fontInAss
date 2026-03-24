@@ -11,9 +11,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils import get_all_files, get_font_info
 
 # 在线字体库的URL前缀
-HOSTS = [r"https://vip.123pan.cn/1833788059/direct/超级字体整合包 XZ/",r"https://fonts.storage.rd5isto.org/超级字体整合包 XZ/"]
+HOSTS = [r"https://vip.123pan.cn/1833788059/direct/",r"https://fonts.storage.rd5isto.org/"]
 # 要扫描的字体文件所在的根目录
-TARGET_DIR = r"/mnt/storage/Fonts/超级字体整合包 XZ"
+TARGET_DIR = r"/mnt/storage/Fonts/"
 # 生成的JSON文件的输出路径
 OUTPUT_FILE = "customOnlineFonts.json"
 
