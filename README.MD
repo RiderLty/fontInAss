@@ -282,7 +282,7 @@ server {
 
 自带的 [onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 文件来自[超级字体整合包 XZ](https://vcb-s.com/archives/1114)
 
-通过123云盘直链和cloudflareR2提供，[源文件链接](https://www.123865.com/s/7dgATd-ehCQv?pwd=0Jij)
+通过123云盘直链和cloudflareR2提供，[源文件链接](https://www.123684.com/s/7dgATd-BECQv)
 
 如有需求，可参考[onlineFonts.json](https://github.com/RiderLty/fontInAss/blob/main/onlineFonts.json) 自定义字体在线数据库，映射容器内路径为 /data/customOnlineFonts.json
 
