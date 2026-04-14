@@ -216,16 +216,20 @@ async def subtitles_octopus_js(request: Request, response: Response):
 
 
 #/videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt) Emby
+#/videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream.subrip) 新版emby
 #/videos/(.*)/Subtitles/(.*)/(Stream.) infuse
 #/v/api/v1/subtitle/dl/(.*) 飞牛
 @app.get("/{path:path}/Stream.")
 @app.get("/{path:path}/Stream.ass")
 @app.get("/{path:path}/Stream.ssa")
 @app.get("/{path:path}/Stream.srt")
+@app.get("/{path:path}/Stream.subrip")
+
 @app.get("/{path:path}/stream.")
 @app.get("/{path:path}/stream.ass")
 @app.get("/{path:path}/stream.ssa")
 @app.get("/{path:path}/stream.srt")
+@app.get("/{path:path}/stream.subrip")
 @app.get("/v/api/v1/subtitle/dl/{subtitle}")
 # @app.get("{path:path}")
 async def proxy_pass(request: Request, response: Response ):
