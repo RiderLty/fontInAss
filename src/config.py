@@ -108,6 +108,22 @@ CONFIG_SCHEMA = {
         "env_var": "SRT_2_ASS_STYLE",
         "description": "SRT to ASS conversion style",
     },
+    "HDR_SATURATION": {
+        "type": "float",
+        "default": 1.0,
+        "env_var": "HDR_SATURATION",
+        "description": "HDR subtitle saturation (0.0-1.0)",
+        "min": 0.0,
+        "max": 1.0,
+    },
+    "HDR_BRIGHTNESS": {
+        "type": "float",
+        "default": 1.0,
+        "env_var": "HDR_BRIGHTNESS",
+        "description": "HDR subtitle brightness (0.0-1.0)",
+        "min": 0.0,
+        "max": 1.0,
+    },
 }
 
 

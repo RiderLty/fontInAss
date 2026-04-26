@@ -12,7 +12,7 @@ import platform
 import requests
 import coloredlogs
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from uvicorn import Config, Server
@@ -104,10 +104,8 @@ async def index_subset(request: Request):
         renamed_restore = request.headers.get("X-Renamed-Restore") == "1"
         clear_fonts = request.headers.get("X-Clear-Fonts") == "1"
         fonts_check = request.headers.get("X-Fonts-Check") == "1"
-        hsv_s_str = request.headers.get("X-Hsv-S")
-        hsv_v_str = request.headers.get("X-Hsv-V")
-        hsv_s = float(hsv_s_str) if hsv_s_str else 1.0
-        hsv_v = float(hsv_v_str) if hsv_v_str else 1.0
+        hsv_s = config_manager.get("HDR_SATURATION")[0]
+        hsv_v = config_manager.get("HDR_BRIGHTNESS")[0]
 
         result = await process_subset(
             raw_bytes,
@@ -210,52 +208,13 @@ async def get_status():
 async def redirect_subset():
     return RedirectResponse(url="/subset/")
 
-@app.get("/color/set", response_class=HTMLResponse)
-async def set_color():
-    return open(os.path.join(os.path.join(os.path.dirname(__file__) , "html"), "color.html"), "r", encoding="utf-8").read()
-
-user_hsv_s = 1
-user_hsv_v = 1
-
-@app.get("/color/set/saturation/{val}")
-async def set_saturation(val: float):
-    """设置饱和度"""
-    global user_hsv_s,user_hsv_v
-    if val < 0 :
-        return user_hsv_s
-    user_hsv_s = val
-    if user_hsv_s < 0:
-        user_hsv_s = 0
-    if user_hsv_s > 1:
-        user_hsv_s = 1
-    logger.info(f"饱和度 已设置为 {user_hsv_s}")
-    return val
-
-@app.get("/color/set/brightness/{val}")
-async def set_brightness(val: float):
-    """设置亮度"""
-    global user_hsv_s,user_hsv_v
-    if val < 0 :
-        return user_hsv_v
-    user_hsv_v = val
-    if user_hsv_v < 0:
-        user_hsv_v = 0
-    if user_hsv_v > 1:
-        user_hsv_v = 1
-    logger.info(f"亮度 已设置为 {user_hsv_v}")
-    return val
-
-@app.get("/color/set/values")
-async def get_color_values():
-    """返回当前饱和度和亮度值"""
-    return {"saturation": user_hsv_s, "brightness": user_hsv_v}
-        
 @app.post("/fontinass/process_bytes")
 async def process_bytes(request: Request):
-    global user_hsv_s,user_hsv_v
     raw_bytes = await request.body()
+    hsv_s = config_manager.get("HDR_SATURATION")[0]
+    hsv_v = config_manager.get("HDR_BRIGHTNESS")[0]
     try:
-        error, srt, result_bytes = await process(raw_bytes, user_hsv_s,user_hsv_v)
+        error, srt, result_bytes = await process(raw_bytes, hsv_s, hsv_v)
         return Response(
             content=result_bytes,
             headers={
@@ -265,7 +224,6 @@ async def process_bytes(request: Request):
         )
     except Exception as e:
         logger.exception("/fontinass/process_bytes ERROR")
-        # logger.error(f"ERROR : {traceback.format_exc()}")
         return Response(raw_bytes)
 
 
@@ -328,7 +286,6 @@ async def subtitles_octopus_js(request: Request, response: Response):
 @app.get("/v/api/v1/subtitle/dl/{subtitle}")
 # @app.get("{path:path}")
 async def proxy_pass(request: Request, response: Response ):
-    global user_hsv_s,user_hsv_v
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
         request_url = EMBY_SERVER_URL + source_path
@@ -340,7 +297,9 @@ async def proxy_pass(request: Request, response: Response ):
     headers = {}
     try:
         raw_bytes = server_response.content
-        error, srt, result_bytes = await process(raw_bytes, user_hsv_s,user_hsv_v)
+        hsv_s = config_manager.get("HDR_SATURATION")[0]
+        hsv_v = config_manager.get("HDR_BRIGHTNESS")[0]
+        error, srt, result_bytes = await process(raw_bytes, hsv_s, hsv_v)
         if not result_bytes:
             raise Exception(f"{error}，返回原始内容")
         if srt and ("user-agent" in request.headers) and ("infuse" in request.headers["user-agent"].lower()):

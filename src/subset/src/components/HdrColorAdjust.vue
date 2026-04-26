@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -9,9 +9,7 @@ const props = defineProps({
   brightness: { type: Number, default: 1.0 },
 });
 
-const emit = defineEmits(["update:saturation", "update:brightness"]);
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const emit = defineEmits(["update:saturation", "update:brightness", "committed-change"]);
 
 const originalColor = ref("#ffffff");
 const activeSlider = ref("saturation");
@@ -72,16 +70,13 @@ const adjustedColor = computed(() => {
 const satDisplay = computed(() => satValue.value.toFixed(2));
 const briDisplay = computed(() => briValue.value.toFixed(2));
 
-// Slider interaction
-let reportTimeout = null;
-
 function onSatInput(v) {
   satValue.value = v;
 }
 
 function onSatChange(v) {
   satValue.value = v;
-  syncToBackend("saturation", v);
+  emit("committed-change", { saturation: satValue.value, brightness: briValue.value });
 }
 
 function onBriInput(v) {
@@ -90,21 +85,13 @@ function onBriInput(v) {
 
 function onBriChange(v) {
   briValue.value = v;
-  syncToBackend("brightness", v);
-}
-
-function syncToBackend(type, val) {
-  const endpoint = type === "saturation"
-    ? `${API_BASE_URL}/color/set/saturation/${val.toFixed(2)}`
-    : `${API_BASE_URL}/color/set/brightness/${val.toFixed(2)}`;
-  fetch(endpoint).catch(() => {});
+  emit("committed-change", { saturation: satValue.value, brightness: briValue.value });
 }
 
 function resetAll() {
   satValue.value = 1.0;
   briValue.value = 1.0;
-  syncToBackend("saturation", 1.0);
-  syncToBackend("brightness", 1.0);
+  emit("committed-change", { saturation: 1.0, brightness: 1.0 });
 }
 
 // Color picker
@@ -141,29 +128,8 @@ function onKeyDown(e) {
 function onKeyUp(e) {
   if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
     e.stopPropagation();
-    if (activeSlider.value === "saturation") {
-      syncToBackend("saturation", satValue.value);
-    } else {
-      syncToBackend("brightness", briValue.value);
-    }
   }
 }
-
-// Sync from backend on mount (read-only sentinel -1)
-onMounted(async () => {
-  try {
-    const [satResp, briResp] = await Promise.all([
-      fetch(`${API_BASE_URL}/color/set/saturation/-1`),
-      fetch(`${API_BASE_URL}/color/set/brightness/-1`),
-    ]);
-    const satVal = parseFloat(await satResp.text());
-    const briVal = parseFloat(await briResp.text());
-    if (!isNaN(satVal) && satVal >= 0) satValue.value = satVal;
-    if (!isNaN(briVal) && briVal >= 0) briValue.value = briVal;
-  } catch {
-    // Backend unavailable, keep defaults
-  }
-});
 </script>
 
 <template>
