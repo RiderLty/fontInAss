@@ -198,6 +198,10 @@ class ConfigManager:
         if key not in self._schema:
             raise KeyError(f"Unknown config key: {key}")
 
+        # No change → skip write
+        if value == old_value:
+            return old_value, old_source, old_value, old_source
+
         default_val = self._schema[key]["default"]
         env_raw = self._get_env_raw(key)
         env_val = self._cast_value(env_raw, self._schema[key]["type"]) if env_raw is not None else None
