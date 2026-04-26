@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { debounce } from "lodash-es";
 
 const { t } = useI18n();
 
@@ -70,13 +71,17 @@ const adjustedColor = computed(() => {
 const satDisplay = computed(() => satValue.value.toFixed(2));
 const briDisplay = computed(() => briValue.value.toFixed(2));
 
+const emitCommitted = debounce((s, b) => {
+  emit("committed-change", { saturation: s, brightness: b });
+}, 300);
+
 function onSatInput(v) {
   satValue.value = v;
 }
 
 function onSatChange(v) {
   satValue.value = v;
-  emit("committed-change", { saturation: satValue.value, brightness: briValue.value });
+  emitCommitted(v, briValue.value);
 }
 
 function onBriInput(v) {
@@ -85,12 +90,13 @@ function onBriInput(v) {
 
 function onBriChange(v) {
   briValue.value = v;
-  emit("committed-change", { saturation: satValue.value, brightness: briValue.value });
+  emitCommitted(satValue.value, v);
 }
 
 function resetAll() {
   satValue.value = 1.0;
   briValue.value = 1.0;
+  emitCommitted.cancel();
   emit("committed-change", { saturation: 1.0, brightness: 1.0 });
 }
 
