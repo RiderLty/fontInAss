@@ -13,7 +13,12 @@ const messages = {
 
 const i18n = createI18n({
     legacy: false, // composition API 模式
-    locale: localStorage.getItem("locale") || "zh-CN",
+    locale: (() => {
+        const saved = localStorage.getItem("locale");
+        if (saved) return saved;
+        const lang = navigator.language || "";
+        return lang.toLowerCase().startsWith("en") ? "en-US" : "zh-CN";
+    })(),
     fallbackLocale: "en-US",
     missingWarn: false, // 关闭 missing key 警告
     fallbackWarn: false, // 关闭 fallback 警告

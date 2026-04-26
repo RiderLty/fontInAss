@@ -91,5 +91,23 @@
 
     "sourceYaml": "Custom (YAML)",
     "sourceEnv": "Environment Variable",
-    "sourceDefault": "Default"
+    "sourceDefault": "Default",
+
+    "config_EMBY_SERVER_URL": "Emby/Jellyfin server URL",
+    "config_SUB_CACHE_SIZE": "Subtitle cache size (entries)",
+    "config_SUB_CACHE_TTL": "Subtitle cache TTL (minutes)",
+    "config_FONT_CACHE_SIZE": "Font cache size (entries)",
+    "config_FONT_CACHE_TTL": "Font cache TTL (minutes)",
+    "config_LOG_LEVEL": "Log level",
+    "config_ERROR_DISPLAY": "Duration to show error info in subtitles (0-60s, 0 = off)",
+    "config_MISS_LOGS": "Enable missing font logging",
+    "config_MISS_GLYPH_LOGS": "Enable missing glyph logging",
+    "config_DISABLE_ONLINE_FONTS": "Disable online font download",
+    "config_RENAMED_FONT_RESTORE": "Restore renamed font names in subtitles",
+    "config_EMBY_WEB_EMBED_FONT": "Modify Emby JS for web font rendering support",
+    "config_POOL_CPU_MAX": "Max CPU pool size (0 = auto)",
+    "config_SRT_2_ASS_FORMAT": "SRT to ASS format template",
+    "config_SRT_2_ASS_STYLE": "SRT to ASS subtitle style",
+    "config_HDR_SATURATION": "HDR subtitle saturation (0.0-1.0)",
+    "config_HDR_BRIGHTNESS": "HDR subtitle brightness (0.0-1.0)"
 }

@@ -9,7 +9,7 @@ import copy from "copy-to-clipboard";
 
 // 导入方法
 import { analyseAss, uudecode } from "../assets/subtitles-octopus.js";
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 // ========= 设置相关 =========
 const settingsVisible = ref(false);
@@ -37,19 +37,6 @@ const openSettings = () => { settingsVisible.value = true; };
 const loadSettings = () => {
   let cached = localStorage.getItem("subset_settings");
   if (cached) Object.assign(settings, JSON.parse(cached));
-  // 先看本地是否存过语言选择
-  const savedLocale = localStorage.getItem("locale");
-  if (savedLocale) {
-      locale.value = savedLocale;
-  } else {
-    // 没存过就自动检测浏览器语言
-    const browserLang = navigator.language || navigator.userLanguage;
-    if (browserLang && browserLang.toLowerCase().startsWith("en")) {
-        locale.value = "en-US";
-      } else {
-        locale.value = "zh-CN"; // 默认中文
-      }
-  }
 };
 
 // 自动保存到 localStorage（防抖）
@@ -66,11 +53,6 @@ const initSettingsWatchers = () => {
       saveSettingsToLocal,
       { deep: true}
   );
-
-  // 监听语言变化
-  watch(locale, (newVal) => {
-    localStorage.setItem("locale", newVal);
-  });
 };
 
 // UTF-8 字符串 -> Base64
@@ -549,18 +531,6 @@ onBeforeUnmount(() => {
           </a-col>
         </a-row>
 
-        <!-- 语言选择保持原样 -->
-        <a-form-item>
-          <template #label>
-            <a-tooltip :title="t('languageDesc')">
-              {{ t('languageLabel') }}
-            </a-tooltip>
-          </template>
-          <a-select v-model:value="locale" allow-clear>
-            <a-select-option value="zh-CN">中文</a-select-option>
-            <a-select-option value="en-US">English</a-select-option>
-          </a-select>
-        </a-form-item>
       </a-form>
 
     </a-modal>

@@ -91,5 +91,23 @@
 
     "sourceYaml": "自定义 (YAML)",
     "sourceEnv": "环境变量",
-    "sourceDefault": "默认值"
+    "sourceDefault": "默认值",
+
+    "config_EMBY_SERVER_URL": "Emby/Jellyfin 服务器地址",
+    "config_SUB_CACHE_SIZE": "字幕缓存大小（条目数）",
+    "config_SUB_CACHE_TTL": "字幕缓存过期时间（分钟）",
+    "config_FONT_CACHE_SIZE": "字体缓存大小（条目数）",
+    "config_FONT_CACHE_TTL": "字体缓存过期时间（分钟）",
+    "config_LOG_LEVEL": "日志级别",
+    "config_ERROR_DISPLAY": "在字幕中显示错误信息的时长（0-60秒，0为关闭）",
+    "config_MISS_LOGS": "启用缺失字体日志记录",
+    "config_MISS_GLYPH_LOGS": "启用缺失字形日志记录",
+    "config_DISABLE_ONLINE_FONTS": "禁用在线字体下载",
+    "config_RENAMED_FONT_RESTORE": "恢复字幕中被重命名的字体名称",
+    "config_EMBY_WEB_EMBED_FONT": "修改 Emby JS 以支持网页字体渲染",
+    "config_POOL_CPU_MAX": "最大 CPU 池大小（0 = 自动）",
+    "config_SRT_2_ASS_FORMAT": "SRT 转 ASS 的格式模板",
+    "config_SRT_2_ASS_STYLE": "SRT 转 ASS 的字幕样式",
+    "config_HDR_SATURATION": "HDR 字幕饱和度（0.0-1.0）",
+    "config_HDR_BRIGHTNESS": "HDR 字幕亮度（0.0-1.0）"
 }

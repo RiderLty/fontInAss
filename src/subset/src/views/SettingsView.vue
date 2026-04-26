@@ -83,7 +83,7 @@ onMounted(() => {
             { title: t('settingsKey'), dataIndex: 'key', width: 220 },
             { title: t('settingsValue'), dataIndex: 'value', width: 250 },
             { title: t('settingsSource'), dataIndex: 'source', width: 150 },
-            { title: t('settingsDesc'), dataIndex: 'description' },
+            { title: t('settingsDesc'), key: 'description' },
             { title: t('action'), key: 'action', width: 150 },
           ]"
           :pagination="false"
@@ -92,7 +92,10 @@ onMounted(() => {
           :scroll="{ y: 'calc(100vh - 280px)' }"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'source'">
+            <template v-if="column.key === 'description'">
+              {{ t('config_' + record.key) !== ('config_' + record.key) ? t('config_' + record.key) : record.description }}
+            </template>
+            <template v-else-if="column.dataIndex === 'source'">
               <a-tag :color="sourceColor(record.source)">{{ sourceLabel(record.source) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'value'">

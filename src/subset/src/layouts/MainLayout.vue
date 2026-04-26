@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const collapsed = ref(false)
@@ -20,6 +20,13 @@ const selectedKeys = computed(() => [route.path])
 const onMenuClick = ({ key }) => {
   router.push(key)
 }
+
+const toggleLocale = () => {
+  locale.value = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+  localStorage.setItem('locale', locale.value)
+}
+
+const localeLabel = computed(() => locale.value === 'zh-CN' ? 'English' : '中文')
 </script>
 
 <template>
@@ -46,6 +53,11 @@ const onMenuClick = ({ key }) => {
           <span>{{ item.icon }} {{ item.label }}</span>
         </a-menu-item>
       </a-menu>
+      <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+        <a-button type="text" style="color: rgba(255,255,255,0.65); width: 100%;" @click="toggleLocale">
+          {{ localeLabel }}
+        </a-button>
+      </div>
     </a-layout-sider>
     <a-layout style="height: 100vh">
       <a-layout-content style="height: 100vh; overflow: auto;">
@@ -58,6 +70,7 @@ const onMenuClick = ({ key }) => {
 <style scoped>
 :deep(.ant-layout-sider) {
   background: #001529;
+  position: relative;
 }
 :deep(.ant-layout) {
   background: #f0f2f5;
