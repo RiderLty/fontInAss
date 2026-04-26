@@ -23,7 +23,7 @@ const onMenuClick = ({ key }) => {
 </script>
 
 <template>
-  <a-layout style="min-height: 100vh">
+  <a-layout style="height: 100vh">
     <a-layout-sider
       v-model:collapsed="collapsed"
       :trigger="null"
@@ -47,8 +47,8 @@ const onMenuClick = ({ key }) => {
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
-    <a-layout>
-      <a-layout-content style="margin: 0; padding: 0; overflow: auto;">
+    <a-layout style="height: 100vh">
+      <a-layout-content style="height: 100vh; overflow: auto;">
         <router-view />
       </a-layout-content>
     </a-layout>

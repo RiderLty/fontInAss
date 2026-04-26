@@ -74,9 +74,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div style="padding: 24px;">
-    <a-spin :spinning="loading">
-      <a-card :title="t('settingsTitle')">
+  <div style="padding: 16px; height: 100vh; box-sizing: border-box; overflow: hidden;">
+    <a-spin :spinning="loading" style="height: 100%;">
+      <a-card :title="t('settingsTitle')" style="height: 100%; overflow: hidden;" :body-style="{ height: 'calc(100% - 57px)', display: 'flex', flexDirection: 'column', padding: '12px 16px', overflow: 'hidden' }">
         <a-table
           :data-source="configEntries"
           :columns="[
@@ -89,6 +89,7 @@ onMounted(() => {
           :pagination="false"
           size="small"
           row-key="key"
+          :scroll="{ y: 'calc(100vh - 280px)' }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.dataIndex === 'source'">
@@ -142,3 +143,21 @@ onMounted(() => {
     </a-spin>
   </div>
 </template>
+
+<style scoped>
+:deep(.ant-table-wrapper) {
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+:deep(.ant-table-body) {
+  overflow-y: auto !important;
+}
+:deep(.ant-table-thead th) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fafafa;
+}
+</style>

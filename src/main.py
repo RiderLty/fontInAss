@@ -16,12 +16,12 @@ from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from uvicorn import Config, Server
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS, ROOT_PATH, DATA_PATH
+from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, ROOT_PATH, DATA_PATH
 from dirmonitor import dirmonitor
 from fontmanager import FontManager
 from subsetter import SubSetter
 from utils import insert_str
-from config import ConfigManager, CONFIG_SCHEMA
+from config import init_config_manager, get_config, CONFIG_SCHEMA
 from sse_handler import sse_handler, sse_log_stream
 import mimetypes
 
@@ -63,7 +63,7 @@ process = None
 process_subset = None
 
 # YAML config manager
-config_manager = ConfigManager(
+config_manager = init_config_manager(
     schema=CONFIG_SCHEMA,
     yaml_path=os.path.join(DATA_PATH, "config.yaml"),
 )
@@ -72,13 +72,13 @@ config_manager = ConfigManager(
 sse_handler.setFormatter(logging.Formatter("%(message)s"))
 logging.getLogger("main:loger").addHandler(sse_handler)
 
-# Override module-level constants from YAML/env config
-import constants
-for key in CONFIG_SCHEMA:
-    if hasattr(constants, key):
-        val, _ = config_manager.get(key)
-        if val is not None:
-            setattr(constants, key, val)
+# Derive INSERT_JS from config (moved from constants.py)
+INSERT_JS = None
+if config_manager.get("EMBY_WEB_EMBED_FONT")[0]:
+    import constants as _const
+    with open(os.path.join(_const.ROOT_PATH, "subset", "src", "assets", "subtitles-octopus.js"), 'r', encoding='utf-8') as _f:
+        from jsmin import jsmin
+        INSERT_JS = jsmin(_f.read()).replace("export ", "")
 
 # 修复 Windows / 某些系统默认缺失的 MIME 类型
 mimetypes.add_type("application/javascript", ".js")
@@ -146,11 +146,11 @@ async def index_subset(request: Request):
 # ========= Config / Status / Logs API =========
 
 @app.get("/api/config")
-async def get_config():
+async def api_get_config():
     return config_manager.get_all()
 
 @app.put("/api/config")
-async def update_config(request: Request):
+async def api_update_config(request: Request):
     body = await request.json()
     if "key" in body and "value" in body:
         key, value = body["key"], body["value"]
@@ -172,7 +172,7 @@ async def update_config(request: Request):
     raise HTTPException(status_code=400, detail="Invalid request body")
 
 @app.delete("/api/config/{key}")
-async def delete_config(key: str):
+async def api_delete_config(key: str):
     try:
         value, source = config_manager.delete(key)
         return {"success": True, "key": key, "current_value": value, "current_source": source}
@@ -180,7 +180,7 @@ async def delete_config(key: str):
         raise HTTPException(status_code=404, detail=f"Key not found in schema: {key}")
 
 @app.get("/api/logs/stream")
-async def logs_stream(request: Request):
+async def api_logs_stream(request: Request):
     return StreamingResponse(
         sse_log_stream(request),
         media_type="text/event-stream",
@@ -192,7 +192,7 @@ async def logs_stream(request: Request):
     )
 
 @app.get("/api/status")
-async def get_status():
+async def api_get_status():
     return {
         "version": "0.1.0",
         "uptime_seconds": int(time.time() - _start_time),
@@ -231,7 +231,7 @@ async def process_bytes(request: Request):
 async def html_videoplayer_plugin_js(request: Request, response: Response):
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        request_url = EMBY_SERVER_URL + source_path
+        request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"JSURL: {request_url}")
         server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
@@ -251,7 +251,7 @@ async def html_videoplayer_plugin_js(request: Request, response: Response):
 async def subtitles_octopus_js(request: Request, response: Response):
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        request_url = EMBY_SERVER_URL + source_path
+        request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"JSURL: {request_url}")
         server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:
@@ -288,7 +288,7 @@ async def subtitles_octopus_js(request: Request, response: Response):
 async def proxy_pass(request: Request, response: Response ):
     try:
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        request_url = EMBY_SERVER_URL + source_path
+        request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"字幕URL: {request_url}")
         server_response = requests.get(url=request_url, headers=request.headers)
     except Exception as e:

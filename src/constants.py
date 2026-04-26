@@ -3,8 +3,6 @@ import asyncio
 import logging
 import builtins
 import coloredlogs
-from jsmin import jsmin
-from logs import LogsManager
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -50,29 +48,8 @@ os.makedirs(DATA_PATH, exist_ok=True)
 os.makedirs(LOGS_PATH, exist_ok=True)
 MAIN_LOOP = asyncio.new_event_loop()
 cpu_count = int(os.cpu_count())
-POOL_CPU_MAX = int(os.environ.get("POOL_CPU_MAX", default=cpu_count))
-if POOL_CPU_MAX >= cpu_count or POOL_CPU_MAX <= 0:
-    POOL_CPU_MAX = cpu_count
-
-EMBY_SERVER_URL = os.environ.get("EMBY_SERVER_URL", default="尚未EMBY_SERVER_URL环境变量")
-
-SUB_CACHE_SIZE = int(os.environ.get("SUB_CACHE_SIZE", default=50))
-SUB_CACHE_TTL = int(os.environ.get("SUB_CACHE_TTL", default=60)) * 60
-
-FONT_CACHE_SIZE = int(os.environ.get("FONT_CACHE_SIZE", default=30))
-FONT_CACHE_TTL = int(os.environ.get("FONT_CACHE_TTL", default=30)) * 60
-
-SRT_2_ASS_FORMAT = os.environ.get("SRT_2_ASS_FORMAT", None)
-SRT_2_ASS_STYLE = os.environ.get("SRT_2_ASS_STYLE", None)
-
-
 
 FONTS_TYPE = os.environ.get("FONTS_TYPE", ["ttc", "ttf", "otf"])
-
-# FT_STYLE_FLAG_ITALIC = 0x01
-# FT_STYLE_FLAG_BOLD = 0x02
-
-ERROR_DISPLAY = float(os.environ.get("ERROR_DISPLAY", default=0))
 
 ERROR_DISPLAY_IGNORE_GLYPH = os.environ.get("ERROR_DISPLAY_IGNORE_GLYPH", default="False") == "True"
 
@@ -95,24 +72,8 @@ for start, end in ranges:
     for code_point in range(start, end + 1):
         PUNCTUATION_UNICODES.add(code_point)
 
-INSERT_JS = None
-
-EMBY_WEB_EMBED_FONT = os.environ.get("EMBY_WEB_EMBED_FONT", default="True") == "True"
-
-if EMBY_WEB_EMBED_FONT:
-    with open(os.path.join(os.path.dirname(ROOT_PATH),"src/subset/src/assets/subtitles-octopus.js") , 'r', encoding='utf-8') as file:
-        content = file.read()
-    INSERT_JS = jsmin(content).replace("export ", "")
-    
-RENAMED_FONT_RESTORE = os.environ.get("RENAMED_FONT_RESTORE", default="True") == "True"
-
-miss_logs_manager = None
-MISS_LOGS = os.environ.get("MISS_LOGS", default="False") == "True"
-MISS_GLYPH_LOGS = os.environ.get("MISS_GLYPH_LOGS", default="False") == "True"
+# miss_logs settings (used by subsetter for lazy init)
 MISS_LOGS_NAME = str(os.environ.get("MISS_LOGS_NAME", default="miss_logs"))
 MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))
 MISS_LOGS_ORDER = os.environ.get("MISS_LOGS_ORDER", default="False") == "True"
 MISS_LOGS_PATH = os.path.join(LOGS_PATH, f"{MISS_LOGS_NAME}.txt")
-if MISS_LOGS or MISS_GLYPH_LOGS:
-    miss_logs_manager = LogsManager(MISS_LOGS_PATH, MISS_LOGS_SIZE, MISS_LOGS_ORDER)
-DISABLE_ONLINE_FONTS = os.environ.get("DISABLE_ONLINE_FONTS", default="False") == "True"

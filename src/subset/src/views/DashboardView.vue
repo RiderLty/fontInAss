@@ -53,9 +53,9 @@ fetchStatus()
 </script>
 
 <template>
-  <div style="padding: 16px; height: 100%; display: flex; flex-direction: column;">
+  <div style="padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
     <!-- Status Cards -->
-    <a-row :gutter="16" style="margin-bottom: 16px;">
+    <a-row :gutter="16" style="margin-bottom: 16px; flex-shrink: 0;">
       <a-col :span="6">
         <a-card size="small">
           <a-statistic :title="t('statusVersion')" :value="status?.version || '-'" />
@@ -79,7 +79,7 @@ fetchStatus()
     </a-row>
 
     <!-- Log Viewer -->
-    <a-card :title="t('dashboardLogs')" size="small" style="flex: 1; display: flex; flex-direction: column;" :body-style="{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px' }">
+    <a-card :title="t('dashboardLogs')" size="small" style="flex: 1; min-height: 0; display: flex; flex-direction: column;" :body-style="{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '8px' }">
       <template #extra>
         <a-space>
           <a-tag :color="connected ? 'green' : 'red'">
@@ -93,7 +93,7 @@ fetchStatus()
       </template>
       <div
         ref="logContainer"
-        style="flex: 1; overflow-y: auto; background: #1e1e1e; border-radius: 4px; padding: 8px; font-family: 'Courier New', monospace; font-size: 12px; min-height: 300px;"
+        style="flex: 1; min-height: 0; overflow-y: auto; background: #1e1e1e; border-radius: 4px; padding: 8px; font-family: 'Courier New', monospace; font-size: 12px;"
       >
         <div v-if="messages.length === 0" style="color: #666; text-align: center; padding: 40px;">
           {{ t('logWaiting') }}

@@ -8,7 +8,8 @@ from typing import Iterator
 from watchdog import observers
 from watchdog.utils.dirsnapshot import DirectorySnapshot, DirectorySnapshotDiff
 from watchdog.events import FileSystemEventHandler
-from constants import logger, FONT_DIRS, FONTS_TYPE, LOG_LEVEL
+from constants import logger, FONT_DIRS, FONTS_TYPE
+from config import get_config
 from fontmanager import FontManager
 
 class _DirectorySnapshot(DirectorySnapshot):
@@ -116,7 +117,7 @@ class FileEventHandler(FileSystemEventHandler):
         self.timer = None
         self.font_manager_instance = font_manager_instance
         self.lock = Lock()
-        self.delay = 1 if LOG_LEVEL == "DEBUG" else 5
+        self.delay = 1 if get_config("LOG_LEVEL") == "DEBUG" else 5
 
     def on_any_event(self, event):
         if self.timer:

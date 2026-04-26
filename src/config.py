@@ -9,13 +9,13 @@ CONFIG_SCHEMA = {
         "type": "string",
         "default": None,
         "env_var": "EMBY_SERVER_URL",
-        "description": "Emby/Jellyfin server URL",
+        "description": "Emby/Jellyfin 服务器地址",
     },
     "SUB_CACHE_SIZE": {
         "type": "integer",
         "default": 50,
         "env_var": "SUB_CACHE_SIZE",
-        "description": "Subtitle cache size (entries)",
+        "description": "字幕缓存大小（条目数）",
         "min": 1,
         "max": 10000,
     },
@@ -23,7 +23,7 @@ CONFIG_SCHEMA = {
         "type": "integer",
         "default": 60,
         "env_var": "SUB_CACHE_TTL",
-        "description": "Subtitle cache TTL (minutes)",
+        "description": "字幕缓存过期时间（分钟）",
         "min": 1,
         "max": 1440,
     },
@@ -31,7 +31,7 @@ CONFIG_SCHEMA = {
         "type": "integer",
         "default": 30,
         "env_var": "FONT_CACHE_SIZE",
-        "description": "Font cache size (entries)",
+        "description": "字体缓存大小（条目数）",
         "min": 1,
         "max": 10000,
     },
@@ -39,7 +39,7 @@ CONFIG_SCHEMA = {
         "type": "integer",
         "default": 30,
         "env_var": "FONT_CACHE_TTL",
-        "description": "Font cache TTL (minutes)",
+        "description": "字体缓存过期时间（分钟）",
         "min": 1,
         "max": 1440,
     },
@@ -47,14 +47,14 @@ CONFIG_SCHEMA = {
         "type": "enum",
         "default": "INFO",
         "env_var": "LOG_LEVEL",
-        "description": "Logging level",
+        "description": "日志级别",
         "enum_values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     },
     "ERROR_DISPLAY": {
         "type": "float",
         "default": 0.0,
         "env_var": "ERROR_DISPLAY",
-        "description": "Show error info in subtitle (0-60s)",
+        "description": "在字幕中显示错误信息的时长（0-60秒，0为关闭）",
         "min": 0,
         "max": 60,
     },
@@ -62,37 +62,37 @@ CONFIG_SCHEMA = {
         "type": "boolean",
         "default": False,
         "env_var": "MISS_LOGS",
-        "description": "Enable missing font logging",
+        "description": "启用缺失字体日志记录",
     },
     "MISS_GLYPH_LOGS": {
         "type": "boolean",
         "default": False,
         "env_var": "MISS_GLYPH_LOGS",
-        "description": "Enable missing glyph logging",
+        "description": "启用缺失字形日志记录",
     },
     "DISABLE_ONLINE_FONTS": {
         "type": "boolean",
         "default": False,
         "env_var": "DISABLE_ONLINE_FONTS",
-        "description": "Disable online font download",
+        "description": "禁用在线字体下载",
     },
     "RENAMED_FONT_RESTORE": {
         "type": "boolean",
         "default": True,
         "env_var": "RENAMED_FONT_RESTORE",
-        "description": "Restore renamed font names in subtitles",
+        "description": "恢复字幕中被重命名的字体名称",
     },
     "EMBY_WEB_EMBED_FONT": {
         "type": "boolean",
         "default": True,
         "env_var": "EMBY_WEB_EMBED_FONT",
-        "description": "Modify Emby JS for web font rendering",
+        "description": "修改 Emby JS 以支持网页字体渲染",
     },
     "POOL_CPU_MAX": {
         "type": "integer",
         "default": 0,
         "env_var": "POOL_CPU_MAX",
-        "description": "Max CPU pool size (0 = auto)",
+        "description": "最大 CPU 池大小（0 = 自动）",
         "min": 0,
         "max": 128,
     },
@@ -100,19 +100,19 @@ CONFIG_SCHEMA = {
         "type": "string",
         "default": None,
         "env_var": "SRT_2_ASS_FORMAT",
-        "description": "SRT to ASS conversion format template",
+        "description": "SRT 转 ASS 的格式模板",
     },
     "SRT_2_ASS_STYLE": {
         "type": "string",
         "default": None,
         "env_var": "SRT_2_ASS_STYLE",
-        "description": "SRT to ASS conversion style",
+        "description": "SRT 转 ASS 的字幕样式",
     },
     "HDR_SATURATION": {
         "type": "float",
         "default": 1.0,
         "env_var": "HDR_SATURATION",
-        "description": "HDR subtitle saturation (0.0-1.0)",
+        "description": "HDR 字幕饱和度（0.0-1.0）",
         "min": 0.0,
         "max": 1.0,
     },
@@ -120,11 +120,32 @@ CONFIG_SCHEMA = {
         "type": "float",
         "default": 1.0,
         "env_var": "HDR_BRIGHTNESS",
-        "description": "HDR subtitle brightness (0.0-1.0)",
+        "description": "HDR 字幕亮度（0.0-1.0）",
         "min": 0.0,
         "max": 1.0,
     },
 }
+
+
+_config_manager: "ConfigManager | None" = None
+
+
+def get_config(key: str):
+    """Read a config value from ConfigManager at runtime."""
+    if _config_manager is not None:
+        value, _source = _config_manager.get(key)
+        return value
+    schema_entry = CONFIG_SCHEMA.get(key)
+    if schema_entry is not None:
+        return schema_entry["default"]
+    raise KeyError(f"Unknown config key: {key}")
+
+
+def init_config_manager(schema: dict = CONFIG_SCHEMA, yaml_path: str | Path = None) -> "ConfigManager":
+    """Initialize the module-level ConfigManager. Called once by main.py at startup."""
+    global _config_manager
+    _config_manager = ConfigManager(schema=schema, yaml_path=yaml_path)
+    return _config_manager
 
 
 class ConfigManager:

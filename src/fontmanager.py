@@ -5,7 +5,8 @@ import aiohttp
 import asyncio
 import uharfbuzz
 from cachetools import LRUCache, TTLCache
-from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, FONT_CACHE_SIZE, FONT_CACHE_TTL, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, POOL_CPU_MAX , DISABLE_ONLINE_FONTS,CUSTOM_ONLINE_FONTS
+from constants import logger, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, ONLINE_FONTS_DB_PATH, LOCAL_FONTS_DB_PATH, CUSTOM_ONLINE_FONTS
+from config import get_config
 from utils import get_all_files, get_font_info, save_to_disk, select_font_fromlist
 from sqlalchemy import Column, Integer, String, Boolean, TypeDecorator, create_engine, ForeignKey, event, update, bindparam, delete, select, or_, JSON
 from sqlalchemy.dialects.sqlite import insert  # 2.0新特性批量插入
@@ -81,7 +82,9 @@ class FontName(Base):
 # 数据库管理类
 class FontManager:
     def __init__(self):
-        self.cache = TTLCache(maxsize=FONT_CACHE_SIZE, ttl=FONT_CACHE_TTL) if FONT_CACHE_TTL > 0 else LRUCache(maxsize=FONT_CACHE_SIZE)
+        cache_size = get_config("FONT_CACHE_SIZE")
+        cache_ttl = get_config("FONT_CACHE_TTL")
+        self.cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_ttl > 0 else LRUCache(maxsize=cache_size)
         if os.path.exists(CUSTOM_ONLINE_FONTS):
             logger.info(f"加载自定义字体在线字体")
             with open(CUSTOM_ONLINE_FONTS, "r", encoding="UTF-8") as f:
@@ -297,7 +300,7 @@ class FontManager:
             self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
             return font_bytes, index
         else:
-            if DISABLE_ONLINE_FONTS:
+            if get_config("DISABLE_ONLINE_FONTS"):
                 logger.info(f"已禁用在线字体下载 [{(target_font_name, target_weight, target_italic)}]")
                 return None, None
             elif result := self.select_font_online(db_font_name, target_weight, target_italic):

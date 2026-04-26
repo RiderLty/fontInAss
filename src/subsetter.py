@@ -8,9 +8,9 @@ from fontmanager import FontManager
 import colorAdjust
 from utils import ass_insert_line, bytes_to_str, is_srt, bytes_to_hash, srt_to_ass, remove_section, check_section
 from py2cy.c_utils import uuencode
-from constants import (RENAMED_FONT_RESTORE , ERROR_DISPLAY_IGNORE_GLYPH, logger, ERROR_DISPLAY,
-                       PUNCTUATION_UNICODES, SUB_CACHE_SIZE, SUB_CACHE_TTL, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE,
-                       MISS_LOGS, MISS_GLYPH_LOGS, miss_logs_manager, Result)
+from constants import (logger, ERROR_DISPLAY_IGNORE_GLYPH,
+                       PUNCTUATION_UNICODES, Result)
+from config import get_config
 
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
@@ -18,11 +18,10 @@ from py2cy.c_utils import analyseAss
 class SubSetter:
     def __init__(self, font_manager_instance: FontManager) -> None:
         self.font_manager_instance = font_manager_instance
-        # self.processPool = ProcessPoolExecutor(max_workers=POOL_CPU_MAX)
-        # logger.info(f"子集化进程数量：{POOL_CPU_MAX}")
-        # 提交一个简单的任务来预热进程池
-        # self.processPool.submit(initpass)
-        self.cache = TTLCache(maxsize=SUB_CACHE_SIZE, ttl=SUB_CACHE_TTL) if SUB_CACHE_TTL > 0 else LRUCache(maxsize=SUB_CACHE_SIZE)
+        cache_size = get_config("SUB_CACHE_SIZE")
+        cache_ttl = get_config("SUB_CACHE_TTL")
+        self.cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_ttl > 0 else LRUCache(maxsize=cache_size)
+        self._miss_logs_manager = None
 
     # def close(self):
     # self.processPool.shutdown()
@@ -75,10 +74,12 @@ class SubSetter:
 
         # ass_text = restore_subset_fonts(ass_text)
         srt = is_srt(ass_text)
+        srt_2_ass_format = get_config("SRT_2_ASS_FORMAT")
+        srt_2_ass_style = get_config("SRT_2_ASS_STYLE")
         if srt:
-            if SRT_2_ASS_FORMAT and SRT_2_ASS_STYLE:
+            if srt_2_ass_format and srt_2_ass_style:
                 logger.info("SRT ==> ASS")
-                ass_text = srt_to_ass(ass_text, SRT_2_ASS_FORMAT, SRT_2_ASS_STYLE)
+                ass_text = srt_to_ass(ass_text, srt_2_ass_format, srt_2_ass_style)
             else:
                 logger.warning("未开启SRT转ASS")
                 return "未开启SRT转ASS", True, raw_bytes.encode("UTF-8-sig")
@@ -114,7 +115,8 @@ class SubSetter:
 
             embed_fonts_text = "[Fonts]\n"
 
-            if RENAMED_FONT_RESTORE:
+            renamed_font_restore = get_config("RENAMED_FONT_RESTORE")
+            if renamed_font_restore:
                 for replacedName, originName in sub_rename.items():
                     ass_text = ass_text.replace(replacedName, originName)
 
@@ -130,22 +132,29 @@ class SubSetter:
                     total_errors.append(err)
                     if err.startswith("字体缺失"):
                         display_errors.append(err)
-                        if MISS_LOGS:
+                        if get_config("MISS_LOGS"):
                             logs_errors.append(err)
                     if err.startswith("缺少字形"):
                         # 忽略缺失字形显示意思，默认值为False，意思就是默认不忽略
                         if not ERROR_DISPLAY_IGNORE_GLYPH:
                             display_errors.append(err)
-                        if MISS_GLYPH_LOGS:
+                        if get_config("MISS_GLYPH_LOGS"):
                             logs_errors.append(err)
                 embed_fonts_text += result
 
             logger.info(f"ass分析 {(analyse_end_time - analyse_start_time) / 1000000:.2f}ms")  # {len(embed_fonts_text) / (1024 * 1024):.2f}MB in
             logger.info(f"子集化嵌入 {(time.perf_counter_ns() - subset_start_time) / 1000000:.2f}ms")  # {len(embed_fonts_text) / (1024 * 1024):.2f}MB in
-            if len(display_errors) != 0 and 0 < ERROR_DISPLAY <= 60:
-                ass_text = ass_insert_line(ass_text, f"0:00:{ERROR_DISPLAY:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(display_errors))
+            error_display = get_config("ERROR_DISPLAY")
+            if len(display_errors) != 0 and 0 < error_display <= 60:
+                ass_text = ass_insert_line(ass_text, f"0:00:{error_display:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(display_errors))
             if logs_errors:
-                asyncio.create_task(miss_logs_manager.insert(logs_errors))
+                if self._miss_logs_manager is None:
+                    from logs import LogsManager
+                    import constants as _const
+                    self._miss_logs_manager = LogsManager(
+                        _const.MISS_LOGS_PATH, _const.MISS_LOGS_SIZE, _const.MISS_LOGS_ORDER
+                    )
+                asyncio.create_task(self._miss_logs_manager.insert(logs_errors))
         # head, tai = ass_text.split("[Events]")
         # result_text = head + embed_fonts_text + "\n[Events]" + tai
         head, sep, tai = ass_text.partition("[Events]")
