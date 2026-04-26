@@ -80,6 +80,10 @@ async def index_subset(request: Request):
         renamed_restore = request.headers.get("X-Renamed-Restore") == "1"
         clear_fonts = request.headers.get("X-Clear-Fonts") == "1"
         fonts_check = request.headers.get("X-Fonts-Check") == "1"
+        hsv_s_str = request.headers.get("X-Hsv-S")
+        hsv_v_str = request.headers.get("X-Hsv-V")
+        hsv_s = float(hsv_s_str) if hsv_s_str else 1.0
+        hsv_v = float(hsv_v_str) if hsv_v_str else 1.0
 
         result = await process_subset(
             raw_bytes,
@@ -87,7 +91,9 @@ async def index_subset(request: Request):
             srt_format=srt_format,
             srt_style=srt_style,
             renamed_restore=renamed_restore,
-            clear_fonts=clear_fonts
+            clear_fonts=clear_fonts,
+            hsv_s=hsv_s,
+            hsv_v=hsv_v,
         )
 
         message = ""
@@ -153,7 +159,12 @@ async def set_brightness(val: float):
     if user_hsv_v > 1:
         user_hsv_v = 1
     logger.info(f"亮度 已设置为 {user_hsv_v}")
-    return val      
+    return val
+
+@app.get("/color/set/values")
+async def get_color_values():
+    """返回当前饱和度和亮度值"""
+    return {"saturation": user_hsv_s, "brightness": user_hsv_v}
         
 @app.post("/fontinass/process_bytes")
 async def process_bytes(request: Request):

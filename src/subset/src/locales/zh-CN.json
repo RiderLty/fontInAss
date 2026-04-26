@@ -50,6 +50,12 @@
     "statusUploading": "上传中",
     "statusRetrying": "重新上传中",
     "srtFormatPlaceholder": "请输入或选择格式",
-    "srtStylePlaceholder": "请输入或选择样式"
+    "srtStylePlaceholder": "请输入或选择样式",
+
+    "hdrTitle": "HDR 色彩调整",
+    "hdrSaturation": "饱和度 (S)",
+    "hdrBrightness": "亮度 (V)",
+    "hdrReset": "重置",
+    "hdrDesc": "调整字幕的饱和度和亮度，用于 HDR 字幕色彩适配"
 
 }

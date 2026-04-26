@@ -9,6 +9,7 @@ import copy from "copy-to-clipboard";
 
 // 导入方法
 import { analyseAss, uudecode } from "../assets/subtitles-octopus.js";
+import HdrColorAdjust from "./HdrColorAdjust.vue";
 
 const { t, locale } = useI18n();
 
@@ -22,6 +23,8 @@ const settings = reactive({
   DOWNLOAD_PARSE_FONTS: false, // 下载时解析内嵌字体
   CLEAR_SUCCESS_AFTER_DOWNLOAD: true, //下载后清除下载的文件列表
   STRICT_MODE: true, // 严格模式，缺一字体不可
+  HDR_SATURATION: 1.0,
+  HDR_BRIGHTNESS: 1.0,
 });
 
 // 预设
@@ -105,6 +108,8 @@ const uploadFile = async (fileObj) => {
       "X-Renamed-Restore": settings.RENAMED_FONT_RESTORE ? "1" : "0",
       "X-Clear-Fonts": settings.CLEAR_FONTS ? "1" : "0",
       "X-Fonts-Check": settings.STRICT_MODE ? "1" : "0",
+      "X-Hsv-S": String(settings.HDR_SATURATION),
+      "X-Hsv-V": String(settings.HDR_BRIGHTNESS),
     };
 
     const response = await fetch(`${API_BASE_URL}/api/subset`, {
@@ -549,6 +554,12 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-col>
         </a-row>
+
+        <a-divider>{{ t('hdrTitle') }}</a-divider>
+        <HdrColorAdjust
+          v-model:saturation="settings.HDR_SATURATION"
+          v-model:brightness="settings.HDR_BRIGHTNESS"
+        />
 
         <!-- 语言选择保持原样 -->
         <a-form-item>

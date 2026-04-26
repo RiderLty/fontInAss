@@ -163,9 +163,11 @@ class SubSetter:
         return "\n".join(total_errors), srt, result_bytes
 
     async def process_subset(self, raw_bytes, fonts_check=True,
-                             srt_format=None, srt_style=None, renamed_restore=False, clear_fonts=False):
+                             srt_format=None, srt_style=None, renamed_restore=False, clear_fonts=False,
+                             hsv_s=1.0, hsv_v=1.0):
         # 如果renamed_restore在程序运行中会发生变化，需要生成与renamed_restore关联的bytes_hash，否则会导致结果与缓存不一致
-        bytes_hash = bytes_to_hash(raw_bytes + int(renamed_restore).to_bytes(4, byteorder="big", signed=True))
+        bytes_hash = bytes_to_hash(raw_bytes + int(renamed_restore).to_bytes(4, byteorder="big", signed=True)
+                                   + int((hsv_s * 10 + hsv_v) * 100).to_bytes(4, byteorder="big", signed=True))
         ass_encode, ass_text = bytes_to_str(raw_bytes)
         if not ass_encode:
             return Result(400, "无法解析字幕文件编码", None)
@@ -187,6 +189,10 @@ class SubSetter:
                 return Result(400, "已有内嵌字体", None)
         elif status == 2:  # 有 Fonts 但是没内容
             ass_text = remove_section(ass_text, "Fonts")
+
+        if hsv_s != 1.0 or hsv_v != 1.0:
+            logger.info(f"颜色调整 饱和度x{hsv_s} 亮度x{hsv_v}")
+            ass_text = colorAdjust.ssaProcessor(ass_text, hsv_s, hsv_v)
 
         total_errors = []
         # if bytes_hash in self.cache:

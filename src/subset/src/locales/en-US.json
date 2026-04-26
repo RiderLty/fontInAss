@@ -50,5 +50,11 @@
     "statusUploading": "Uploading",
     "statusRetrying": "Retrying Upload",
     "srtFormatPlaceholder": "Please enter or select a format",
-    "srtStylePlaceholder": "Please enter or select a style"
+    "srtStylePlaceholder": "Please enter or select a style",
+
+    "hdrTitle": "HDR Color Adjustment",
+    "hdrSaturation": "Saturation (S)",
+    "hdrBrightness": "Brightness (V)",
+    "hdrReset": "Reset",
+    "hdrDesc": "Adjust subtitle saturation and brightness for HDR color adaptation"
 }
