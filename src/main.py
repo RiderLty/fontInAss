@@ -5,21 +5,27 @@ import base64
 import json
 import os
 import ssl
+import time
 import logging
 import asyncio
+import platform
 import requests
 import coloredlogs
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from uvicorn import Config, Server
-from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS, ROOT_PATH
+from constants import logger, EMBY_SERVER_URL, FONT_DIRS, DEFAULT_FONT_PATH, MAIN_LOOP, INSERT_JS, ROOT_PATH, DATA_PATH
 from dirmonitor import dirmonitor
 from fontmanager import FontManager
 from subsetter import SubSetter
 from utils import insert_str
+from config import ConfigManager, CONFIG_SCHEMA
+from sse_handler import sse_handler, sse_log_stream
 import mimetypes
+
+_start_time = time.time()
 
 
 
@@ -55,6 +61,24 @@ app.add_middleware(
 
 process = None
 process_subset = None
+
+# YAML config manager
+config_manager = ConfigManager(
+    schema=CONFIG_SCHEMA,
+    yaml_path=os.path.join(DATA_PATH, "config.yaml"),
+)
+
+# Install SSE log handler
+sse_handler.setFormatter(logging.Formatter("%(message)s"))
+logging.getLogger("main:loger").addHandler(sse_handler)
+
+# Override module-level constants from YAML/env config
+import constants
+for key in CONFIG_SCHEMA:
+    if hasattr(constants, key):
+        val, _ = config_manager.get(key)
+        if val is not None:
+            setattr(constants, key, val)
 
 # 修复 Windows / 某些系统默认缺失的 MIME 类型
 mimetypes.add_type("application/javascript", ".js")
@@ -120,6 +144,66 @@ async def index_subset(request: Request):
                 "X-Message": message,
             }
         )
+
+# ========= Config / Status / Logs API =========
+
+@app.get("/api/config")
+async def get_config():
+    return config_manager.get_all()
+
+@app.put("/api/config")
+async def update_config(request: Request):
+    body = await request.json()
+    if "key" in body and "value" in body:
+        key, value = body["key"], body["value"]
+        try:
+            new_val, new_src, old_val, old_src = config_manager.set(key, value)
+            return {"success": True, "key": key, "value": new_val, "source": new_src,
+                    "previous_value": old_val, "previous_source": old_src}
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"Key not found in schema: {key}")
+    elif "updates" in body:
+        results = []
+        for k, v in body["updates"].items():
+            try:
+                new_val, new_src, old_val, old_src = config_manager.set(k, v)
+                results.append({"key": k, "value": new_val, "source": new_src})
+            except KeyError:
+                results.append({"key": k, "error": f"Key not found in schema"})
+        return {"success": True, "results": results}
+    raise HTTPException(status_code=400, detail="Invalid request body")
+
+@app.delete("/api/config/{key}")
+async def delete_config(key: str):
+    try:
+        value, source = config_manager.delete(key)
+        return {"success": True, "key": key, "current_value": value, "current_source": source}
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Key not found in schema: {key}")
+
+@app.get("/api/logs/stream")
+async def logs_stream(request: Request):
+    return StreamingResponse(
+        sse_log_stream(request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+@app.get("/api/status")
+async def get_status():
+    return {
+        "version": "0.1.0",
+        "uptime_seconds": int(time.time() - _start_time),
+        "python_version": platform.python_version(),
+        "config_source": "yaml" if config_manager._yaml_data else "default",
+        "config_path": str(config_manager._yaml_path),
+        "log_level": config_manager.get("LOG_LEVEL")[0],
+        "emby_server_url": config_manager.get("EMBY_SERVER_URL")[0],
+    }
 
 # 重定向/subset 到 /subset/
 @app.get("/subset")

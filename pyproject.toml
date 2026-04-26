@@ -20,4 +20,5 @@ dependencies = [
     "uharfbuzz==0.45.0",
     "uvicorn==0.32.1",
     "watchdog==6.0.0",
+    "pyyaml==6.0.2",
 ]

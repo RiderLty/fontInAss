@@ -6,6 +6,14 @@ import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
 // https://vite.dev/config/
 export default defineConfig({
     base: './',
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:8011',
+                changeOrigin: true,
+            },
+        },
+    },
     plugins: [
         vue(),
         Components({

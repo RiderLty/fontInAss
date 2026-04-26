@@ -56,6 +56,40 @@
     "hdrSaturation": "饱和度 (S)",
     "hdrBrightness": "亮度 (V)",
     "hdrReset": "重置",
-    "hdrDesc": "调整字幕的饱和度和亮度，用于 HDR 字幕色彩适配"
+    "hdrDesc": "调整字幕的饱和度和亮度，用于 HDR 字幕色彩适配",
 
+    "navDashboard": "仪表盘",
+    "navSubset": "字幕子集化",
+    "navHdr": "HDR 色彩",
+    "navSettings": "系统设置",
+
+    "dashboardLogs": "实时日志",
+    "dashboardStatus": "系统状态",
+    "sseConnected": "已连接",
+    "sseDisconnected": "未连接",
+    "logPause": "暂停",
+    "logResume": "继续",
+    "logClear": "清空",
+    "logWaiting": "等待日志...",
+
+    "statusVersion": "版本",
+    "statusUptime": "运行时间",
+    "statusPython": "Python 版本",
+    "statusLogLevel": "日志级别",
+
+    "settingsTitle": "系统设置",
+    "settingsKey": "配置项",
+    "settingsValue": "当前值",
+    "settingsSource": "来源",
+    "settingsDesc": "说明",
+    "settingsSave": "保存",
+    "settingsReset": "恢复默认",
+    "settingsSaved": "设置已保存",
+    "settingsSaveFailed": "保存失败",
+    "settingsInvalidValue": "无效的值",
+    "settingsResetDone": "已恢复默认值",
+
+    "sourceYaml": "自定义 (YAML)",
+    "sourceEnv": "环境变量",
+    "sourceDefault": "默认值"
 }

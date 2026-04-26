@@ -56,5 +56,40 @@
     "hdrSaturation": "Saturation (S)",
     "hdrBrightness": "Brightness (V)",
     "hdrReset": "Reset",
-    "hdrDesc": "Adjust subtitle saturation and brightness for HDR color adaptation"
+    "hdrDesc": "Adjust subtitle saturation and brightness for HDR color adaptation",
+
+    "navDashboard": "Dashboard",
+    "navSubset": "Subtitle Processing",
+    "navHdr": "HDR Color",
+    "navSettings": "Settings",
+
+    "dashboardLogs": "Live Logs",
+    "dashboardStatus": "System Status",
+    "sseConnected": "Connected",
+    "sseDisconnected": "Disconnected",
+    "logPause": "Pause",
+    "logResume": "Resume",
+    "logClear": "Clear",
+    "logWaiting": "Waiting for logs...",
+
+    "statusVersion": "Version",
+    "statusUptime": "Uptime",
+    "statusPython": "Python Version",
+    "statusLogLevel": "Log Level",
+
+    "settingsTitle": "System Settings",
+    "settingsKey": "Key",
+    "settingsValue": "Value",
+    "settingsSource": "Source",
+    "settingsDesc": "Description",
+    "settingsSave": "Save",
+    "settingsReset": "Reset to Default",
+    "settingsSaved": "Settings saved",
+    "settingsSaveFailed": "Save failed",
+    "settingsInvalidValue": "Invalid value",
+    "settingsResetDone": "Reset to default",
+
+    "sourceYaml": "Custom (YAML)",
+    "sourceEnv": "Environment Variable",
+    "sourceDefault": "Default"
 }

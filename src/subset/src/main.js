@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import { createI18n } from "vue-i18n";
 import './style.css';
 import App from './App.vue';
+import router from './router';
 import zhCN from "./locales/zh-CN.json";
 import enUS from "./locales/en-US.json";
 
@@ -19,4 +20,4 @@ const i18n = createI18n({
     messages,
 });
 
-createApp(App).use(i18n).mount('#app')
+createApp(App).use(i18n).use(router).mount('#app')
