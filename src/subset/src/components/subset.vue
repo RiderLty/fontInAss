@@ -6,6 +6,9 @@ import { saveAs } from "file-saver";
 import { message } from "ant-design-vue";
 import { debounce } from "lodash-es";
 import copy from "copy-to-clipboard";
+import { useTheme } from "../composables/useTheme";
+
+const { isDark } = useTheme();
 
 // 导入方法
 import { analyseAss, uudecode } from "../assets/subtitles-octopus.js";
@@ -568,7 +571,7 @@ onBeforeUnmount(() => {
 
 /* 鼠标悬停效果（非空才高亮） */
 .cell-content:not(.cell-empty):hover {
-  background: #f6f6f6;
+  background: v-bind("isDark ? '#303030' : '#f6f6f6'");
 }
 
 /* 文件名列最多 400px，超长换行 */

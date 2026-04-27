@@ -111,5 +111,9 @@
     "config_SRT_2_ASS_FORMAT": "SRT to ASS format template",
     "config_SRT_2_ASS_STYLE": "SRT to ASS subtitle style",
     "config_HDR_SATURATION": "HDR subtitle saturation (0.0-2.0, 1.0 = original)",
-    "config_HDR_BRIGHTNESS": "HDR subtitle brightness (0.0-1.0)"
+    "config_HDR_BRIGHTNESS": "HDR subtitle brightness (0.0-1.0)",
+
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeAuto": "Auto"
 }

@@ -2,7 +2,10 @@
 import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfig } from '../composables/useConfig'
+import { useTheme } from '../composables/useTheme'
 import { message } from 'ant-design-vue'
+
+const { isDark } = useTheme()
 
 const { t } = useI18n()
 const { config, loading, fetchConfig, updateConfig, deleteConfig } = useConfig()
@@ -164,6 +167,6 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #fafafa;
+  background: v-bind("isDark ? '#1d1d1d' : '#fafafa'");
 }
 </style>

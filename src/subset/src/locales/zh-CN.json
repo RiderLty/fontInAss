@@ -111,5 +111,9 @@
     "config_SRT_2_ASS_FORMAT": "SRT 转 ASS 的格式模板",
     "config_SRT_2_ASS_STYLE": "SRT 转 ASS 的字幕样式",
     "config_HDR_SATURATION": "HDR 字幕饱和度（0.0-2.0，1.0为原值）",
-    "config_HDR_BRIGHTNESS": "HDR 字幕亮度（0.0-1.0）"
+    "config_HDR_BRIGHTNESS": "HDR 字幕亮度（0.0-1.0）",
+
+    "themeLight": "明亮",
+    "themeDark": "暗黑",
+    "themeAuto": "自动"
 }

@@ -2,11 +2,13 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useTheme } from '../composables/useTheme'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const collapsed = ref(false)
+const { themeMode, cycleTheme } = useTheme()
 
 const menuItems = computed(() => [
   { key: '/dashboard', label: t('navDashboard'), icon: '📊' },
@@ -27,6 +29,14 @@ const toggleLocale = () => {
 }
 
 const localeLabel = computed(() => locale.value === 'zh-CN' ? 'Switch to English' : '切换至中文')
+
+const themeIcon = computed(() => {
+  if (themeMode.value === 'light') return '☀️'
+  if (themeMode.value === 'dark') return '🌙'
+  return '💻'
+})
+
+const themeLabel = computed(() => t('theme' + themeMode.value.charAt(0).toUpperCase() + themeMode.value.slice(1)))
 </script>
 
 <template>
@@ -54,6 +64,9 @@ const localeLabel = computed(() => locale.value === 'zh-CN' ? 'Switch to English
         </a-menu-item>
       </a-menu>
       <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+        <a-button type="text" style="color: rgba(255,255,255,0.65); width: 100%;" @click="cycleTheme">
+          {{ themeIcon }} {{ themeLabel }}
+        </a-button>
         <a-button type="text" style="color: rgba(255,255,255,0.65); width: 100%;" @click="toggleLocale">
           {{ localeLabel }}
         </a-button>
@@ -71,8 +84,5 @@ const localeLabel = computed(() => locale.value === 'zh-CN' ? 'Switch to English
 :deep(.ant-layout-sider) {
   background: #001529;
   position: relative;
-}
-:deep(.ant-layout) {
-  background: #f0f2f5;
 }
 </style>
