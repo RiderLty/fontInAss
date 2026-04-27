@@ -53,6 +53,9 @@ const handleSave = async (key, value) => {
     message.warning(t('settingsInvalidValue'))
     return
   }
+  if (coerced === info.value || JSON.stringify(coerced) === JSON.stringify(info.value)) {
+    return
+  }
   const result = await updateConfig(key, coerced)
   if (result.success) {
     message.success(t('settingsSaved'))
