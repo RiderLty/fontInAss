@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { debounce } from "lodash-es";
 
@@ -12,25 +12,32 @@ const props = defineProps({
 
 const emit = defineEmits(["update:saturation", "update:brightness", "committed-change"]);
 
-const originalColor = ref("#ffffff");
-const activeSlider = ref("saturation");
+// --- State ---
+const hexInput = ref("#FFFFFF");
+const previewText = ref("我能吞下玻璃而不伤身体");
+const isRealFullscreen = ref(false);
+const containerRef = ref(null);
 
+// --- v-model ---
 const satValue = computed({
   get: () => props.saturation,
   set: (v) => emit("update:saturation", v),
 });
-
 const briValue = computed({
   get: () => props.brightness,
   set: (v) => emit("update:brightness", v),
 });
 
-// Color math helpers (ported from color.html)
+// --- Color math ---
 function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r
+    ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) }
     : { r: 0, g: 0, b: 0 };
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map(c => Math.round(c).toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 function rgbToHsb(r, g, b) {
@@ -59,39 +66,81 @@ function hsbToRgb(h, s, b) {
   };
 }
 
-const adjustedColor = computed(() => {
-  const rgb = hexToRgb(originalColor.value);
-  const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
-  const adjS = hsb.s * satValue.value;
-  const adjB = hsb.b * briValue.value;
-  const adjRgb = hsbToRgb(hsb.h, adjS, adjB);
-  return `rgb(${adjRgb.r}, ${adjRgb.g}, ${adjRgb.b})`;
-});
+// --- Computed ---
+const origRgb = computed(() => hexToRgb(hexInput.value));
+const origHsb = computed(() => rgbToHsb(origRgb.value.r, origRgb.value.g, origRgb.value.b));
+
+function applyMapping(s, sf) {
+  if (sf <= 1.0) return s * sf;
+  return (1 - s) * (sf - 1) + s;
+}
+
+const adjHsb = computed(() => ({
+  h: origHsb.value.h,
+  s: Math.min(Math.max(applyMapping(origHsb.value.s, satValue.value), 0), 1),
+  b: Math.min(Math.max(origHsb.value.b * briValue.value, 0), 1),
+}));
+const adjRgb = computed(() => hsbToRgb(adjHsb.value.h, adjHsb.value.s, adjHsb.value.b));
+const adjHex = computed(() => rgbToHex(adjRgb.value.r, adjRgb.value.g, adjRgb.value.b));
 
 const satDisplay = computed(() => satValue.value.toFixed(2));
 const briDisplay = computed(() => briValue.value.toFixed(2));
 
+// --- HDR detection ---
+const hdrInfo = ref({ hdr: false, gamut: 'srgb' });
+
+function detectHdr() {
+  const hdr = window.matchMedia?.('(dynamic-range: high)')?.matches ?? false;
+  const p3 = window.matchMedia?.('(color-gamut: p3)')?.matches ?? false;
+  const rec2020 = window.matchMedia?.('(color-gamut: rec2020)')?.matches ?? false;
+  const gamut = rec2020 ? 'Rec. 2020' : p3 ? 'Display P3' : 'sRGB';
+  hdrInfo.value = { hdr, gamut };
+}
+
+onMounted(() => detectHdr());
+
+// --- Color input ---
+const colorPickerRef = ref(null);
+function openColorPicker() { colorPickerRef.value?.click(); }
+function onColorPick(e) { hexInput.value = e.target.value; }
+
+function onHexInput(e) {
+  let v = e.target.value.trim();
+  if (!v.startsWith("#")) v = "#" + v;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) hexInput.value = v.toUpperCase();
+}
+function onHexBlur(e) {
+  let v = e.target.value.trim();
+  if (!v.startsWith("#")) v = "#" + v;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) hexInput.value = v.toUpperCase();
+  else e.target.value = hexInput.value;
+}
+
+// --- Browser Fullscreen ---
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    containerRef.value?.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function onFullscreenChange() {
+  isRealFullscreen.value = !!document.fullscreenElement;
+}
+
+onMounted(() => document.addEventListener("fullscreenchange", onFullscreenChange));
+onBeforeUnmount(() => document.removeEventListener("fullscreenchange", onFullscreenChange));
+
+// --- Commit ---
 const emitCommitted = debounce((s, b) => {
   emit("committed-change", { saturation: s, brightness: b });
 }, 300);
 
-function onSatInput(v) {
-  satValue.value = v;
-}
-
-function onSatChange(v) {
-  satValue.value = v;
-  emitCommitted(v, briValue.value);
-}
-
-function onBriInput(v) {
-  briValue.value = v;
-}
-
-function onBriChange(v) {
-  briValue.value = v;
-  emitCommitted(satValue.value, v);
-}
+function onSatInput(v) { satValue.value = v; }
+function onSatChange(v) { satValue.value = v; emitCommitted(v, briValue.value); }
+function onBriInput(v) { briValue.value = v; }
+function onBriChange(v) { briValue.value = v; emitCommitted(satValue.value, v); }
 
 function resetAll() {
   satValue.value = 1.0;
@@ -100,168 +149,251 @@ function resetAll() {
   emit("committed-change", { saturation: 1.0, brightness: 1.0 });
 }
 
-// Color picker
-const colorPickerRef = ref(null);
-function openColorPicker() {
-  colorPickerRef.value?.click();
-}
-function onColorPick(e) {
-  originalColor.value = e.target.value;
-}
-
-// Keyboard handling (scoped to component root)
-function onKeyDown(e) {
-  if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(e.key)) return;
-  e.stopPropagation();
-  e.preventDefault();
-
-  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-    activeSlider.value = activeSlider.value === "saturation" ? "brightness" : "saturation";
-  } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-    const step = e.key === "ArrowLeft" ? -0.05 : 0.05;
-    if (activeSlider.value === "saturation") {
-      const nv = Math.max(0, Math.min(1, satValue.value + step));
-      satValue.value = parseFloat(nv.toFixed(2));
-    } else {
-      const nv = Math.max(0, Math.min(1, briValue.value + step));
-      briValue.value = parseFloat(nv.toFixed(2));
-    }
-  } else if (e.key === "Enter") {
-    openColorPicker();
-  }
-}
-
-function onKeyUp(e) {
-  if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-    e.stopPropagation();
-  }
-}
+defineExpose({ toggleFullscreen });
 </script>
 
 <template>
-  <div class="hdr-adjust" @keydown="onKeyDown" @keyup="onKeyUp" tabindex="0">
-    <!-- Color preview -->
-    <div class="hdr-preview">
-      <div class="hdr-color-box" :style="{ backgroundColor: originalColor }" @click="openColorPicker">
+  <div ref="containerRef" class="hdr-container" :class="{ 'hdr-container--real-fs': isRealFullscreen }">
+    <!-- Subtitle previews -->
+    <div class="hdr-subtitles">
+      <div class="hdr-sub-line" :style="{ color: hexInput }">{{ previewText }}</div>
+      <div class="hdr-sub-line" :style="{ color: adjHex }">{{ previewText }}</div>
+    </div>
+
+    <!-- Floating adjustment panel -->
+    <div class="hdr-panel" @click.stop>
+      <div class="hdr-panel-header">
+        <span>{{ t('hdrTitle') }}</span>
+        <div class="hdr-panel-header-right">
+          <span class="hdr-env-tag" :class="hdrInfo.hdr ? 'hdr-env-tag--on' : 'hdr-env-tag--off'">
+            <span class="hdr-env-dot"></span>
+            {{ hdrInfo.hdr ? 'HDR' : 'SDR' }} · {{ hdrInfo.gamut }}
+          </span>
+          <a-button size="small" type="text" @click="toggleFullscreen" class="hdr-fs-btn">
+            {{ isRealFullscreen ? '✕' : '⛶' }}
+          </a-button>
+        </div>
+      </div>
+
+      <!-- Color row -->
+      <div class="hdr-color-row">
+        <div class="hdr-dot" :style="{ backgroundColor: hexInput }" @click="openColorPicker">
+          <input ref="colorPickerRef" type="color" :value="hexInput" class="hdr-picker-hidden" @input="onColorPick" />
+        </div>
         <input
-          ref="colorPickerRef"
-          type="color"
-          :value="originalColor"
-          class="hdr-color-picker"
-          @input="onColorPick"
+          class="hdr-hex-input"
+          :value="hexInput"
+          @input="onHexInput"
+          @blur="onHexBlur"
+          @keydown.enter="(e) => e.target.blur()"
+          maxlength="7"
+          spellcheck="false"
         />
+        <span class="hdr-arrow">→</span>
+        <div class="hdr-dot" :style="{ backgroundColor: adjHex }"></div>
+        <span class="hdr-hex-label">{{ adjHex }}</span>
       </div>
-      <span class="hdr-arrow">↓</span>
-      <div class="hdr-color-box" :style="{ backgroundColor: adjustedColor }"></div>
-    </div>
 
-    <!-- Value display -->
-    <div class="hdr-values">
-      <span>{{ t('hdrSaturation') }} x{{ satDisplay }}</span>
-      <span style="margin: 0 8px;">|</span>
-      <span>{{ t('hdrBrightness') }} x{{ briDisplay }}</span>
-    </div>
-
-    <!-- Sliders -->
-    <div class="hdr-sliders">
+      <!-- Sliders -->
       <div class="hdr-slider-row">
-        <span class="hdr-slider-label">{{ t('hdrSaturation') }}</span>
-        <a-slider
-          :min="0" :max="1" :step="0.01"
-          :value="satValue"
-          @input="onSatInput"
-          @change="onSatChange"
-          class="hdr-slider"
-        />
+        <span class="hdr-slider-label">S x{{ satDisplay }}</span>
+        <a-slider :min="0" :max="2" :step="0.01" :value="satValue" @input="onSatInput" @change="onSatChange" class="hdr-slider" />
       </div>
       <div class="hdr-slider-row">
-        <span class="hdr-slider-label">{{ t('hdrBrightness') }}</span>
-        <a-slider
-          :min="0" :max="1" :step="0.01"
-          :value="briValue"
-          @input="onBriInput"
-          @change="onBriChange"
-          class="hdr-slider"
-        />
+        <span class="hdr-slider-label">V x{{ briDisplay }}</span>
+        <a-slider :min="0" :max="1" :step="0.01" :value="briValue" @input="onBriInput" @change="onBriChange" class="hdr-slider" />
       </div>
-    </div>
 
-    <!-- Reset -->
-    <a-button size="small" @click="resetAll" class="hdr-reset-btn">{{ t('hdrReset') }}</a-button>
+      <!-- Text input -->
+      <div class="hdr-text-row">
+        <input class="hdr-text-input" v-model="previewText" :placeholder="t('hdrTextPlaceholder')" spellcheck="false" />
+      </div>
+
+      <a-button size="small" @click="resetAll" class="hdr-reset">{{ t('hdrReset') }}</a-button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.hdr-adjust {
-  outline: none;
-}
-
-.hdr-preview {
+.hdr-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
-.hdr-color-box {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
+/* Browser fullscreen: remove border-radius, fill screen */
+.hdr-container--real-fs {
+  border-radius: 0;
+}
+
+/* Subtitles */
+.hdr-subtitles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  user-select: none;
+}
+.hdr-sub-line {
+  font-size: 36px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  transition: color 0.15s;
+}
+.hdr-container--real-fs .hdr-sub-line {
+  font-size: 56px;
+}
+
+/* Panel */
+.hdr-panel {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  background: rgba(20, 20, 40, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  color: #e0e0e0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+.hdr-container--real-fs .hdr-panel {
+  width: 340px;
+  bottom: 24px;
+  right: 24px;
+}
+
+.hdr-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.hdr-fs-btn {
+  color: #aaa !important;
+  font-size: 18px !important;
+  padding: 0 4px !important;
+}
+.hdr-fs-btn:hover { color: #fff !important; }
+
+.hdr-panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hdr-env-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+.hdr-env-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hdr-env-tag--on {
+  background: rgba(82, 196, 26, 0.15);
+  color: #52c41a;
+}
+.hdr-env-tag--on .hdr-env-dot {
+  background: #52c41a;
+  box-shadow: 0 0 4px #52c41a;
+}
+.hdr-env-tag--off {
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+}
+.hdr-env-tag--off .hdr-env-dot {
+  background: #666;
+}
+
+/* Color row */
+.hdr-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.hdr-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
   cursor: pointer;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
-
-.hdr-color-box:hover {
-  transform: scale(1.05);
-}
-
-.hdr-color-picker {
+.hdr-picker-hidden {
   position: absolute;
   width: 100%;
   height: 100%;
   opacity: 0;
   cursor: pointer;
 }
-
-.hdr-arrow {
-  font-size: 18px;
-  color: #999;
+.hdr-hex-input {
+  width: 80px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #e0e0e0;
+  padding: 3px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  outline: none;
+}
+.hdr-hex-input:focus { border-color: #4a9eff; }
+.hdr-arrow { color: #666; font-size: 13px; }
+.hdr-hex-label {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #ccc;
 }
 
-.hdr-values {
-  text-align: center;
-  color: #BDBDBD;
-  font-size: 14px;
-  margin-bottom: 12px;
-}
-
-.hdr-sliders {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+/* Sliders */
 .hdr-slider-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
-
 .hdr-slider-label {
-  min-width: 60px;
-  font-size: 13px;
-  color: #BDBDBD;
+  min-width: 50px;
+  font-size: 11px;
+  color: #888;
+  font-family: 'Courier New', monospace;
   white-space: nowrap;
 }
+.hdr-slider { flex: 1; }
 
-.hdr-slider {
-  flex: 1;
+/* Text input */
+.hdr-text-row { margin-top: 6px; margin-bottom: 8px; }
+.hdr-text-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  color: #e0e0e0;
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
 }
+.hdr-text-input:focus { border-color: #4a9eff; }
 
-.hdr-reset-btn {
-  margin-top: 8px;
-}
+.hdr-reset { margin-top: 2px; }
 </style>

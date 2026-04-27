@@ -112,9 +112,9 @@ CONFIG_SCHEMA = {
         "type": "float",
         "default": 1.0,
         "env_var": "HDR_SATURATION",
-        "description": "HDR 字幕饱和度（0.0-1.0）",
+        "description": "HDR 字幕饱和度（0.0-2.0，1.0为原值）",
         "min": 0.0,
-        "max": 1.0,
+        "max": 2.0,
     },
     "HDR_BRIGHTNESS": {
         "type": "float",

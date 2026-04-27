@@ -5,7 +5,7 @@ import { useConfig } from '../composables/useConfig'
 import HdrColorAdjust from '../components/HdrColorAdjust.vue'
 
 const { t } = useI18n()
-const { config, loading, fetchConfig } = useConfig()
+const { config, fetchConfig } = useConfig()
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -32,16 +32,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div style="padding: 24px;">
-    <a-spin :spinning="loading">
-      <a-card :title="t('hdrTitle')" style="max-width: 500px;">
-        <p style="color: #999; margin-bottom: 16px;">{{ t('hdrDesc') }}</p>
-        <HdrColorAdjust
-          v-model:saturation="saturation"
-          v-model:brightness="brightness"
-          @committed-change="onCommitted"
-        />
-      </a-card>
-    </a-spin>
+  <div style="padding: 16px; height: 100vh; box-sizing: border-box;">
+    <HdrColorAdjust
+      v-model:saturation="saturation"
+      v-model:brightness="brightness"
+      @committed-change="onCommitted"
+    />
   </div>
 </template>
