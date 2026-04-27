@@ -89,7 +89,7 @@ onMounted(() => {
           :pagination="false"
           size="small"
           row-key="key"
-          :scroll="{ y: 'calc(100vh - 280px)' }"
+          :scroll="{ y: 'calc(100vh - 151px)' }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'description'">

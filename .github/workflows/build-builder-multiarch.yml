@@ -63,8 +63,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push manifest images
-        uses: Noelware/docker-manifest-action@master # or use a pinned version in the Releases tab
+        uses: Noelware/docker-manifest-action@v1
         with:
-            inputs: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
-            tags: riderlty/fontinass-builder:latest
+            inputs: riderlty/fontinass-builder:latest
+            images: riderlty/fontinass-builder:latest-amd64,riderlty/fontinass-builder:latest-arm64
             push: true
