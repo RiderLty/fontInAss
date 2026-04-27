@@ -84,6 +84,17 @@ const adjHsb = computed(() => ({
 const adjRgb = computed(() => hsbToRgb(adjHsb.value.h, adjHsb.value.s, adjHsb.value.b));
 const adjHex = computed(() => rgbToHex(adjRgb.value.r, adjRgb.value.g, adjRgb.value.b));
 
+// sRGB → Display P3
+function srgbToP3css(r, g, b) {
+  const R = r / 255, G = g / 255, B = b / 255;
+  const p3r = 0.8225 * R + 0.1774 * G + 0.0001 * B;
+  const p3g = 0.0332 * R + 0.9669 * G + 0.0000 * B;
+  const p3b = 0.0170 * R + 0.0724 * G + 0.9107 * B;
+  return `color(display-p3 ${p3r.toFixed(4)} ${p3g.toFixed(4)} ${p3b.toFixed(4)})`;
+}
+const origP3 = computed(() => srgbToP3css(origRgb.value.r, origRgb.value.g, origRgb.value.b));
+const adjP3 = computed(() => srgbToP3css(adjRgb.value.r, adjRgb.value.g, adjRgb.value.b));
+
 const satDisplay = computed(() => satValue.value.toFixed(2));
 const briDisplay = computed(() => briValue.value.toFixed(2));
 
@@ -171,8 +182,8 @@ defineExpose({ toggleFullscreen });
   <div ref="containerRef" class="hdr-container" :class="{ 'hdr-container--real-fs': isRealFullscreen }">
     <!-- Subtitle previews -->
     <div class="hdr-subtitles">
-      <div class="hdr-sub-line" :style="{ color: hexInput }">{{ previewText }}</div>
-      <div class="hdr-sub-line" :style="{ color: adjHex }">{{ previewText }}</div>
+      <div class="hdr-sub-line" :style="{ color: origP3 }">{{ previewText }}</div>
+      <div class="hdr-sub-line" :style="{ color: adjP3 }">{{ previewText }}</div>
     </div>
 
     <!-- Floating adjustment panel -->
@@ -181,6 +192,10 @@ defineExpose({ toggleFullscreen });
       <div v-show="!panelCollapsed" class="hdr-panel-header">
         <span>{{ t('hdrTitle') }}</span>
         <div class="hdr-panel-header-right">
+          <span class="hdr-env-tag" :class="hdrInfo.hdr ? 'hdr-env-tag--on' : 'hdr-env-tag--off'">
+            <span class="hdr-env-dot"></span>
+            {{ hdrInfo.hdr ? 'HDR' : 'SDR' }} · {{ hdrInfo.gamut }}
+          </span>
           <a-button size="small" type="text" @click="toggleFullscreen" class="hdr-fs-btn">
             {{ isRealFullscreen ? '✕' : '⛶' }}
           </a-button>
