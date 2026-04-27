@@ -6,8 +6,10 @@ import ass as ssa
 
 def colorAdjust(rgb, sf=1.0, vf=1.0):
     h, s, v = colorsys.rgb_to_hsv(rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0)
-    # 饱和度：sf ≤ 1 直接乘，sf > 1 线性插值向 1.0 靠拢
-    if sf <= 1.0:
+    # 饱和度：原始为 0（白/黑/灰）则保持不变，否则按映射处理
+    if s == 0:
+        pass
+    elif sf <= 1.0:
         s = min(max(s * sf, 0), 1)
     else:
         s = min(max((1 - s) * (sf - 1) + s, 0), 1)

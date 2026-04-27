@@ -78,7 +78,7 @@ function applyMapping(s, sf) {
 
 const adjHsb = computed(() => ({
   h: origHsb.value.h,
-  s: Math.min(Math.max(applyMapping(origHsb.value.s, satValue.value), 0), 1),
+  s: origHsb.value.s === 0 ? 0 : Math.min(Math.max(applyMapping(origHsb.value.s, satValue.value), 0), 1),
   b: Math.min(Math.max(origHsb.value.b * briValue.value, 0), 1),
 }));
 const adjRgb = computed(() => hsbToRgb(adjHsb.value.h, adjHsb.value.s, adjHsb.value.b));
