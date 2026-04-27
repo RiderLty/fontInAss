@@ -16,6 +16,7 @@ const emit = defineEmits(["update:saturation", "update:brightness", "committed-c
 const hexInput = ref("#FFFFFF");
 const previewText = ref("我能吞下玻璃而不伤身体");
 const isRealFullscreen = ref(false);
+const panelCollapsed = ref(false);
 const containerRef = ref(null);
 
 // --- v-model ---
@@ -86,18 +87,32 @@ const adjHex = computed(() => rgbToHex(adjRgb.value.r, adjRgb.value.g, adjRgb.va
 const satDisplay = computed(() => satValue.value.toFixed(2));
 const briDisplay = computed(() => briValue.value.toFixed(2));
 
-// --- HDR detection ---
-const hdrInfo = ref({ hdr: false, gamut: 'srgb' });
+// --- HDR detection via CSS media query ---
+const hdrMedia = window.matchMedia?.('(dynamic-range: high)');
+const gamutP3 = window.matchMedia?.('(color-gamut: p3)');
+const gamut2020 = window.matchMedia?.('(color-gamut: rec2020)');
 
-function detectHdr() {
-  const hdr = window.matchMedia?.('(dynamic-range: high)')?.matches ?? false;
-  const p3 = window.matchMedia?.('(color-gamut: p3)')?.matches ?? false;
-  const rec2020 = window.matchMedia?.('(color-gamut: rec2020)')?.matches ?? false;
-  const gamut = rec2020 ? 'Rec. 2020' : p3 ? 'Display P3' : 'sRGB';
+const hdrInfo = ref({
+  hdr: hdrMedia?.matches ?? false,
+  gamut: gamut2020?.matches ? 'Rec. 2020' : gamutP3?.matches ? 'Display P3' : 'sRGB',
+});
+
+function updateHdrInfo() {
+  const hdr = hdrMedia?.matches ?? false;
+  const gamut = gamut2020?.matches ? 'Rec. 2020' : gamutP3?.matches ? 'Display P3' : 'sRGB';
   hdrInfo.value = { hdr, gamut };
 }
 
-onMounted(() => detectHdr());
+onMounted(() => {
+  hdrMedia?.addEventListener('change', updateHdrInfo);
+  gamutP3?.addEventListener('change', updateHdrInfo);
+  gamut2020?.addEventListener('change', updateHdrInfo);
+});
+onBeforeUnmount(() => {
+  hdrMedia?.removeEventListener('change', updateHdrInfo);
+  gamutP3?.removeEventListener('change', updateHdrInfo);
+  gamut2020?.removeEventListener('change', updateHdrInfo);
+});
 
 // --- Color input ---
 const colorPickerRef = ref(null);
@@ -161,55 +176,69 @@ defineExpose({ toggleFullscreen });
     </div>
 
     <!-- Floating adjustment panel -->
-    <div class="hdr-panel" @click.stop>
-      <div class="hdr-panel-header">
+    <div class="hdr-panel" :class="{ 'hdr-panel--collapsed': panelCollapsed }" @click.stop>
+      <!-- Header (hidden when collapsed) -->
+      <div v-show="!panelCollapsed" class="hdr-panel-header">
         <span>{{ t('hdrTitle') }}</span>
         <div class="hdr-panel-header-right">
-          <span class="hdr-env-tag" :class="hdrInfo.hdr ? 'hdr-env-tag--on' : 'hdr-env-tag--off'">
-            <span class="hdr-env-dot"></span>
-            {{ hdrInfo.hdr ? 'HDR' : 'SDR' }} · {{ hdrInfo.gamut }}
-          </span>
           <a-button size="small" type="text" @click="toggleFullscreen" class="hdr-fs-btn">
             {{ isRealFullscreen ? '✕' : '⛶' }}
           </a-button>
         </div>
       </div>
 
-      <!-- Color row -->
-      <div class="hdr-color-row">
-        <div class="hdr-dot" :style="{ backgroundColor: hexInput }" @click="openColorPicker">
-          <input ref="colorPickerRef" type="color" :value="hexInput" class="hdr-picker-hidden" @input="onColorPick" />
+      <!-- Panel body (collapsible) -->
+      <Transition name="hdr-collapse">
+        <div v-show="!panelCollapsed" class="hdr-panel-body">
+          <!-- Color row -->
+          <div class="hdr-color-row">
+            <div class="hdr-dot" :style="{ backgroundColor: hexInput }" @click="openColorPicker">
+              <input ref="colorPickerRef" type="color" :value="hexInput" class="hdr-picker-hidden" @input="onColorPick" />
+            </div>
+            <input
+              class="hdr-hex-input"
+              :value="hexInput"
+              @input="onHexInput"
+              @blur="onHexBlur"
+              @keydown.enter="(e) => e.target.blur()"
+              maxlength="7"
+              spellcheck="false"
+            />
+            <span class="hdr-arrow">→</span>
+            <div class="hdr-dot" :style="{ backgroundColor: adjHex }"></div>
+            <span class="hdr-hex-label">{{ adjHex }}</span>
+          </div>
+
+          <!-- Sliders -->
+          <div class="hdr-slider-row">
+            <span class="hdr-slider-label">S x{{ satDisplay }}</span>
+            <a-slider :min="0" :max="2" :step="0.01" :value="satValue" @input="onSatInput" @change="onSatChange" class="hdr-slider" />
+          </div>
+          <div class="hdr-slider-row">
+            <span class="hdr-slider-label">V x{{ briDisplay }}</span>
+            <a-slider :min="0" :max="1" :step="0.01" :value="briValue" @input="onBriInput" @change="onBriChange" class="hdr-slider" />
+          </div>
+
+          <!-- Text input -->
+          <div class="hdr-text-row">
+            <input class="hdr-text-input" v-model="previewText" :placeholder="t('hdrTextPlaceholder')" spellcheck="false" />
+          </div>
+
+          <div class="hdr-bottom-row">
+            <a-button size="small" @click="resetAll" class="hdr-reset">{{ t('hdrReset') }}</a-button>
+            <span class="hdr-collapse-toggle" @click="panelCollapsed = true">▴</span>
+          </div>
         </div>
-        <input
-          class="hdr-hex-input"
-          :value="hexInput"
-          @input="onHexInput"
-          @blur="onHexBlur"
-          @keydown.enter="(e) => e.target.blur()"
-          maxlength="7"
-          spellcheck="false"
-        />
-        <span class="hdr-arrow">→</span>
-        <div class="hdr-dot" :style="{ backgroundColor: adjHex }"></div>
-        <span class="hdr-hex-label">{{ adjHex }}</span>
-      </div>
+      </Transition>
 
-      <!-- Sliders -->
-      <div class="hdr-slider-row">
-        <span class="hdr-slider-label">S x{{ satDisplay }}</span>
-        <a-slider :min="0" :max="2" :step="0.01" :value="satValue" @input="onSatInput" @change="onSatChange" class="hdr-slider" />
+      <!-- Collapsed: only HDR indicator + expand -->
+      <div v-if="panelCollapsed" class="hdr-collapsed-bar">
+        <span class="hdr-env-tag" :class="hdrInfo.hdr ? 'hdr-env-tag--on' : 'hdr-env-tag--off'">
+          <span class="hdr-env-dot"></span>
+          {{ hdrInfo.hdr ? 'HDR' : 'SDR' }} · {{ hdrInfo.gamut }}
+        </span>
+        <span class="hdr-collapse-toggle" @click="panelCollapsed = false">▾</span>
       </div>
-      <div class="hdr-slider-row">
-        <span class="hdr-slider-label">V x{{ briDisplay }}</span>
-        <a-slider :min="0" :max="1" :step="0.01" :value="briValue" @input="onBriInput" @change="onBriChange" class="hdr-slider" />
-      </div>
-
-      <!-- Text input -->
-      <div class="hdr-text-row">
-        <input class="hdr-text-input" v-model="previewText" :placeholder="t('hdrTextPlaceholder')" spellcheck="false" />
-      </div>
-
-      <a-button size="small" @click="resetAll" class="hdr-reset">{{ t('hdrReset') }}</a-button>
     </div>
   </div>
 </template>
@@ -263,6 +292,7 @@ defineExpose({ toggleFullscreen });
   padding: 14px;
   color: #e0e0e0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  transition: width 0.25s ease, padding 0.25s ease;
 }
 .hdr-container--real-fs .hdr-panel {
   width: 340px;
@@ -320,6 +350,61 @@ defineExpose({ toggleFullscreen });
 }
 .hdr-env-tag--off .hdr-env-dot {
   background: #666;
+}
+
+/* Collapsed state */
+.hdr-panel--collapsed {
+  width: auto;
+  padding: 8px 12px;
+}
+.hdr-collapsed-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hdr-collapse-toggle {
+  color: #666;
+  font-size: 1.6rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 0.2s, background 0.2s;
+  user-select: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hdr-collapse-toggle:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hdr-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.hdr-panel-body {
+  overflow: hidden;
+}
+
+/* Collapse transition */
+.hdr-collapse-enter-active {
+  transition: max-height 0.25s ease-out, opacity 0.25s ease-out;
+}
+.hdr-collapse-leave-active {
+  transition: max-height 0.2s ease-in, opacity 0.2s ease-in;
+}
+.hdr-collapse-enter-from,
+.hdr-collapse-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.hdr-collapse-enter-to,
+.hdr-collapse-leave-from {
+  max-height: 300px;
+  opacity: 1;
 }
 
 /* Color row */
@@ -395,5 +480,21 @@ defineExpose({ toggleFullscreen });
 }
 .hdr-text-input:focus { border-color: #4a9eff; }
 
-.hdr-reset { margin-top: 2px; }
+.hdr-reset { margin-top: 0; }
+
+/* --- HDR display enhancements --- */
+@media (dynamic-range: high) {
+  .hdr-sub-line {
+    /* Use P3 red-gold for original text when HDR is available */
+    filter: brightness(1.1) saturate(1.2);
+  }
+  .hdr-env-tag--on {
+    background: color(display-p3 0.2 0.8 0.1 / 0.2);
+    color: color(display-p3 0.4 1 0.2);
+  }
+  .hdr-env-tag--on .hdr-env-dot {
+    background: color(display-p3 0.4 1 0.2);
+    box-shadow: 0 0 6px color(display-p3 0.4 1 0.2);
+  }
+}
 </style>
