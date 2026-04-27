@@ -26,7 +26,7 @@ const toggleLocale = () => {
   localStorage.setItem('locale', locale.value)
 }
 
-const localeLabel = computed(() => locale.value === 'zh-CN' ? 'English' : '中文')
+const localeLabel = computed(() => locale.value === 'zh-CN' ? 'Switch to English' : '切换至中文')
 </script>
 
 <template>
