@@ -79,8 +79,12 @@ const openFontDetail = async (fontName) => {
   detailUrl.value = null
   drawerVisible.value = true
   await fetchFontDetail(fontName)
-  await fetchGlyphs(fontName)
-  drawerGlyphs.value = [...glyphs.value]
+  if (viewMode.value === 'glyphs') {
+    drawerGlyphs.value = glyphs.value.filter(g => g.font_name === fontName)
+  } else {
+    await fetchGlyphs(fontName)
+    drawerGlyphs.value = [...glyphs.value]
+  }
 }
 
 const openUrlDetail = async (url) => {
