@@ -294,13 +294,13 @@ class FontManager:
         if (db_font_name, target_weight, target_italic) in self.cache:
             (font_bytes, index) = self.cache[(db_font_name, target_weight, target_italic)]  # 刷新缓存
             self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
-            logger.info(f"已缓存 {len(font_bytes) / (1024 * 1024):.2f}MB \t\t[{(db_font_name, target_weight, target_italic)} <== <cache> ]")
+            logger.info(f"加载已缓存的字体 {len(font_bytes) / (1024 * 1024):.2f}MB \t\t[{(db_font_name, target_weight, target_italic)} <== <cache> ]")
             return font_bytes, index
         elif result := self.select_font_local(db_font_name, target_weight, target_italic):
             path, index = result
             start = time.perf_counter_ns()
             font_bytes = uharfbuzz.Blob.from_file_path(path)
-            logger.info(f"本地 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== {path}]")
+            logger.info(f"从本地加载字体 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== {path}]")
             self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
             return font_bytes, index
         else:
@@ -316,7 +316,7 @@ class FontManager:
                     if resp.ok:
                         break
                 font_bytes = await resp.read()
-                logger.info(f"下载 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
+                logger.info(f"从CDN加载字体 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
                 self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
                 save_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")
                 save_dir = os.path.dirname(save_path)
