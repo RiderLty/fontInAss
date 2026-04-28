@@ -129,6 +129,20 @@ const truncateUrl = (url, max = 60) => {
   return '...' + url.slice(url.length - max + 3)
 }
 
+const splitChars = (chars) => {
+  if (!chars) return []
+  return [...chars]
+}
+
+const copyText = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    message.success(t('copied'))
+  } catch {
+    message.error(t('copyFail'))
+  }
+}
+
 const drawerTitle = computed(() => {
   if (detailFont.value) return detailFont.value
   if (detailUrl.value) return truncateUrl(detailUrl.value, 80)
@@ -254,7 +268,7 @@ loadMissData()
           :data-source="glyphs"
           :pagination="false"
           size="small"
-          row-key="missing_chars"
+          :row-key="(r) => r.font_name + '|' + r.missing_chars"
           :loading="missLoading"
           :locale="{ emptyText: t('missLogNoData') }"
           virtual
@@ -265,9 +279,14 @@ loadMissData()
               <a @click="openFontDetail(record.font_name)" style="cursor: pointer;">{{ record.font_name }}</a>
             </template>
           </a-table-column>
-          <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars" :width="160">
+          <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars">
             <template #default="{ record }">
-              <a-tag color="orange">{{ record.missing_chars }}</a-tag>
+              <span
+                style="cursor: pointer; word-break: break-all; white-space: normal;"
+                @click="copyText(record.missing_chars)"
+              >
+                <a-tag v-for="(ch, i) in splitChars(record.missing_chars)" :key="i" color="orange" style="margin-bottom: 2px;">{{ ch }}</a-tag>
+              </span>
             </template>
           </a-table-column>
           <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
