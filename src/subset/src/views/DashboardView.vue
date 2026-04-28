@@ -75,23 +75,23 @@ onBeforeUnmount(() => {
 <template>
   <div style="padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
     <!-- Status Cards -->
-    <a-row :gutter="16" style="margin-bottom: 16px; flex-shrink: 0;">
-      <a-col :span="4">
+    <a-row :gutter="[16, 16]" style="margin-bottom: 16px; flex-shrink: 0;">
+      <a-col :xs="12" :sm="6" :md="4">
         <a-card size="small">
           <a-statistic :title="t('statusUptime')" :value="formatUptime(uptimeSeconds)" />
         </a-card>
       </a-col>
-      <a-col :span="4">
+      <a-col :xs="12" :sm="6" :md="4">
         <a-card size="small">
           <a-statistic :title="t('statusPython')" :value="status?.python_version || '-'" />
         </a-card>
       </a-col>
-      <a-col :span="4">
+      <a-col :xs="12" :sm="6" :md="4">
         <a-card size="small">
           <a-statistic :title="t('statusLogLevel')" :value="status?.log_level || '-'" />
         </a-card>
       </a-col>
-      <a-col :span="12">
+      <a-col :xs="12" :sm="6" :md="12">
         <a-card size="small">
           <a-statistic :title="t('statusEmbyUrl')" :value="status?.emby_server_url || '-'" />
         </a-card>

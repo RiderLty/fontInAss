@@ -299,7 +299,7 @@ defineExpose({ toggleFullscreen });
   position: absolute;
   bottom: 20px;
   right: 20px;
-  width: 300px;
+  width: min(300px, calc(100vw - 40px));
   background: rgba(20, 20, 40, 0.9);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -310,7 +310,7 @@ defineExpose({ toggleFullscreen });
   transition: width 0.25s ease, padding 0.25s ease;
 }
 .hdr-container--real-fs .hdr-panel {
-  width: 340px;
+  width: min(340px, calc(100vw - 48px));
   bottom: 24px;
   right: 24px;
 }

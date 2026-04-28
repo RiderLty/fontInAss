@@ -478,7 +478,7 @@ onBeforeUnmount(() => {
 
         <!-- 勾选开关改为两列一行 -->
         <a-row :gutter="16">
-          <a-col :span="12">
+          <a-col :xs="24" :sm="12">
             <a-form-item>
               <template #label>
                 <a-tooltip :title="t('restoreRenamedFontDesc')">
@@ -489,7 +489,7 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-col>
 
-          <a-col :span="12">
+          <a-col :xs="24" :sm="12">
             <a-form-item>
               <template #label>
                 <a-tooltip :title="t('clearEmbeddedFontsDesc')">
@@ -500,7 +500,7 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-col>
 
-          <a-col :span="12">
+          <a-col :xs="24" :sm="12">
             <a-form-item>
               <template #label>
                 <a-tooltip :title="t('downloadFontsDesc')">
@@ -511,7 +511,7 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-col>
 
-          <a-col :span="12">
+          <a-col :xs="24" :sm="12">
             <a-form-item>
               <template #label>
                 <a-tooltip :title="t('clearAfterDownloadDesc')">
@@ -522,7 +522,7 @@ onBeforeUnmount(() => {
             </a-form-item>
           </a-col>
 
-          <a-col :span="12">
+          <a-col :xs="24" :sm="12">
             <a-form-item>
               <template #label>
                 <a-tooltip :title="t('strictModeDesc')">

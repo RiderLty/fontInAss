@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import { useMissLogs } from '../composables/useMissLogs'
@@ -165,6 +165,15 @@ const drawerTitle = computed(() => {
   return ''
 })
 
+const isMobile = ref(window.innerWidth < 768)
+const drawerWidth = computed(() => isMobile.value ? '90vw' : 500)
+
+onMounted(() => {
+  const onResize = () => { isMobile.value = window.innerWidth < 768 }
+  window.addEventListener('resize', onResize)
+  onBeforeUnmount(() => window.removeEventListener('resize', onResize))
+})
+
 const scrollConfig = computed(() => ({ y: tableHeight.value }))
 const headerClick = (field) => ({ style: 'cursor: pointer', onClick: () => handleSort(field) })
 
@@ -182,23 +191,23 @@ loadMissData()
       </template>
 
       <!-- Summary Stats -->
-      <a-row :gutter="16" style="margin-bottom: 16px; flex-shrink: 0;">
-        <a-col :span="6">
+      <a-row :gutter="[12, 12]" style="margin-bottom: 12px; flex-shrink: 0;">
+        <a-col :xs="12" :sm="6">
           <a-card size="small" style="text-align: center;">
             <a-statistic :title="t('missLogTotalFonts')" :value="summary.total_fonts || 0" />
           </a-card>
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="12" :sm="6">
           <a-card size="small" style="text-align: center;">
             <a-statistic :title="t('missLogTotalUrls')" :value="summary.total_urls || 0" />
           </a-card>
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="12" :sm="6">
           <a-card size="small" style="text-align: center;">
             <a-statistic :title="t('missLogTotalGlyphs')" :value="summary.total_glyphs || 0" />
           </a-card>
         </a-col>
-        <a-col :span="6">
+        <a-col :xs="12" :sm="6">
           <a-card size="small" style="text-align: center;">
             <a-statistic :title="t('missLogTotalEvents')" :value="summary.total_events || 0" />
           </a-card>
@@ -217,7 +226,7 @@ loadMissData()
           v-model:value="searchQuery"
           :placeholder="t(viewMode === 'fonts' ? 'missLogSearch' : 'missLogSearchFont')"
           size="small"
-          style="width: 200px;"
+          style="width: 180px;"
           @search="handleSearch"
           allow-clear
         />
@@ -318,7 +327,9 @@ loadMissData()
       v-model:open="drawerVisible"
       :title="drawerTitle"
       placement="right"
-      :width="500"
+      :width="drawerWidth"
+      :body-style="{ padding: '12px' }"
+      :header-style="{ padding: '12px 16px' }"
     >
       <!-- Font Detail -->
       <template v-if="detailFont && fontDetail">
