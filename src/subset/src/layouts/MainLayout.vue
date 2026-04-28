@@ -12,6 +12,7 @@ const { themeMode, cycleTheme } = useTheme()
 
 const menuItems = computed(() => [
   { key: '/dashboard', label: t('navDashboard'), icon: '📊' },
+  { key: '/miss-logs', label: t('navMissLogs'), icon: '🔍' },
   { key: '/subset', label: t('navSubset'), icon: '📁' },
   { key: '/hdr', label: t('navHdr'), icon: '🎨' },
   { key: '/settings', label: t('navSettings'), icon: '⚙️' },

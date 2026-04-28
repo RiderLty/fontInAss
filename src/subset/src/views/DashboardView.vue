@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSSE } from '../composables/useSSE'
 
@@ -30,12 +30,27 @@ const levelColor = (level) => {
   }
 }
 
+const uptimeSeconds = ref(0)
+let uptimeBase = 0
+let uptimeFetchedAt = 0
+let uptimeTimer = null
+
 const fetchStatus = async () => {
   try {
     const resp = await fetch(`${API_BASE_URL}/api/status`)
-    status.value = await resp.json()
+    const data = await resp.json()
+    status.value = data
+    uptimeBase = data.uptime_seconds || 0
+    uptimeFetchedAt = Date.now()
+    uptimeSeconds.value = uptimeBase
   } catch (e) {
     console.error('Failed to fetch status:', e)
+  }
+}
+
+const updateUptime = () => {
+  if (uptimeFetchedAt) {
+    uptimeSeconds.value = uptimeBase + Math.floor((Date.now() - uptimeFetchedAt) / 1000)
   }
 }
 
@@ -44,41 +59,46 @@ const formatUptime = (seconds) => {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60
-  if (h > 0) return `${h}h ${m}m`
+  if (h > 0) return `${h}h ${m}m ${s}s`
   if (m > 0) return `${m}m ${s}s`
   return `${s}s`
 }
 
 fetchStatus()
+uptimeTimer = setInterval(updateUptime, 1000)
+
+onBeforeUnmount(() => {
+  if (uptimeTimer) clearInterval(uptimeTimer)
+})
 </script>
 
 <template>
   <div style="padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
     <!-- Status Cards -->
     <a-row :gutter="16" style="margin-bottom: 16px; flex-shrink: 0;">
-      <a-col :span="6">
+      <a-col :span="4">
         <a-card size="small">
-          <a-statistic :title="t('statusVersion')" :value="status?.version || '-'" />
+          <a-statistic :title="t('statusUptime')" :value="formatUptime(uptimeSeconds)" />
         </a-card>
       </a-col>
-      <a-col :span="6">
-        <a-card size="small">
-          <a-statistic :title="t('statusUptime')" :value="formatUptime(status?.uptime_seconds)" />
-        </a-card>
-      </a-col>
-      <a-col :span="6">
+      <a-col :span="4">
         <a-card size="small">
           <a-statistic :title="t('statusPython')" :value="status?.python_version || '-'" />
         </a-card>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="4">
         <a-card size="small">
           <a-statistic :title="t('statusLogLevel')" :value="status?.log_level || '-'" />
         </a-card>
       </a-col>
+      <a-col :span="12">
+        <a-card size="small">
+          <a-statistic :title="t('statusEmbyUrl')" :value="status?.emby_server_url || '-'" />
+        </a-card>
+      </a-col>
     </a-row>
 
-    <!-- Log Viewer -->
+    <!-- Live Logs -->
     <a-card :title="t('dashboardLogs')" size="small" style="flex: 1; min-height: 0; display: flex; flex-direction: column;" :body-style="{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '8px' }">
       <template #extra>
         <a-space>

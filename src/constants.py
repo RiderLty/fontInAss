@@ -72,8 +72,7 @@ for start, end in ranges:
     for code_point in range(start, end + 1):
         PUNCTUATION_UNICODES.add(code_point)
 
-# miss_logs settings (used by subsetter for lazy init)
-MISS_LOGS_NAME = str(os.environ.get("MISS_LOGS_NAME", default="miss_logs"))
-MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))
-MISS_LOGS_ORDER = os.environ.get("MISS_LOGS_ORDER", default="False") == "True"
-MISS_LOGS_PATH = os.path.join(LOGS_PATH, f"{MISS_LOGS_NAME}.txt")
+# miss_logs settings
+MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))  # MB
+MISS_LOGS_DB_PATH = os.path.join(DATA_PATH, "miss_logs.db")
+MISS_LOGS_TXT_PATH = os.path.join(LOGS_PATH, "miss_logs.txt")

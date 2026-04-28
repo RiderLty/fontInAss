@@ -14,6 +14,12 @@ const routes = [
         meta: { titleKey: 'navDashboard' },
       },
       {
+        path: 'miss-logs',
+        name: 'MissLogs',
+        component: () => import('../views/MissLogsView.vue'),
+        meta: { titleKey: 'navMissLogs' },
+      },
+      {
         path: 'subset',
         name: 'Subset',
         component: () => import('../views/SubsetView.vue'),

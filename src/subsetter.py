@@ -15,13 +15,21 @@ from config import get_config
 # from analyseAss import analyseAss
 from py2cy.c_utils import analyseAss
 
+def _err_to_str(err):
+    if isinstance(err, dict):
+        if err["type"] == "font":
+            return f"字体缺失 \t\t[{err['font_name']}]"
+        else:
+            return f"缺少字形 \t\t[{err['font_name']}]{err['chars']}"
+    return str(err)
+
+
 class SubSetter:
     def __init__(self, font_manager_instance: FontManager) -> None:
         self.font_manager_instance = font_manager_instance
         cache_size = get_config("SUB_CACHE_SIZE")
         cache_ttl = get_config("SUB_CACHE_TTL")
         self.cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_ttl > 0 else LRUCache(maxsize=cache_size)
-        self._miss_logs_manager = None
 
     # def close(self):
     # self.processPool.shutdown()
@@ -45,7 +53,7 @@ class SubSetter:
             if miss_glyph == "":
                 return None, result
             else:
-                return f"缺少字形 \t\t[{font_name}]{miss_glyph}", result
+                return {"type": "glyph", "font_name": font_name, "chars": miss_glyph}, result
         except Exception as e:
             logger.exception(f"子集化出错 \t\t[{font_name}]")
             # logger.error(f"子集化出错 \t\t[{font_name}]: \n{traceback.format_exc()}")
@@ -55,16 +63,14 @@ class SubSetter:
         try:
             font_bytes, index = await self.font_manager_instance.load_font(font_name, weight, italic)
             if font_bytes is None:
-                # 与return后的totalErrors显示重复
-                # logger.error(f"字体缺失 \t\t[{font_name}]")
-                return f"字体缺失 \t\t[{font_name}]", ""
+                return {"type": "font", "font_name": font_name}, ""
         except Exception as e:
             logger.exception(f"加载字体出错 \t\t[{font_name}]")
             # logger.error(f"加载字体出错 \t\t[{font_name}]: \n{traceback.format_exc()}")
             return f"加载字体出错 \t\t[{font_name}]: \n{str(e)}", ""
         return SubSetter.font_subsetter(font_bytes, index, font_name, weight, italic, unicode_set)
 
-    async def process(self, raw_bytes, user_hsv_s, user_hsv_v):
+    async def process(self, raw_bytes, user_hsv_s, user_hsv_v, url=None):
         bytes_hash = bytes_to_hash(raw_bytes + int((user_hsv_s*10 + user_hsv_v) * 100).to_bytes(4, byteorder="big", signed=True))
 
         ass_encode, ass_text = bytes_to_str(raw_bytes)
@@ -124,37 +130,39 @@ class SubSetter:
             tasks = [self.load_subset_encode(font_name, weight, italic, unicode_set) for ((font_name, weight, italic), unicode_set) in font_char_list.items()]
             total_errors = []
             display_errors = []
-            logs_errors = []
+            db_errors = []
 
             for task in asyncio.as_completed(tasks):
                 err, result = await task
                 if err:
-                    total_errors.append(err)
-                    if err.startswith("字体缺失"):
-                        display_errors.append(err)
-                        if get_config("MISS_LOGS"):
-                            logs_errors.append(err)
-                    if err.startswith("缺少字形"):
-                        # 忽略缺失字形显示意思，默认值为False，意思就是默认不忽略
-                        if not ERROR_DISPLAY_IGNORE_GLYPH:
-                            display_errors.append(err)
-                        if get_config("MISS_GLYPH_LOGS"):
-                            logs_errors.append(err)
+                    err_str = _err_to_str(err)
+                    total_errors.append(err_str)
+                    if isinstance(err, dict):
+                        if err["type"] == "font":
+                            display_errors.append(err_str)
+                            if get_config("MISS_LOGS"):
+                                db_errors.append(err)
+                        elif err["type"] == "glyph":
+                            if not ERROR_DISPLAY_IGNORE_GLYPH:
+                                display_errors.append(err_str)
+                            if get_config("MISS_GLYPH_LOGS"):
+                                db_errors.append(err)
                 embed_fonts_text += result
 
-            logger.info(f"ass分析 {(analyse_end_time - analyse_start_time) / 1000000:.2f}ms")  # {len(embed_fonts_text) / (1024 * 1024):.2f}MB in
-            logger.info(f"子集化嵌入 {(time.perf_counter_ns() - subset_start_time) / 1000000:.2f}ms")  # {len(embed_fonts_text) / (1024 * 1024):.2f}MB in
+            logger.info(f"ass分析 {(analyse_end_time - analyse_start_time) / 1000000:.2f}ms")
+            logger.info(f"子集化嵌入 {(time.perf_counter_ns() - subset_start_time) / 1000000:.2f}ms")
             error_display = get_config("ERROR_DISPLAY")
             if len(display_errors) != 0 and 0 < error_display <= 60:
                 ass_text = ass_insert_line(ass_text, f"0:00:{error_display:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(display_errors))
-            if logs_errors:
-                if self._miss_logs_manager is None:
-                    from logs import LogsManager
-                    import constants as _const
-                    self._miss_logs_manager = LogsManager(
-                        _const.MISS_LOGS_PATH, _const.MISS_LOGS_SIZE, _const.MISS_LOGS_ORDER
-                    )
-                asyncio.create_task(self._miss_logs_manager.insert(logs_errors))
+            if db_errors and url:
+                from miss_logs_db import MissLogsDB
+                from constants import MISS_LOGS_DB_PATH, MISS_LOGS_SIZE as _sz
+                _db = MissLogsDB(MISS_LOGS_DB_PATH, _sz)
+                for e in db_errors:
+                    if e["type"] == "font":
+                        asyncio.create_task(_db.insert_font_miss(url, e["font_name"]))
+                    else:
+                        asyncio.create_task(_db.insert_glyph_miss(url, e["font_name"], e["chars"]))
         # head, tai = ass_text.split("[Events]")
         # result_text = head + embed_fonts_text + "\n[Events]" + tai
         head, sep, tai = ass_text.partition("[Events]")
@@ -240,7 +248,7 @@ class SubSetter:
         for task in asyncio.as_completed(tasks):
             err, result = await task
             if err:
-                total_errors.append(err)
+                total_errors.append(_err_to_str(err))
             embed_fonts_text += result
         # 经常报错点，理应先检查ass_text
         head, sep, tai = ass_text.partition("[Events]")

@@ -70,6 +70,14 @@ CONFIG_SCHEMA = {
         "env_var": "MISS_GLYPH_LOGS",
         "description": "启用缺失字形日志记录",
     },
+    "MISS_LOGS_SIZE": {
+        "type": "integer",
+        "default": 20,
+        "min": 1,
+        "max": 1024,
+        "env_var": "MISS_LOGS_SIZE",
+        "description": "缺失日志数据库最大大小 (MB)",
+    },
     "DISABLE_ONLINE_FONTS": {
         "type": "boolean",
         "default": False,
