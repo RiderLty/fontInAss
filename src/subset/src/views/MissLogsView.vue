@@ -13,6 +13,7 @@ const sortOrder = ref('desc')
 const detailFont = ref(null)
 const detailUrl = ref(null)
 const drawerVisible = ref(false)
+const drawerGlyphs = ref([])
 
 // Virtual scroll table height
 const tableWrap = ref(null)
@@ -28,7 +29,6 @@ const updateTableHeight = () => {
 }
 
 onMounted(() => {
-  updateTableHeight()
   resizeObserver = new ResizeObserver(updateTableHeight)
   if (tableWrap.value) resizeObserver.observe(tableWrap.value)
 })
@@ -50,6 +50,7 @@ const loadMissData = () => {
   if (viewMode.value === 'fonts') fetchFonts(sortField.value, sortOrder.value, searchQuery.value)
   else if (viewMode.value === 'urls') fetchUrls(sortField.value, sortOrder.value)
   else if (viewMode.value === 'glyphs') fetchAllGlyphs(sortField.value, sortOrder.value, searchQuery.value)
+  nextTick(updateTableHeight)
 }
 
 const switchView = (mode) => {
@@ -79,6 +80,7 @@ const openFontDetail = async (fontName) => {
   drawerVisible.value = true
   await fetchFontDetail(fontName)
   await fetchGlyphs(fontName)
+  drawerGlyphs.value = [...glyphs.value]
 }
 
 const openUrlDetail = async (url) => {
@@ -218,7 +220,7 @@ loadMissData()
       </div>
 
       <!-- Data Table -->
-      <div ref="tableWrap" style="flex: 1; min-height: 0;">
+      <div ref="tableWrap" style="flex: 1; min-height: 0; overflow: hidden;">
         <!-- By Font -->
         <a-table
           v-if="viewMode === 'fonts'"
@@ -340,10 +342,10 @@ loadMissData()
           <a-table-column :title="t('missLogMissingCount')" data-index="count" :width="80" />
         </a-table>
 
-        <h4>{{ t('missLogGlyphDetail') }} ({{ glyphs?.length || 0 }})</h4>
+        <h4>{{ t('missLogGlyphDetail') }} ({{ drawerGlyphs?.length || 0 }})</h4>
         <a-table
-          v-if="glyphs && glyphs.length > 0"
-          :data-source="glyphs"
+          v-if="drawerGlyphs && drawerGlyphs.length > 0"
+          :data-source="drawerGlyphs"
           :pagination="false"
           size="small"
           row-key="missing_chars"
