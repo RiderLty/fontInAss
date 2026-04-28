@@ -136,7 +136,17 @@ const splitChars = (chars) => {
 
 const copyText = async (text) => {
   try {
-    await navigator.clipboard.writeText(text)
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.cssText = 'position:fixed;left:-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
     message.success(t('copied'))
   } catch {
     message.error(t('copyFail'))
@@ -276,10 +286,10 @@ loadMissData()
         >
           <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="200">
             <template #default="{ record }">
-              <a @click="openFontDetail(record.font_name)" style="cursor: pointer;">{{ record.font_name }}</a>
+              <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
             </template>
           </a-table-column>
-          <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars">
+          <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars" :width="260">
             <template #default="{ record }">
               <span
                 style="cursor: pointer; word-break: break-all; white-space: normal;"
