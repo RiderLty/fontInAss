@@ -239,7 +239,7 @@ loadMissData()
         >
           <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="280">
             <template #default="{ record }">
-              <a @click="openFontDetail(record.font_name)" style="cursor: pointer;">{{ record.font_name }}</a>
+              <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
             </template>
           </a-table-column>
           <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
