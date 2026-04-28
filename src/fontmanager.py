@@ -281,9 +281,13 @@ class FontManager:
             # self.executor.shutdown(wait=True)
             self.db_session.close()
             engine.dispose()
-            MAIN_LOOP.create_task(self.http_session.close())
         except Exception as e:
             logger.exception("关闭数据库连接发生错误")
+
+    async def close_async(self):
+        self.close()
+        if self.http_session and not self.http_session.closed:
+            await self.http_session.close()
 
     async def load_font(self, target_font_name, target_weight, target_italic):
         db_font_name = target_font_name.strip().lower()

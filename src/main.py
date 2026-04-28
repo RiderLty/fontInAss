@@ -349,13 +349,18 @@ if __name__ == "__main__":
     process_subset = subsetter_instance.process_subset  # 绑定函数
     server_instance = get_server(8011, MAIN_LOOP, app)
     init_logger()
-    MAIN_LOOP.run_until_complete(server_instance.serve())
-    # # 关闭和清理资源
+    try:
+        MAIN_LOOP.run_until_complete(server_instance.serve())
+    except KeyboardInterrupt:
+        pass
+    # 关闭和清理资源
     event_handler.stop()  # 停止文件监视器
     event_handler.join()  # 等待文件监视退出
-    font_manager_instance.close()  # 关闭aiohttp的session
     # subsetter_instance.close()  # 关闭进程池
     pending = asyncio.all_tasks(MAIN_LOOP)
-    MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))  # 等待异步任务结束
-    MAIN_LOOP.stop()  # 停止事件循环
-    MAIN_LOOP.close()  # 清理资源
+    for task in pending:
+        task.cancel()
+    MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+    MAIN_LOOP.run_until_complete(font_manager_instance.close_async())
+    MAIN_LOOP.stop()
+    MAIN_LOOP.close()
