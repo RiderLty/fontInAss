@@ -15,13 +15,13 @@ https://github.com/RiderLty/fontInAss&#xD;
 https://hub.docker.com/r/riderlty/fontinass&#xD;
 https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
   <Category/>
-  <WebUI>http://[IP]:[PORT:8012]/</WebUI>
+  <WebUI>http://[IP]:[PORT:8011]/</WebUI>
   <TemplateURL/>
   <Icon>https://www.foundertype.com/favicon.ico</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
-  <DateInstalled>1758029270</DateInstalled>
+  <DateInstalled>1777445090</DateInstalled>
   <DonateText/>
   <DonateLink/>
   <Requires/>
@@ -30,7 +30,6 @@ https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
   <Config Name="&#x5B57;&#x4F53;&#x5904;&#x7406;&#x7A0B;&#x5E8F;&#x7AEF;&#x53E3;" Target="8011" Default="8011" Mode="tcp" Description="&#x5B57;&#x4F53;&#x5904;&#x7406;&#x670D;&#x52A1;&#x7AEF;&#x53E3;&#xFF0C;&#x624B;&#x52A8;&#x8BBE;&#x7F6E;&#x53CD;&#x5411;&#x4EE3;&#x7406;&#x65F6;&#x4F7F;&#x7528;&#xFF0C;&#x975E;&#x5FC5;&#x8981;" Type="Port" Display="always" Required="false" Mask="false">8011</Config>
   <Config Name="data" Target="/data" Default="/mnt/user/appdata/fontinass/" Mode="rw" Description="&#x6570;&#x636E;&#x5E93;&#x6587;&#x4EF6;&#x5B58;&#x50A8;&#x4F4D;&#x7F6E;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/fontinass/</Config>
   <Config Name="&#x65E5;&#x5FD7;" Target="/logs" Default="/mnt/user/appdata/fontinass/" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/fontinass/</Config>
-  <Config Name="fonts" Target="/fonts" Default="" Mode="rw" Description="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6620;&#x5C04;&#x7684;&#x8DEF;&#x5F84;&#xFF0C;&#x540C;&#x65F6;&#x7528;&#x4E8E;&#x5B58;&#x50A8;&#x4E0B;&#x8F7D;&#x7684;&#x5B57;&#x4F53;&#x3002;" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/storage/Fonts/</Config>
   <Config Name="HDR" Target="HDR" Default="-1" Mode="" Description="HDR&#x9002;&#x914D;&#xFF0C;-1 &#x4E0D;&#x5F00;&#x542F;" Type="Variable" Display="always" Required="false" Mask="false">-1</Config>
   <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="" Mode="" Description="&#x65E5;&#x5FD7;&#x7B49;&#x7EA7;&#xFF0C;&#x53EF;&#x8BBE;&#x7F6E;&#x4E3A; DEBUG INFO WARNING ERROR CRITICAL" Type="Variable" Display="always" Required="false" Mask="false">DEBUG</Config>
   <Config Name="&#x9519;&#x8BEF;&#x663E;&#x793A;" Target="ERROR_DISPLAY" Default="0" Mode="" Description="&#x9519;&#x8BEF;&#x4FE1;&#x606F;&#x663E;&#x793A;&#xFF0C;&#x9ED8;&#x8BA4;&#x5173;&#x95ED;&#xFF0C;&#x5355;&#x4F4D;&#xFF08;&#x79D2;&#xFF09;&#x8303;&#x56F4;&#x5927;&#x4E8E;0&#x5C0F;&#x4E8E;60&#13;&#10;&#x5F00;&#x542F;&#x540E;&#x4F1A;&#x5728;&#x5B57;&#x5E55;&#x5F00;&#x5934;&#x63D2;&#x5165;&#x9519;&#x8BEF;&#x4FE1;&#x606F;&#x7528;&#x6765;&#x544A;&#x77E5;&#x5B57;&#x4F53;&#x7F3A;&#x5931;&#x6216;&#x8005;&#x5176;&#x4ED6;&#x9519;&#x8BEF;&#x4FE1;&#x606F;" Type="Variable" Display="always" Required="false" Mask="false">3</Config>
@@ -45,7 +44,7 @@ https://www.bilibili.com/video/BV1e1p2eMEVP</Overview>
   <Config Name="NGINX_GZIP&#x538B;&#x7F29;&#x7B49;&#x7EA7;" Target="NGINX_GZIP_COMP_LEVEL" Default="1" Mode="" Description="nginx&#x7684;gzip&#x538B;&#x7F29;&#x7B49;&#x7EA7;,&#x53EF;&#x7528;&#x503C;1~9&#xFF0C;&#x8BBE;&#x7F6E;&#x4E3A;&#x5176;&#x4ED6;&#x503C;&#x5219;&#x7981;&#x7528;gzip&#xFF08;noproxy&#x65E0;&#x4F5C;&#x7528;&#xFF09;" Type="Variable" Display="always" Required="false" Mask="false">1</Config>
   <Config Name="&#x5B57;&#x4F53;&#x7F3A;&#x5931;&#x6587;&#x4EF6;&#x8BB0;&#x5F55;" Target="MISS_LOGS" Default="False" Mode="" Description="&#x5B57;&#x4F53;&#x7F3A;&#x5931;&#x6587;&#x4EF6;&#x8BB0;&#x5F55;&#x5F00;&#x5173;&#xFF0C;&#x8BBE;&#x7F6E;&#x4E3A;True&#x4F1A;&#x628A;&#x5B57;&#x4F53;&#x7F3A;&#x5931;&#x8BB0;&#x5F55;&#x5230;MISS_LOGS_NAME" Type="Variable" Display="always" Required="false" Mask="false">True</Config>
   <Config Name="&#x7F3A;&#x5C11;&#x5B57;&#x5F62;&#x6587;&#x4EF6;&#x8BB0;&#x5F55;&#x5F00;&#x5173;" Target="MISS_GLYPH_LOGS" Default="False" Mode="" Description="&#x7F3A;&#x5C11;&#x5B57;&#x5F62;&#x6587;&#x4EF6;&#x8BB0;&#x5F55;&#x5F00;&#x5173;&#xFF0C;&#x8BBE;&#x7F6E;&#x4E3A;True&#x4F1A;&#x628A;&#x7F3A;&#x5C11;&#x5B57;&#x5F62;&#x8BB0;&#x5F55;&#x5230;MISS_LOGS_NAME" Type="Variable" Display="always" Required="false" Mask="false">True</Config>
-  <Config Name="&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x6587;&#x4EF6;&#x540D;" Target="MISS_LOGS_NAME" Default="miss_logs" Mode="" Description="&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x6587;&#x4EF6;&#x540D;&#xFF0C;&#x4EFB;&#x610F;&#x4E2D;&#x82F1;&#x6587;/&#x7EC4;&#x5408;&#xFF08;&#x7279;&#x6B8A;&#x7B26;&#x53F7;&#x9664;&#x5916;&#xFF09;" Type="Variable" Display="always" Required="false" Mask="false">miss_logs</Config>
   <Config Name="&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x6700;&#x5927;&#x8BB0;&#x5F55;&#x6570;" Target="MISS_LOGS_SIZE" Default="20" Mode="" Description="&#9;&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x6700;&#x5927;&#x8BB0;&#x5F55;&#x6570;&#xFF08;&#x884C;&#x6570;&#xFF09;&#xFF0C;&#x5355;&#x4F4D;&#xFF08;&#x884C;&#xFF09;" Type="Variable" Display="always" Required="false" Mask="false">9999</Config>
-  <Config Name="&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x65B0;&#x589E;&#x987A;&#x5E8F;" Target="MISS_LOGS_ORDER" Default="False" Mode="" Description="&#x7F3A;&#x5931;&#x5B57;&#x4F53;/&#x5B57;&#x5F62;&#x65E5;&#x8BB0;&#x65B0;&#x589E;&#x987A;&#x5E8F;&#xFF0C;&#x8BBE;&#x7F6E;&#x4E3A;True&#x65F6;&#x65B0;&#x589E;&#x65E5;&#x8BB0;&#x4F1A;&#x8BB0;&#x5F55;&#x5230;&#x6700;&#x540E;&#x9762;&#xFF0C;&#x53CD;&#x4E4B;&#x6700;&#x524D;&#x9762;" Type="Variable" Display="always" Required="false" Mask="false">True</Config>
+  <Config Name="RENAMED_FONT_RESTORE" Target="RENAMED_FONT_RESTORE" Default="" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">True</Config>
+  <Config Name="&#x672C;&#x5730;&#x5B57;&#x4F53;&#x6587;&#x4EF6;&#x5939;" Target="/fonts" Default="" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/storage/Fonts/</Config>
 </Container>
