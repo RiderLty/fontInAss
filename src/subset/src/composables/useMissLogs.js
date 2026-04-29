@@ -9,8 +9,6 @@ export function useMissLogs() {
   const fontDetail = ref(null)
   const urlDetail = ref(null)
   const glyphs = ref([])
-  const topFonts = ref([])
-  const topUrls = ref([])
   const loading = ref(false)
 
   const fetchSummary = async () => {
@@ -40,10 +38,14 @@ export function useMissLogs() {
     }
   }
 
-  const fetchFontDetail = async (fontName) => {
+  const fetchFontDetail = async (fontName, type = 'font') => {
     loading.value = true
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/miss-logs/fonts/${encodeURIComponent(fontName)}`)
+      const resp = await fetch(`${API_BASE_URL}/api/miss-logs/fonts/detail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ font_name: fontName, type }),
+      })
       if (resp.ok) {
         fontDetail.value = await resp.json()
       } else {
@@ -57,7 +59,11 @@ export function useMissLogs() {
   const fetchUrlDetail = async (url) => {
     loading.value = true
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/miss-logs/urls/${encodeURIComponent(url)}`)
+      const resp = await fetch(`${API_BASE_URL}/api/miss-logs/urls/detail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
       if (resp.ok) {
         urlDetail.value = await resp.json()
       } else {
@@ -90,19 +96,11 @@ export function useMissLogs() {
     }
   }
 
-  const fetchTopFonts = async (limit = 10) => {
-    const resp = await fetch(`${API_BASE_URL}/api/miss-logs/top-fonts?limit=${limit}`)
-    topFonts.value = await resp.json()
-  }
-
-  const fetchTopUrls = async (limit = 10) => {
-    const resp = await fetch(`${API_BASE_URL}/api/miss-logs/top-urls?limit=${limit}`)
-    topUrls.value = await resp.json()
-  }
-
   const deleteUrl = async (url) => {
-    const resp = await fetch(`${API_BASE_URL}/api/miss-logs/urls/${encodeURIComponent(url)}`, {
-      method: 'DELETE',
+    const resp = await fetch(`${API_BASE_URL}/api/miss-logs/urls/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
     })
     return resp.ok
   }
@@ -115,10 +113,9 @@ export function useMissLogs() {
   }
 
   return {
-    summary, fonts, urls, fontDetail, urlDetail, glyphs,
-    topFonts, topUrls, loading,
+    summary, fonts, urls, fontDetail, urlDetail, glyphs, loading,
     fetchSummary, fetchFonts, fetchUrls, fetchFontDetail,
-    fetchUrlDetail, fetchGlyphs, fetchAllGlyphs, fetchTopFonts, fetchTopUrls,
+    fetchUrlDetail, fetchGlyphs, fetchAllGlyphs,
     deleteUrl, clearAll,
   }
 }

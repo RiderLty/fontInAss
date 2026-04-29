@@ -154,15 +154,27 @@ class SubSetter:
             error_display = get_config("ERROR_DISPLAY")
             if len(display_errors) != 0 and 0 < error_display <= 60:
                 ass_text = ass_insert_line(ass_text, f"0:00:{error_display:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(display_errors))
-            if db_errors and url:
+            if db_errors:
+                md5_hash = hashlib.md5(raw_bytes).hexdigest()
+                miss_fonts = list(set(e["font_name"] for e in db_errors if e["type"] == "font"))
+                glyph_entries = []
+                seen = set()
+                for e in db_errors:
+                    if e["type"] == "glyph":
+                        key = (e["font_name"], e["chars"])
+                        if key not in seen:
+                            seen.add(key)
+                            glyph_entries.append({"font_name": e["font_name"], "missing_chars": e["chars"]})
+                record = {
+                    "url": url,
+                    "hash": md5_hash,
+                    "miss_fonts": miss_fonts,
+                    "miss_glyphs": glyph_entries,
+                }
                 from miss_logs_db import MissLogsDB
                 from constants import MISS_LOGS_DB_PATH, MISS_LOGS_SIZE as _sz
                 _db = MissLogsDB(MISS_LOGS_DB_PATH, _sz)
-                for e in db_errors:
-                    if e["type"] == "font":
-                        asyncio.create_task(_db.insert_font_miss(url, e["font_name"]))
-                    else:
-                        asyncio.create_task(_db.insert_glyph_miss(url, e["font_name"], e["chars"]))
+                asyncio.create_task(_db.insert_request(record))
         # head, tai = ass_text.split("[Events]")
         # result_text = head + embed_fonts_text + "\n[Events]" + tai
         head, sep, tai = ass_text.partition("[Events]")

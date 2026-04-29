@@ -78,10 +78,11 @@ const openFontDetail = async (fontName) => {
   detailFont.value = fontName
   detailUrl.value = null
   drawerVisible.value = true
-  await fetchFontDetail(fontName)
   if (viewMode.value === 'glyphs') {
+    await fetchFontDetail(fontName, 'glyph')
     drawerGlyphs.value = glyphs.value.filter(g => g.font_name === fontName)
   } else {
+    await fetchFontDetail(fontName, 'font')
     drawerGlyphs.value = []
   }
 }
@@ -208,7 +209,7 @@ loadMissData()
         </a-col>
         <a-col :xs="12" :sm="6">
           <a-card size="small" style="text-align: center;">
-            <a-statistic :title="t('missLogTotalEvents')" :value="summary.total_events || 0" />
+            <a-statistic :title="t('missLogTotalRequests')" :value="summary.total_requests || 0" />
           </a-card>
         </a-col>
       </a-row>
@@ -275,7 +276,7 @@ loadMissData()
               </a-tooltip>
             </template>
           </a-table-column>
-          <a-table-column data-index="font_count" :width="100" :title="t('missLogFontCount') + sortIcon('font_count')" :custom-header-cell="() => headerClick('font_count')" />
+          <a-table-column data-index="request_count" :width="100" :title="t('missLogTotalRequests') + sortIcon('request_count')" :custom-header-cell="() => headerClick('request_count')" />
           <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
             <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
           </a-table-column>
@@ -327,14 +328,14 @@ loadMissData()
       :title="drawerTitle"
       placement="right"
       :width="drawerWidth"
-      :body-style="{ padding: '12px' }"
+      :body-style="{ padding: '12px', overflowX: 'hidden' }"
       :header-style="{ padding: '12px 16px' }"
     >
       <!-- Font Detail -->
       <template v-if="detailFont && fontDetail">
         <a-descriptions :column="1" size="small" bordered style="margin-bottom: 16px;">
           <a-descriptions-item :label="t('missLogFontName')">{{ fontDetail.font_name }}</a-descriptions-item>
-          <a-descriptions-item :label="t('missLogTotalEvents')">{{ fontDetail.total_count }}</a-descriptions-item>
+          <a-descriptions-item :label="t('missLogMissingCount')">{{ fontDetail.total_count }}</a-descriptions-item>
           <a-descriptions-item :label="t('missLogLastSeen')">{{ formatTime(fontDetail.last_seen) }}</a-descriptions-item>
         </a-descriptions>
 
@@ -345,6 +346,7 @@ loadMissData()
           size="small"
           row-key="url"
           style="margin-bottom: 16px;"
+          table-layout="fixed"
         >
           <a-table-column title="URL" data-index="url">
             <template #default="{ record }">
@@ -364,10 +366,13 @@ loadMissData()
           size="small"
           row-key="missing_chars"
           style="margin-bottom: 16px;"
+          table-layout="fixed"
         >
           <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars">
             <template #default="{ record }">
-              <a-tag color="orange">{{ record.missing_chars }}</a-tag>
+              <div style="word-break: break-all; white-space: normal; display: flex; flex-wrap: wrap; gap: 2px;">
+                <a-tag v-for="(ch, i) in splitChars(record.missing_chars)" :key="i" color="orange" style="margin: 0;">{{ ch }}</a-tag>
+              </div>
             </template>
           </a-table-column>
           <a-table-column :title="t('missLogMissingCount')" data-index="total_count" :width="80" />
@@ -411,11 +416,14 @@ loadMissData()
           :pagination="false"
           size="small"
           row-key="missing_chars"
+          table-layout="fixed"
         >
-          <a-table-column :title="t('missLogFontName')" data-index="font_name" />
+          <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="120" />
           <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars">
             <template #default="{ record }">
-              <a-tag color="orange">{{ record.missing_chars }}</a-tag>
+              <div style="word-break: break-all; white-space: normal; display: flex; flex-wrap: wrap; gap: 2px;">
+                <a-tag v-for="(ch, i) in splitChars(record.missing_chars)" :key="i" color="orange" style="margin: 0;">{{ ch }}</a-tag>
+              </div>
             </template>
           </a-table-column>
           <a-table-column :title="t('missLogMissingCount')" data-index="count" :width="80" />

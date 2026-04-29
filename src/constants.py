@@ -74,5 +74,4 @@ for start, end in ranges:
 
 # miss_logs settings
 MISS_LOGS_SIZE = int(os.environ.get("MISS_LOGS_SIZE", default=20))  # MB
-MISS_LOGS_DB_PATH = os.path.join(DATA_PATH, "miss_logs.db")
-MISS_LOGS_TXT_PATH = os.path.join(LOGS_PATH, "miss_logs.txt")
+MISS_LOGS_DB_PATH = os.path.join(DATA_PATH, "missLogs.ver.2.6.db")

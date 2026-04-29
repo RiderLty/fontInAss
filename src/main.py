@@ -27,7 +27,7 @@ from miss_logs_db import MissLogsDB
 import mimetypes
 import urllib.parse
 
-from constants import MISS_LOGS_DB_PATH, MISS_LOGS_TXT_PATH, MISS_LOGS_SIZE
+from constants import MISS_LOGS_DB_PATH, MISS_LOGS_SIZE
 
 _start_time = time.time()
 
@@ -216,23 +216,28 @@ async def api_miss_logs_summary():
     return await miss_logs_db.get_summary()
 
 @app.get("/api/miss-logs/fonts")
-async def api_miss_logs_fonts(sort: str = "last_seen", order: str = "desc", q: str = None):
-    return await miss_logs_db.get_all_fonts(sort_by=sort, order=order, q=q)
+async def api_miss_logs_fonts(sort: str = "total_count", order: str = "desc", q: str = None):
+    return await miss_logs_db.get_fonts(sort_by=sort, order=order, q=q)
 
-@app.get("/api/miss-logs/fonts/{font_name:path}")
-async def api_miss_logs_font_detail(font_name: str):
-    detail = await miss_logs_db.get_font_detail(font_name)
+@app.post("/api/miss-logs/fonts/detail")
+async def api_miss_logs_font_detail(body: dict):
+    font_name = body.get("font_name", "")
+    miss_type = body.get("type", "font")
+    if miss_type == "glyph":
+        detail = await miss_logs_db.get_glyph_font_detail(font_name)
+    else:
+        detail = await miss_logs_db.get_font_detail(font_name)
     if not detail:
         raise HTTPException(status_code=404, detail="Font not found")
     return detail
 
 @app.get("/api/miss-logs/urls")
 async def api_miss_logs_urls(sort: str = "last_seen", order: str = "desc"):
-    return await miss_logs_db.get_all_urls(sort_by=sort, order=order)
+    return await miss_logs_db.get_urls(sort_by=sort, order=order)
 
-@app.get("/api/miss-logs/urls/{url:path}")
-async def api_miss_logs_url_detail(url: str):
-    url = urllib.parse.unquote(url)
+@app.post("/api/miss-logs/urls/detail")
+async def api_miss_logs_url_detail(body: dict):
+    url = body.get("url", "")
     detail = await miss_logs_db.get_url_detail(url)
     if not detail:
         raise HTTPException(status_code=404, detail="URL not found")
@@ -240,21 +245,11 @@ async def api_miss_logs_url_detail(url: str):
 
 @app.get("/api/miss-logs/glyphs")
 async def api_miss_logs_glyphs(font: str = "", sort: str = "total_count", order: str = "desc"):
-    if font:
-        return await miss_logs_db.get_glyphs_by_font(font)
-    return await miss_logs_db.get_all_glyphs(sort_by=sort, order=order)
+    return await miss_logs_db.get_glyphs(sort_by=sort, order=order, font_name=font or None)
 
-@app.get("/api/miss-logs/top-fonts")
-async def api_miss_logs_top_fonts(limit: int = 10):
-    return await miss_logs_db.get_top_fonts(limit)
-
-@app.get("/api/miss-logs/top-urls")
-async def api_miss_logs_top_urls(limit: int = 10):
-    return await miss_logs_db.get_top_urls(limit)
-
-@app.delete("/api/miss-logs/urls/{url:path}")
-async def api_miss_logs_delete_url(url: str):
-    url = urllib.parse.unquote(url)
+@app.post("/api/miss-logs/urls/delete")
+async def api_miss_logs_delete_url(body: dict):
+    url = body.get("url", "")
     await miss_logs_db.delete_url(url)
     return {"success": True}
 
@@ -404,15 +399,6 @@ if __name__ == "__main__":
     ssl._create_default_https_context = ssl._create_unverified_context
     font_manager_instance = FontManager()
     subsetter_instance = SubSetter(font_manager_instance=font_manager_instance)
-    # 迁移旧的纯文本缺失日志到 SQLite
-    if os.path.exists(MISS_LOGS_TXT_PATH):
-        try:
-            count = miss_logs_db.migrate_from_txt(MISS_LOGS_TXT_PATH)
-            if count > 0:
-                os.rename(MISS_LOGS_TXT_PATH, MISS_LOGS_TXT_PATH + ".bak")
-                logger.info(f"已迁移 {count} 条旧缺失日志到 SQLite")
-        except Exception as e:
-            logger.exception("迁移旧缺失日志失败")
     event_handler = dirmonitor(font_manager_instance=font_manager_instance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = subsetter_instance.process  # 绑定函数
