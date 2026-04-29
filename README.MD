@@ -50,7 +50,8 @@ docker run -d --name=fontinass --restart=unless-stopped \
   -v /yourDir/fontinass/logs:/logs \
 ```
 
-如果你需要批量字幕字体子集化，映射8011端口后在网页访问`http://[ip]:8011/subset`（详细功能见下展开）
+映射8011端口后可在网页访问控制面板`http://[ip]:8011/fontinass`
+
 
 ### 批量字幕子集化介绍
 
@@ -212,13 +213,15 @@ server {
 
 ## 其他配置说明
 
-容器内部端口`8011`为字体与js处理服务
+容器内部端口`8011`为字体与js处理服务，同时提供控制面板
 
 `8012`为nginx反向代理端口，使用此端口访问代理后的服务器
 
-如有其他需求，可暴露`8011`端口用于字幕处理与HDR设置等
+如有其他需求，可暴露`8011`端口用于访问控制面板、字幕处理与HDR调整等
 
 ## 配置
+
+配置项均可通过控制面板的设置页面（`http://[ip]:8011/fontinass/#/settings`）在线修改，修改后立即生效，部分设置需要重启服务生效。
 
 | 配置项                        | 描述                                                                    | 默认值       |
 |:---------------------------|:----------------------------------------------------------------------|:----------|
@@ -234,12 +237,13 @@ server {
 | LOG_LEVEL                  | 日志等级，可设置为 DEBUG、INFO、WARNING、ERROR、CRITICAL                           | INFO      |
 | ERROR_DISPLAY              | 错误信息显示，默认关闭，单位（秒）范围大于0小于60，开启后会在字幕开头插入错误信息用来告知字体缺失或者其他错误信息。           | 0         |
 | ERROR_DISPLAY_IGNORE_GLYPH | 错误信息显示开启时，设置为False显示缺少字形+字体缺失信息，设置为True后只会显示字体缺失信息                    | False     |
-| MISS_LOGS                  | 字体缺失文件记录开关，设置为True会把字体缺失记录到`MISS_LOGS_NAME`                           | False     |
-| MISS_GLYPH_LOGS            | 缺少字形文件记录开关，设置为True会把缺少字形记录到`MISS_LOGS_NAME`                           | False     |
+| MISS_LOGS                  | 字体缺失文件记录开关，设置为True会把字体缺失记录到数据库，可在控制面板「缺失记录」页面查看                    | False     |
+| MISS_GLYPH_LOGS            | 缺少字形文件记录开关，设置为True会把缺少字形记录到数据库，可在控制面板「缺失记录」页面查看                    | False     |
 | MISS_LOGS_NAME             | 字体缺失/缺少字形日记文件名，任意中英文/组合（特殊符号除外）                                       | miss_logs |
 | MISS_LOGS_SIZE             | 字体缺失/缺少字形日记最大记录数（行数），单位（行）                                            | 20        |
 | MISS_LOGS_ORDER            | 字体缺失/缺少字形日记新增顺序，设置为True时新增日记会记录到最后面，反之最前面                             | False     |
 | DISABLE_ONLINE_FONTS       | 禁用在线字体下载开关，设置为True时会禁用从在线字体数据库下载字体，仅使用本地字体数据库中的字体 | False     |
+| FONT_DIRS                  | 额外字体目录路径，多个用`;`分隔，会自动扫描子目录                                              | None      |
 
 ⚠️如果你的Emby可以直接播放内嵌字体的MKV，请手动设置EMBY_WEB_EMBED_FONT与RENAMED_FONT_RESTORE都为False 
 > [!NOTE]
@@ -256,7 +260,7 @@ server {
   -e SRT_2_ASS_STYLE='Style: Default,楷体,20,&H03FFFFFF,&H00FFFFFF,&H00000000,&H02000000,-1,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1'
 ```
 
-通过```http://[ip]:8011/color/set```可调整字幕整体颜色亮度与饱和度，避免HDR显示时过亮(需开放8011端口)
+通过控制面板的HDR调整页面（`http://[ip]:8011/fontinass/#/hdr`）可调整字幕整体颜色亮度与饱和度，避免HDR显示时过亮
 
 
 ## 关于飞牛影视
