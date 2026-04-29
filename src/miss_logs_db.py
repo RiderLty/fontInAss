@@ -97,22 +97,11 @@ class MissLogsDB:
                 "INSERT INTO urls(url, created_at) VALUES(?, ?) "
                 "ON CONFLICT(url) DO NOTHING", (url, now))
             self._conn.execute(
-                "INSERT INTO fonts(font_name, total_count, last_seen) VALUES(?, 1, ?) "
-                "ON CONFLICT(font_name) DO UPDATE SET "
-                "total_count = total_count + 1, last_seen = excluded.last_seen",
-                (font_name, now))
-            self._conn.execute(
                 "INSERT INTO glyphs(font_name, missing_chars, total_count, last_seen) "
                 "VALUES(?, ?, 1, ?) "
                 "ON CONFLICT(font_name, missing_chars) DO UPDATE SET "
                 "total_count = total_count + 1, last_seen = excluded.last_seen",
                 (font_name, missing_chars, now))
-            self._conn.execute(
-                "INSERT INTO url_fonts(url_id, font_name, count, first_seen, last_seen) "
-                "VALUES(?, ?, 1, ?, ?) "
-                "ON CONFLICT(url_id, font_name) DO UPDATE SET "
-                "count = count + 1, last_seen = excluded.last_seen",
-                (url, font_name, now, now))
             self._conn.execute(
                 "INSERT INTO url_glyphs(url_id, font_name, missing_chars, count, first_seen, last_seen) "
                 "VALUES(?, ?, ?, 1, ?, ?) "
@@ -363,22 +352,11 @@ class MissLogsDB:
                     self._conn.execute(
                         "INSERT OR IGNORE INTO urls(url, created_at) VALUES('', ?)", (now,))
                     self._conn.execute(
-                        "INSERT INTO fonts(font_name, total_count, last_seen) VALUES(?, 1, ?) "
-                        "ON CONFLICT(font_name) DO UPDATE SET "
-                        "total_count = total_count + 1, last_seen = excluded.last_seen",
-                        (font_name, now))
-                    self._conn.execute(
                         "INSERT INTO glyphs(font_name, missing_chars, total_count, last_seen) "
                         "VALUES(?, ?, 1, ?) "
                         "ON CONFLICT(font_name, missing_chars) DO UPDATE SET "
                         "total_count = total_count + 1, last_seen = excluded.last_seen",
                         (font_name, chars, now))
-                    self._conn.execute(
-                        "INSERT INTO url_fonts(url_id, font_name, count, first_seen, last_seen) "
-                        "VALUES('', ?, 1, ?, ?) "
-                        "ON CONFLICT(url_id, font_name) DO UPDATE SET "
-                        "count = count + 1, last_seen = excluded.last_seen",
-                        (font_name, now, now))
                     self._conn.execute(
                         "INSERT INTO url_glyphs(url_id, font_name, missing_chars, count, first_seen, last_seen) "
                         "VALUES('', ?, ?, 1, ?, ?) "

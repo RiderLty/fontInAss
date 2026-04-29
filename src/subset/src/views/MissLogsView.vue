@@ -82,8 +82,7 @@ const openFontDetail = async (fontName) => {
   if (viewMode.value === 'glyphs') {
     drawerGlyphs.value = glyphs.value.filter(g => g.font_name === fontName)
   } else {
-    await fetchGlyphs(fontName)
-    drawerGlyphs.value = [...glyphs.value]
+    drawerGlyphs.value = []
   }
 }
 
