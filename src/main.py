@@ -88,11 +88,11 @@ if config_manager.get("EMBY_WEB_EMBED_FONT")[0]:
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 
-# 挂载前端静态文件，访问 ip:8011/subset
+# 挂载前端静态文件，访问 ip:8011/fontinass
 app.mount(
-    "/subset",
+    "/fontinass",
     StaticFiles(directory=os.path.join(ROOT_PATH, "subset/dist"), html=True),
-    name="subset"
+    name="fontinass"
 )
 
 @app.post("/api/subset")
@@ -263,10 +263,10 @@ async def api_miss_logs_clear():
     await miss_logs_db.clear_all()
     return {"success": True}
 
-# 重定向/subset 到 /subset/
-@app.get("/subset")
-async def redirect_subset():
-    return RedirectResponse(url="/subset/")
+# 重定向/fontinass 到 /fontinass/
+@app.get("/fontinass")
+async def redirect_fontinass():
+    return RedirectResponse(url="/fontinass/")
 
 @app.post("/fontinass/process_bytes")
 async def process_bytes(request: Request):

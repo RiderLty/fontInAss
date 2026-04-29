@@ -42,7 +42,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory('/subset/'),
+  history: createWebHashHistory('/fontinass/'),
   routes,
 })
 
