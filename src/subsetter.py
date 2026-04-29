@@ -47,7 +47,7 @@ class SubSetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             # miss_glyph = "".join([chr(x) for x in unicode_set if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
-            logger.info(f"子集化 {len(unicode_set)}个字符 {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t[{font_name}]")
+            logger.info(f"子集化 {len(unicode_set)}个字符 {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t\t[{font_name}]")
             miss_glyph = "".join([chr(x) for x in unicode_set.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             result = f"fontname:{font_name}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             if miss_glyph == "":
