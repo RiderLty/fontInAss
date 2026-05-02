@@ -140,6 +140,8 @@ server {
     gzip_comp_level 1;
     gzip_types text/x-ssa;
     proxy_buffer_size 64m;
+    proxy_buffers 64 64m;
+    proxy_busy_buffers_size 64m;
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
         proxy_http_version 1.1;
@@ -160,6 +162,11 @@ server {
 
     location ~* /videos/(.*)/Subtitles/(.*)/(Stream.ass|Stream.ssa|Stream.srt|Stream.)$ {
         #仅匹配ass与srt字幕文件，Stream适配infuse
+        #修改为你的fontinass服务器地址
+        proxy_pass http://127.0.0.1:8011;
+    }
+
+    location ~* /v/api/v1/subtitle/dl/(.*)  {
         #修改为你的fontinass服务器地址
         proxy_pass http://127.0.0.1:8011;
     }
