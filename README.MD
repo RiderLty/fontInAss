@@ -139,6 +139,7 @@ server {
     gzip_http_version 1.0;
     gzip_comp_level 1;
     gzip_types text/x-ssa;
+    proxy_buffer_size 64m;
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
         proxy_http_version 1.1;

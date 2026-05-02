@@ -5,6 +5,7 @@ server {
     gzip_http_version 1.0;
     gzip_comp_level $NGINX_GZIP_COMP_LEVEL;
     gzip_types text/x-ssa;
+    proxy_buffer_size 64m;
 
     location ~ /(socket|embywebsocket) {
         proxy_pass $EMBY_SERVER_URL;
