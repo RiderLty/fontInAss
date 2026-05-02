@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
       </template>
       <div
         ref="logContainer"
-        style="flex: 1; min-height: 0; overflow-y: auto; background: #1e1e1e; border-radius: 4px; padding: 8px; font-family: 'Courier New', monospace; font-size: 12px;"
+        style="flex: 1; min-height: 0; overflow-y: auto; background: #1e1e1e; border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px;"
       >
         <div v-if="messages.length === 0" style="color: #666; text-align: center; padding: 40px;">
           {{ t('logWaiting') }}

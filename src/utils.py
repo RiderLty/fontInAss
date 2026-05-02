@@ -552,3 +552,35 @@ def check_section(ass_text: str, section: str) -> int:
 
     content = match.group(1).strip()
     return 1 if content else 2
+
+
+def display_len(s: str) -> int:
+    """估算显示宽度：非 ASCII 字符按 2 算（不精确）"""
+    return sum(2 if ord(ch) > 127 else 1 for ch in s)
+
+def left_fixed_width(s: str, width: int = 36, fillchar: str = " ") -> str:
+    """
+    将字符串左对齐，按显示宽度填充或截断到指定宽度。
+    宽度单位：英文字符宽度（中文占2）。
+    """
+    # 1. 如果字符串显示宽度超过目标宽度，需要截断
+    if display_len(s) > width:
+        # 逐字符累加显示宽度，确保截断后宽度 ≤ 目标宽度
+        truncated = ""
+        cur_width = 0
+        for ch in s:
+            ch_width = 2 if ord(ch) > 127 else 1
+            if cur_width + ch_width > width:
+                break
+            truncated += ch
+            cur_width += ch_width
+        s = truncated
+
+    # 2. 计算需要填充的空格数量（显示宽度）
+    cur_width = display_len(s)
+    pad_len = width - cur_width
+    if pad_len <= 0:
+        return s
+
+    # 3. 左对齐，右侧填充 fillchar（默认为空格）
+    return s + fillchar * pad_len

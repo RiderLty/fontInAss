@@ -6,7 +6,7 @@ import uharfbuzz
 from cachetools import LRUCache, TTLCache
 from fontmanager import FontManager
 import colorAdjust
-from utils import ass_insert_line, bytes_to_str, is_srt, bytes_to_hash, srt_to_ass, remove_section, check_section
+from utils import ass_insert_line, bytes_to_str, is_srt, bytes_to_hash, srt_to_ass, remove_section, check_section , left_fixed_width
 from py2cy.c_utils import uuencode
 from constants import (logger, ERROR_DISPLAY_IGNORE_GLYPH,
                        PUNCTUATION_UNICODES, Result)
@@ -18,9 +18,9 @@ from py2cy.c_utils import analyseAss
 def _err_to_str(err):
     if isinstance(err, dict):
         if err["type"] == "font":
-            return f"字体缺失 \t\t[{err['font_name']}]"
+            return left_fixed_width(f"字体缺失") + f"[{err['font_name']}]"
         else:
-            return f"缺少字形 \t\t[{err['font_name']}]{err['chars']}"
+            return left_fixed_width(f"缺少字形") + f"[{err['font_name']}]({err['chars']})"
     return str(err)
 
 
@@ -47,7 +47,7 @@ class SubSetter:
             face = uharfbuzz.subset(face, inp)
             enc = uuencode(face.blob.data)
             # miss_glyph = "".join([chr(x) for x in unicode_set if (x not in face.unicodes) and (x not in PUNCTUATION_UNICODES)])
-            logger.info(f"子集化 {len(unicode_set)}个字符 {(time.perf_counter_ns() - start) / 1000000:.2f}ms \t\t[{font_name}]")
+            logger.info(left_fixed_width(f"子集化 {len(unicode_set)} 个字符 {(time.perf_counter_ns() - start) / 1000000:.2f}ms" ) +   f"[{font_name}]")
             miss_glyph = "".join([chr(x) for x in unicode_set.difference(face.unicodes) if x not in PUNCTUATION_UNICODES])
             result = f"fontname:{font_name}_{'B' if weight > 400 else ''}{'I' if italic else ''}0.ttf\n{enc}\n"
             if miss_glyph == "":
@@ -55,7 +55,7 @@ class SubSetter:
             else:
                 return {"type": "glyph", "font_name": font_name, "chars": miss_glyph}, result
         except Exception as e:
-            logger.exception(f"子集化出错 \t\t[{font_name}]")
+            logger.exception(left_fixed_width(f"子集化出错") +   f"[{font_name}]")
             # logger.error(f"子集化出错 \t\t[{font_name}]: \n{traceback.format_exc()}")
             return f"子集化出错 \t\t[{font_name}]: \n{str(e)}", ""
 
@@ -65,7 +65,7 @@ class SubSetter:
             if font_bytes is None:
                 return {"type": "font", "font_name": font_name}, ""
         except Exception as e:
-            logger.exception(f"加载字体出错 \t\t[{font_name}]")
+            logger.exception(left_fixed_width(f"加载字体出错") +   f"[{font_name}]")
             # logger.error(f"加载字体出错 \t\t[{font_name}]: \n{traceback.format_exc()}")
             return f"加载字体出错 \t\t[{font_name}]: \n{str(e)}", ""
         return SubSetter.font_subsetter(font_bytes, index, font_name, weight, italic, unicode_set)
@@ -149,8 +149,8 @@ class SubSetter:
                                 db_errors.append(err)
                 embed_fonts_text += result
 
-            logger.info(f"ass分析 {(analyse_end_time - analyse_start_time) / 1000000:.2f}ms")
-            logger.info(f"子集化嵌入 {(time.perf_counter_ns() - subset_start_time) / 1000000:.2f}ms")
+            logger.info( left_fixed_width("ass分析",12) + f"{(analyse_end_time - analyse_start_time) / 1000000:.2f}ms")
+            logger.info( left_fixed_width("子集化嵌入",12) + f"{(time.perf_counter_ns() - subset_start_time) / 1000000:.2f}ms")
             error_display = get_config("ERROR_DISPLAY")
             if len(display_errors) != 0 and 0 < error_display <= 60:
                 ass_text = ass_insert_line(ass_text, f"0:00:{error_display:05.2f}", r"fontinass 子集化存在错误：\N" + r"\N".join(display_errors))
