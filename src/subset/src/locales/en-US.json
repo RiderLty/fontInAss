@@ -143,6 +143,8 @@
     "missLogSearch": "Search font name",
     "missLogRefresh": "Refresh",
     "missLogBack": "Back",
+    "missLogClickToCopy": "Click to copy",
+    "missLogCopied": "Copied",
 
     "themeLight": "Light",
     "themeDark": "Dark",

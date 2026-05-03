@@ -143,6 +143,8 @@
     "missLogSearch": "搜索字体名称",
     "missLogRefresh": "刷新",
     "missLogBack": "返回",
+    "missLogClickToCopy": "点击复制",
+    "missLogCopied": "已复制",
 
     "themeLight": "亮色",
     "themeDark": "暗色",

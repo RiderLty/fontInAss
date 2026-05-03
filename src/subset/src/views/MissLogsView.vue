@@ -130,9 +130,21 @@ const formatTime = (iso) => {
   return d.toLocaleString()
 }
 
-const truncateUrl = (url, max = 60) => {
+const truncateUrl = (url, max = 80) => {
   if (!url || url.length <= max) return url || '-'
-  return '...' + url.slice(url.length - max + 3)
+  return url.slice(0, max - 3) + '...'
+}
+
+const copyUrl = (url) => {
+  const textarea = document.createElement('textarea')
+  textarea.value = url
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  const ok = document.execCommand('copy')
+  document.body.removeChild(textarea)
+  message.success(ok ? (t('missLogCopied') || '已复制') : '复制失败')
 }
 
 const splitChars = (chars) => {
@@ -350,8 +362,8 @@ loadMissData()
         >
           <a-table-column title="URL" data-index="url">
             <template #default="{ record }">
-              <a-tooltip :title="record.url">
-                <span>{{ truncateUrl(record.url) }}</span>
+              <a-tooltip :title="t('missLogClickToCopy') || '点击复制'">
+                <a @click="copyUrl(record.url)" style="cursor: pointer;">{{ truncateUrl(record.url) }}</a>
               </a-tooltip>
             </template>
           </a-table-column>
@@ -387,8 +399,8 @@ loadMissData()
       <template v-if="detailUrl && urlDetail">
         <a-descriptions :column="1" size="small" bordered style="margin-bottom: 16px;">
           <a-descriptions-item :label="t('missLogUrl')">
-            <a-tooltip :title="urlDetail.url">
-              <span>{{ urlDetail.url }}</span>
+            <a-tooltip :title="t('missLogClickToCopy') || '点击复制'">
+              <a @click="copyUrl(urlDetail.url)" style="cursor: pointer; word-break: break-all;">{{ urlDetail.url }}</a>
             </a-tooltip>
           </a-descriptions-item>
         </a-descriptions>
