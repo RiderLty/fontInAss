@@ -28,7 +28,7 @@ def transformColour(colour, sf,vf):
     colour.g = transformed[1]
     colour.b = transformed[2]
 
-color_code_pattern = re.compile(r"\\[0-9]?c&H([0-9a-fA-F]{2,})&")
+color_code_pattern = re.compile(r"\\[0-9]?c&H([0-9a-fA-F]{1,})&")
 def transformEvent(event, sf,vf):
     line = event.text
     matches = []
@@ -36,7 +36,7 @@ def transformEvent(event, sf,vf):
         start = match.start(1)
         end = match.end(1)
         hex_colour = match.group(1)
-        hex_colour.rjust(6, "0")
+        hex_colour = hex_colour.rjust(6, "0")
         b = int(hex_colour[0:2], 16)
         g = int(hex_colour[2:4], 16)
         r = int(hex_colour[4:6], 16)
