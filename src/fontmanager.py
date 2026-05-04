@@ -311,11 +311,15 @@ class FontManager:
                 path, index = result
                 logger.info(left_fixed_width(f"尝试下载字体") + f"[CDN:{path}]")
                 start = time.perf_counter_ns()
+                font_bytes = None
                 for host in self.onlineMapHosts:
                     resp = await self.http_session.get(f"{host}{path}", timeout=10)
                     if resp.ok:
+                        font_bytes = await resp.read()
                         break
-                font_bytes = await resp.read()
+                if font_bytes is None:
+                    logger.warning(f"所有CDN下载失败 [{(db_font_name, target_weight, target_italic)}]")
+                    return None, None
                 logger.info(left_fixed_width(f"从CDN加载字体 {len(font_bytes) / (1024 * 1024):.2f}MB {(time.perf_counter_ns() - start) / 1000000:.2f}ms") + f"[{(db_font_name, target_weight, target_italic)} <== CDN:{path}]")
                 self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
                 save_path = os.path.join(os.path.join(DEFAULT_FONT_PATH, "download"), f"超级字体整合包 XZ/{path}")

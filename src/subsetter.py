@@ -42,7 +42,8 @@ class SubSetter:
             face = uharfbuzz.Face(font_bytes, index)
             inp = uharfbuzz.SubsetInput()
             inp.sets(uharfbuzz.SubsetInputSets.UNICODE).set(unicode_set)
-            assert "name" in face.table_tags, ValueError("name 表未找到")
+            if "name" not in face.table_tags:
+                raise ValueError("name 表未找到")
             # utils.tag_to_integer("name") 计算得出 1851878757
             inp.sets(uharfbuzz.SubsetInputSets.NO_SUBSET_TABLE_TAG).set({1851878757})
             face = uharfbuzz.subset(face, inp)

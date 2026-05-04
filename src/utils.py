@@ -71,7 +71,8 @@ def tag_to_integer(tag: str) -> int:
     返回：
     对应的 hb_tag_t 整数值。
     """
-    assert len(tag) == 4, ValueError("The input string must be exactly 4 characters long.")
+    if len(tag) != 4:
+        raise ValueError("The input string must be exactly 4 characters long.")
     return int.from_bytes(tag.encode("latin-1"), byteorder="big")
 
 
@@ -345,16 +346,19 @@ def ass_insert_line(ass_str, end_time, insert_content):
             elif state == 0 and line.startswith("[V4+ Styles]"):
                 state = 1
             elif state == 1:
-                assert line.startswith("Format:"), ValueError("解析Style格式失败 : " + line)
+                if not line.startswith("Format:"):
+                    raise ValueError("解析Style格式失败 : " + line)
                 style = (line[8:].replace(" ", ""), lineIndex + 1)
                 state = 2
             elif state == 2 and line.startswith("[Events]"):
                 state = 3
             elif state == 3:
-                assert line.startswith("Format:"), ValueError("解析event格式失败 : " + line)
+                if not line.startswith("Format:"):
+                    raise ValueError("解析event格式失败 : " + line)
                 event = (line[8:].replace(" ", ""), lineIndex + 1)
                 break
-        assert style[1] != -1 and event[1] != -1, ValueError("解析失败")
+        if style[1] == -1 or event[1] == -1:
+            raise ValueError("解析失败")
         insert_style = "Style: " + style[0]
         for key, value in styleMap.items():
             insert_style = insert_style.replace(key, value)
