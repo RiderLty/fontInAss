@@ -9,7 +9,7 @@ import time
 import logging
 import asyncio
 import platform
-import requests
+import aiohttp
 import coloredlogs
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
@@ -65,6 +65,7 @@ app.add_middleware(
 
 process = None
 process_subset = None
+http_session = None
 
 # YAML config manager
 config_manager = init_config_manager(
@@ -288,18 +289,18 @@ async def html_videoplayer_plugin_js(request: Request, response: Response):
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
         request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"JSURL: {request_url}")
-        server_response = requests.get(url=request_url, headers=request.headers)
+        server_response = await http_session.get(request_url, headers=dict(request.headers))
+        raw_bytes = await server_response.read()
     except Exception as e:
         logger.exception("获取原始JS出错")
         return ""
     try:
-        content = server_response.content.decode("utf-8")
+        content = raw_bytes.decode("utf-8")
         content = content.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
         return Response(content=content)
     except Exception as e:
         logger.exception("处理出错，返回原始内容")
-        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=server_response.content)
+        return Response(content=raw_bytes)
 
 
 @app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
@@ -308,18 +309,18 @@ async def subtitles_octopus_js(request: Request, response: Response):
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
         request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"JSURL: {request_url}")
-        server_response = requests.get(url=request_url, headers=request.headers)
+        server_response = await http_session.get(request_url, headers=dict(request.headers))
+        raw_bytes = await server_response.read()
     except Exception as e:
         logger.exception("获取原始JS出错")
         return ""
     try:
-        content = server_response.content.decode("utf-8")
+        content = raw_bytes.decode("utf-8")
         content = insert_str(content, INSERT_JS, "function(options){")
         return Response(content=content)
     except Exception as e:
         logger.exception("处理出错，返回原始内容")
-        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
-        return Response(content=server_response.content)
+        return Response(content=raw_bytes)
 
 
 
@@ -345,13 +346,13 @@ async def proxy_pass(request: Request, response: Response ):
         source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
         request_url = get_config("EMBY_SERVER_URL") + source_path
         logger.info(f"字幕URL: {request_url}")
-        server_response = requests.get(url=request_url, headers=request.headers)
+        server_response = await http_session.get(request_url, headers=dict(request.headers))
+        raw_bytes = await server_response.read()
     except Exception as e:
         logger.exception("获取原始字幕出错")
         return ""
     headers = {}
     try:
-        raw_bytes = server_response.content
         hsv_s = config_manager.get("HDR_SATURATION")[0]
         hsv_v = config_manager.get("HDR_BRIGHTNESS")[0]
         error, srt, result_bytes = await process(raw_bytes, hsv_s, hsv_v, url=request_url)
@@ -369,15 +370,13 @@ async def proxy_pass(request: Request, response: Response ):
         return Response(content=result_bytes, headers=headers)
     except Exception as e:
         logger.exception("处理出错，返回原始内容")
-        # logger.error(f"处理出错，返回原始内容 : \n{traceback.format_exc()}")
         excluded_headers = ["Content-Encoding", "Transfer-Encoding", "Content-Length", "Connection"]
         source_headers = {
             key: value
             for key, value in server_response.headers.items()
             if key not in excluded_headers
         }
-        # print(f"source_headers: {source_headers}")
-        return Response(content=server_response.content, status_code=server_response.status_code, headers=source_headers)
+        return Response(content=raw_bytes, status_code=server_response.status, headers=source_headers)
 
 
 def get_server(port, server_loop, web_app):
@@ -398,7 +397,8 @@ if __name__ == "__main__":
     asyncio.set_event_loop(MAIN_LOOP)
     ssl._create_default_https_context = ssl._create_unverified_context
     font_manager_instance = FontManager()
-    subsetter_instance = SubSetter(font_manager_instance=font_manager_instance)
+    http_session = aiohttp.ClientSession(loop=MAIN_LOOP, connector=aiohttp.TCPConnector(verify_ssl=False, loop=MAIN_LOOP))
+    subsetter_instance = SubSetter(font_manager_instance=font_manager_instance, miss_logs_db=miss_logs_db)
     event_handler = dirmonitor(font_manager_instance=font_manager_instance)  # 创建fonts字体文件夹监视实体
     event_handler.start()
     process = subsetter_instance.process  # 绑定函数
@@ -418,6 +418,7 @@ if __name__ == "__main__":
         task.cancel()
     MAIN_LOOP.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
     MAIN_LOOP.run_until_complete(font_manager_instance.close_async())
+    MAIN_LOOP.run_until_complete(http_session.close())
     miss_logs_db.close()
     MAIN_LOOP.stop()
     MAIN_LOOP.close()

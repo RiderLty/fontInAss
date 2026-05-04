@@ -25,8 +25,9 @@ def _err_to_str(err):
 
 
 class SubSetter:
-    def __init__(self, font_manager_instance: FontManager) -> None:
+    def __init__(self, font_manager_instance: FontManager, miss_logs_db=None) -> None:
         self.font_manager_instance = font_manager_instance
+        self.miss_logs_db = miss_logs_db
         cache_size = get_config("SUB_CACHE_SIZE")
         cache_ttl = get_config("SUB_CACHE_TTL")
         self.cache = TTLCache(maxsize=cache_size, ttl=cache_ttl) if cache_ttl > 0 else LRUCache(maxsize=cache_size)
@@ -171,10 +172,8 @@ class SubSetter:
                     "miss_fonts": miss_fonts,
                     "miss_glyphs": glyph_entries,
                 }
-                from miss_logs_db import MissLogsDB
-                from constants import MISS_LOGS_DB_PATH, MISS_LOGS_SIZE as _sz
-                _db = MissLogsDB(MISS_LOGS_DB_PATH, _sz)
-                asyncio.create_task(_db.insert_request(record))
+                if self.miss_logs_db:
+                    asyncio.create_task(self.miss_logs_db.insert_request(record))
         # head, tai = ass_text.split("[Events]")
         # result_text = head + embed_fonts_text + "\n[Events]" + tai
         head, sep, tai = ass_text.partition("[Events]")
