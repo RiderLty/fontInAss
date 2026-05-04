@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfig } from '../composables/useConfig'
 import { useTheme } from '../composables/useTheme'
 import { message } from 'ant-design-vue'
+import ScrollTable from '../components/ScrollTable.vue'
 
 const { isDark } = useTheme()
 
@@ -80,10 +81,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div style="padding: 16px; height: 100vh; box-sizing: border-box; overflow: hidden;">
-    <a-spin :spinning="loading" style="height: 100%;">
-      <a-card :title="t('settingsTitle')" style="height: 100%; overflow: hidden;" :body-style="{ height: 'calc(100% - 57px)', display: 'flex', flexDirection: 'column', padding: '12px 16px', overflow: 'hidden' }">
-        <a-table
+  <div style="padding: 16px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
+    <a-spin :spinning="loading">
+      <a-card :title="t('settingsTitle')" size="small" :body-style="{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '12px 16px', overflow: 'hidden' }">
+        <ScrollTable
           :data-source="configEntries"
           :columns="[
             { title: t('settingsKey'), dataIndex: 'key', width: 220 },
@@ -95,7 +96,7 @@ onMounted(() => {
           :pagination="false"
           size="small"
           row-key="key"
-          :scroll="{ x: 920, y: 'calc(100vh - 151px)' }"
+          :scroll="{ x: 920 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'description'">
@@ -105,14 +106,12 @@ onMounted(() => {
               <a-tag :color="sourceColor(record.source)">{{ sourceLabel(record.source) }}</a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'value'">
-              <!-- Boolean -->
               <template v-if="record.type === 'boolean'">
                 <a-switch
                   :checked="record.value"
                   @change="(checked) => handleSave(record.key, checked)"
                 />
               </template>
-              <!-- Enum -->
               <template v-else-if="record.type === 'enum'">
                 <a-select
                   :value="record.value"
@@ -122,7 +121,6 @@ onMounted(() => {
                   <a-select-option v-for="v in record.enum_values" :key="v" :value="v">{{ v }}</a-select-option>
                 </a-select>
               </template>
-              <!-- Number -->
               <template v-else-if="record.type === 'integer' || record.type === 'float'">
                 <a-input-number
                   :value="record.value"
@@ -133,7 +131,6 @@ onMounted(() => {
                   @press-enter="(e) => handleSave(record.key, e.target.value)"
                 />
               </template>
-              <!-- String -->
               <template v-else>
                 <a-input
                   :value="record.value"
@@ -147,21 +144,25 @@ onMounted(() => {
               <a-button size="small" @click="handleReset(record.key)">{{ t('settingsReset') }}</a-button>
             </template>
           </template>
-        </a-table>
+        </ScrollTable>
       </a-card>
     </a-spin>
   </div>
 </template>
 
 <style scoped>
-:deep(.ant-table-wrapper) {
+:deep(.ant-spin-nested-loading),
+:deep(.ant-spin-container) {
   flex: 1;
   min-height: 0;
-  border-radius: 8px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-:deep(.ant-table-body) {
-  overflow-y: auto !important;
+:deep(.ant-card) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 :deep(.ant-table-thead th) {
   position: sticky;

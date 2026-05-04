@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal, message } from 'ant-design-vue'
 import { useMissLogs } from '../composables/useMissLogs'
+import { copyToClipboard } from '../utils/clipboard'
+import ScrollTable from '../components/ScrollTable.vue'
 
 const { t } = useI18n()
 
@@ -15,27 +17,6 @@ const detailUrl = ref(null)
 const drawerVisible = ref(false)
 const drawerGlyphs = ref([])
 
-// Virtual scroll table height
-const tableWrap = ref(null)
-const tableHeight = ref(400)
-let resizeObserver = null
-
-const updateTableHeight = () => {
-  nextTick(() => {
-    if (tableWrap.value) {
-      tableHeight.value = tableWrap.value.clientHeight
-    }
-  })
-}
-
-onMounted(() => {
-  resizeObserver = new ResizeObserver(updateTableHeight)
-  if (tableWrap.value) resizeObserver.observe(tableWrap.value)
-})
-
-onBeforeUnmount(() => {
-  if (resizeObserver) resizeObserver.disconnect()
-})
 
 const {
   summary, fonts, urls, fontDetail, urlDetail, glyphs,
@@ -50,7 +31,6 @@ const loadMissData = () => {
   if (viewMode.value === 'fonts') fetchFonts(sortField.value, sortOrder.value, searchQuery.value)
   else if (viewMode.value === 'urls') fetchUrls(sortField.value, sortOrder.value)
   else if (viewMode.value === 'glyphs') fetchAllGlyphs(sortField.value, sortOrder.value, searchQuery.value)
-  nextTick(updateTableHeight)
 }
 
 const switchView = (mode) => {
@@ -135,16 +115,9 @@ const truncateUrl = (url, max = 80) => {
   return url.slice(0, max - 3) + '...'
 }
 
-const copyUrl = (url) => {
-  const textarea = document.createElement('textarea')
-  textarea.value = url
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  document.body.appendChild(textarea)
-  textarea.select()
-  const ok = document.execCommand('copy')
-  document.body.removeChild(textarea)
-  message.success(ok ? (t('missLogCopied') || '已复制') : '复制失败')
+const copyUrl = async (url) => {
+  const ok = await copyToClipboard(url)
+  message.success(ok ? (t('missLogCopied') || '已复制') : (t('copyFail') || '复制失败'))
 }
 
 const splitChars = (chars) => {
@@ -153,22 +126,8 @@ const splitChars = (chars) => {
 }
 
 const copyText = async (text) => {
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(text)
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.cssText = 'position:fixed;left:-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    message.success(t('copied'))
-  } catch {
-    message.error(t('copyFail'))
-  }
+  const ok = await copyToClipboard(text)
+  message.success(ok ? t('copied') : t('copyFail'))
 }
 
 const drawerTitle = computed(() => {
@@ -186,15 +145,14 @@ onMounted(() => {
   onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 })
 
-const scrollConfig = computed(() => ({ y: tableHeight.value }))
 const headerClick = (field) => ({ style: 'cursor: pointer', onClick: () => handleSort(field) })
 
 loadMissData()
 </script>
 
 <template>
-  <div style="padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
-    <a-card :title="t('missLogTitle')" size="small" style="flex: 1; min-height: 0; display: flex; flex-direction: column;" :body-style="{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '12px', overflow: 'hidden' }">
+  <div style="padding: 16px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden;">
+    <a-card :title="t('missLogTitle')" size="small" :body-style="{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '12px', overflow: 'hidden' }">
       <template #extra>
         <a-space>
           <a-button size="small" @click="loadMissData">{{ t('missLogRefresh') }}</a-button>
@@ -245,93 +203,88 @@ loadMissData()
       </div>
 
       <!-- Data Table -->
-      <div ref="tableWrap" style="flex: 1; min-height: 0; overflow: hidden;">
-        <!-- By Font -->
-        <a-table
-          v-if="viewMode === 'fonts'"
-          :data-source="fonts"
-          :pagination="false"
-          size="small"
-          row-key="font_name"
-          :loading="missLoading"
-          :locale="{ emptyText: t('missLogNoData') }"
-          virtual
-          :scroll="scrollConfig"
-        >
-          <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="280">
-            <template #default="{ record }">
-              <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
-            </template>
-          </a-table-column>
-          <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
-          <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
-            <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
-          </a-table-column>
-        </a-table>
+      <!-- By Font -->
+      <ScrollTable
+        v-if="viewMode === 'fonts'"
+        :data-source="fonts"
+        :pagination="false"
+        size="small"
+        row-key="font_name"
+        :loading="missLoading"
+        :locale="{ emptyText: t('missLogNoData') }"
+        virtual
+      >
+        <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="280">
+          <template #default="{ record }">
+            <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
+          </template>
+        </a-table-column>
+        <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
+        <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
+          <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
+        </a-table-column>
+      </ScrollTable>
 
-        <!-- By URL -->
-        <a-table
-          v-if="viewMode === 'urls'"
-          :data-source="urls"
-          :pagination="false"
-          size="small"
-          row-key="url"
-          :loading="missLoading"
-          :locale="{ emptyText: t('missLogNoData') }"
-          virtual
-          :scroll="scrollConfig"
-        >
-          <a-table-column :title="t('missLogUrl')" data-index="url" :width="300">
-            <template #default="{ record }">
-              <a-tooltip :title="record.url">
-                <a @click="openUrlDetail(record.url)" style="cursor: pointer;">{{ truncateUrl(record.url) }}</a>
-              </a-tooltip>
-            </template>
-          </a-table-column>
-          <a-table-column data-index="request_count" :width="100" :title="t('missLogTotalRequests') + sortIcon('request_count')" :custom-header-cell="() => headerClick('request_count')" />
-          <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
-            <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
-          </a-table-column>
-          <a-table-column :title="t('missLogAction')" :width="80">
-            <template #default="{ record }">
-              <a-button size="small" danger @click="handleDeleteUrl(record.url)">{{ t('missLogDelete') }}</a-button>
-            </template>
-          </a-table-column>
-        </a-table>
+      <!-- By URL -->
+      <ScrollTable
+        v-if="viewMode === 'urls'"
+        :data-source="urls"
+        :pagination="false"
+        size="small"
+        row-key="url"
+        :loading="missLoading"
+        :locale="{ emptyText: t('missLogNoData') }"
+        virtual
+      >
+        <a-table-column :title="t('missLogUrl')" data-index="url" :width="300">
+          <template #default="{ record }">
+            <a-tooltip :title="record.url">
+              <a @click="openUrlDetail(record.url)" style="cursor: pointer;">{{ truncateUrl(record.url) }}</a>
+            </a-tooltip>
+          </template>
+        </a-table-column>
+        <a-table-column data-index="request_count" :width="100" :title="t('missLogTotalRequests') + sortIcon('request_count')" :custom-header-cell="() => headerClick('request_count')" />
+        <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
+          <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
+        </a-table-column>
+        <a-table-column :title="t('missLogAction')" :width="80">
+          <template #default="{ record }">
+            <a-button size="small" danger @click="handleDeleteUrl(record.url)">{{ t('missLogDelete') }}</a-button>
+          </template>
+        </a-table-column>
+      </ScrollTable>
 
-        <!-- By Glyph -->
-        <a-table
-          v-if="viewMode === 'glyphs'"
-          :data-source="glyphs"
-          :pagination="false"
-          size="small"
-          :row-key="(r) => r.font_name + '|' + r.missing_chars"
-          :loading="missLoading"
-          :locale="{ emptyText: t('missLogNoData') }"
-          virtual
-          :scroll="scrollConfig"
-        >
-          <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="200">
-            <template #default="{ record }">
-              <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
-            </template>
-          </a-table-column>
-          <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars" :width="260">
-            <template #default="{ record }">
-              <span
-                style="cursor: pointer; word-break: break-all; white-space: normal;"
-                @click="copyText(record.missing_chars)"
-              >
-                <a-tag v-for="(ch, i) in splitChars(record.missing_chars)" :key="i" color="orange" style="margin-bottom: 2px;">{{ ch }}</a-tag>
-              </span>
-            </template>
-          </a-table-column>
-          <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
-          <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
-            <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
-          </a-table-column>
-        </a-table>
-      </div>
+      <!-- By Glyph -->
+      <ScrollTable
+        v-if="viewMode === 'glyphs'"
+        :data-source="glyphs"
+        :pagination="false"
+        size="small"
+        :row-key="(r) => r.font_name + '|' + r.missing_chars"
+        :loading="missLoading"
+        :locale="{ emptyText: t('missLogNoData') }"
+        virtual
+      >
+        <a-table-column :title="t('missLogFontName')" data-index="font_name" :width="200">
+          <template #default="{ record }">
+            <span @click="openFontDetail(record.font_name)" style="cursor: pointer; color: #1890ff;">{{ record.font_name }}</span>
+          </template>
+        </a-table-column>
+        <a-table-column :title="t('missLogMissingChars')" data-index="missing_chars" :width="260">
+          <template #default="{ record }">
+            <span
+              style="cursor: pointer; word-break: break-all; white-space: normal;"
+              @click="copyText(record.missing_chars)"
+            >
+              <a-tag v-for="(ch, i) in splitChars(record.missing_chars)" :key="i" color="orange" style="margin-bottom: 2px;">{{ ch }}</a-tag>
+            </span>
+          </template>
+        </a-table-column>
+        <a-table-column data-index="total_count" :width="120" :title="t('missLogMissingCount') + sortIcon('total_count')" :custom-header-cell="() => headerClick('total_count')" />
+        <a-table-column data-index="last_seen" :width="180" :title="t('missLogLastSeen') + sortIcon('last_seen')" :custom-header-cell="() => headerClick('last_seen')">
+          <template #default="{ record }">{{ formatTime(record.last_seen) }}</template>
+        </a-table-column>
+      </ScrollTable>
     </a-card>
 
     <!-- Detail Drawer -->
@@ -445,3 +398,12 @@ loadMissData()
     </a-drawer>
   </div>
 </template>
+
+<style scoped>
+:deep(.ant-card) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+</style>

@@ -5,7 +5,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { message } from "ant-design-vue";
 import { debounce } from "lodash-es";
-import copy from "copy-to-clipboard";
+import { copyToClipboard } from "../utils/clipboard";
 import { useTheme } from "../composables/useTheme";
 
 const { isDark } = useTheme();
@@ -261,12 +261,9 @@ const onCellClick = (value, columnKey) => {
   copyMessage(text);
 };
 
-const copyMessage = (text) => {
-  if (copy(text)) {
-    message.success(t("copied"));
-  } else {
-    message.error(t("copyFail"));
-  }
+const copyMessage = async (text) => {
+  const ok = await copyToClipboard(text);
+  message[ok ? "success" : "error"](ok ? t("copied") : t("copyFail"));
 };
 
 // ========= 输入框预设逻辑 =========
