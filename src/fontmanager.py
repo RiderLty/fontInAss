@@ -290,7 +290,7 @@ class FontManager:
             await self.http_session.close()
 
     async def load_font(self, target_font_name, target_weight, target_italic):
-        db_font_name = target_font_name.strip().lower()
+        db_font_name = target_font_name.strip().lower().lstrip("@")  # @X 即 X 的竖排变体（libass 自行剥离 @ 后按 X 渲染），此处同步剥离以便匹配正体
         if (db_font_name, target_weight, target_italic) in self.cache:
             (font_bytes, index) = self.cache[(db_font_name, target_weight, target_italic)]  # 刷新缓存
             self.cache[(db_font_name, target_weight, target_italic)] = (font_bytes, index)
@@ -331,7 +331,7 @@ class FontManager:
                 return None, None
 
     async def select_font(self, target_font_name, target_weight, target_italic):
-        db_font_name = target_font_name.strip().lower()
+        db_font_name = target_font_name.strip().lower().lstrip("@")  # @X 即 X 的竖排变体（libass 自行剥离 @ 后按 X 渲染），此处同步剥离以便匹配正体
         if (
             (db_font_name, target_weight, target_italic) in self.cache
             or self.select_font_local(db_font_name, target_weight, target_italic)
