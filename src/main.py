@@ -283,44 +283,79 @@ async def process_bytes(request: Request):
         return Response(raw_bytes)
 
 
+JS_MEDIA_TYPE = "application/javascript"
+
+# 转发给上游时不应带上的请求头：逐跳头、条件请求头、以及会被上游误解的编码/主机头
+FORWARD_EXCLUDED_HEADERS = {
+    "host",
+    "connection",
+    "content-length",
+    "content-encoding",
+    "transfer-encoding",
+    "accept-encoding",
+    "if-none-match",
+    "if-modified-since",
+    "if-range",
+    "if-match",
+    "if-unmodified-since",
+}
+
+
+def build_upstream_headers(request: Request):
+    return {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in FORWARD_EXCLUDED_HEADERS
+    }
+
+
+def build_upstream_url(request: Request):
+    source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
+    return get_config("EMBY_SERVER_URL").rstrip("/") + source_path
+
+
 @app.get("/web/modules/htmlvideoplayer/plugin.js")
 async def html_videoplayer_plugin_js(request: Request, response: Response):
     try:
-        source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        request_url = get_config("EMBY_SERVER_URL") + source_path
+        request_url = build_upstream_url(request)
         logger.info(f"JSURL: {request_url}")
-        server_response = await http_session.get(request_url, headers=dict(request.headers))
+        server_response = await http_session.get(request_url, headers=build_upstream_headers(request))
         raw_bytes = await server_response.read()
     except Exception as e:
         logger.exception("获取原始JS出错")
-        return ""
+        return Response(status_code=502)
+    if server_response.status != 200:
+        logger.warning(f"获取原始JS返回异常状态码: {server_response.status} {request_url}")
+        return Response(status_code=server_response.status)
     try:
         content = raw_bytes.decode("utf-8")
         content = content.replace("fetchSubtitleContent(textTrackUrl,!0)", "fetchSubtitleContent(textTrackUrl,false)")
-        return Response(content=content)
+        return Response(content=content, media_type=JS_MEDIA_TYPE)
     except Exception as e:
         logger.exception("处理出错，返回原始内容")
-        return Response(content=raw_bytes)
+        return Response(content=raw_bytes, media_type=JS_MEDIA_TYPE)
 
 
 @app.get("/web/bower_components/{path:path}/subtitles-octopus.js")
 async def subtitles_octopus_js(request: Request, response: Response):
     try:
-        source_path = f"{request.url.path}?{request.url.query}" if request.url.query else request.url.path
-        request_url = get_config("EMBY_SERVER_URL") + source_path
+        request_url = build_upstream_url(request)
         logger.info(f"JSURL: {request_url}")
-        server_response = await http_session.get(request_url, headers=dict(request.headers))
+        server_response = await http_session.get(request_url, headers=build_upstream_headers(request))
         raw_bytes = await server_response.read()
     except Exception as e:
         logger.exception("获取原始JS出错")
-        return ""
+        return Response(status_code=502)
+    if server_response.status != 200:
+        logger.warning(f"获取原始JS返回异常状态码: {server_response.status} {request_url}")
+        return Response(status_code=server_response.status)
     try:
         content = raw_bytes.decode("utf-8")
         content = insert_str(content, INSERT_JS, "function(options){")
-        return Response(content=content)
+        return Response(content=content, media_type=JS_MEDIA_TYPE)
     except Exception as e:
         logger.exception("处理出错，返回原始内容")
-        return Response(content=raw_bytes)
+        return Response(content=raw_bytes, media_type=JS_MEDIA_TYPE)
 
 
 
